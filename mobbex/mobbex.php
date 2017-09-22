@@ -28,7 +28,7 @@ class Mobbex extends PaymentModule
     {
         $this->name = 'mobbex';
         $this->tab = 'payments_gateway';
-        $this->version = '1.1.0';
+        $this->version = '1.1.1';
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification');
         $this->need_instance = 1;

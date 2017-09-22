@@ -71,7 +71,7 @@ class MobbexHelper
             $link = new Link; //because getImageLInk is not static function
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            $items[] = array("image" => $imagePath, "description" => $product['name'], "quantity" => $product['cart_quantity'], "total" => $product['price_wt'] );
+            $items[] = array("image" => $imagePath, "description" => $product['name'], "quantity" => $product['cart_quantity'], "total" => round($product['price_wt'],2) );
         }
 
         // Create data
