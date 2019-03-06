@@ -8,30 +8,33 @@
  * @version 1.0.0
  * @see     PaymentModuleCore
  */
+use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require(dirname(__FILE__) . '/classes/MobbexHelper.php');
-require(dirname(__FILE__) . '/classes/MobbexTransaction.php');
+require dirname(__FILE__) . '/classes/MobbexHelper.php';
+require dirname(__FILE__) . '/classes/MobbexTransaction.php';
 
 /**
  * Main class of the module
  */
 class Mobbex extends PaymentModule
 {
-    
+
     /**
      * Constructor
      */
     public function __construct()
     {
         $this->name = 'mobbex';
-        $this->tab = 'payments_gateway';
-        $this->version = '1.1.1';
+
+        $this->tab = 'payments_gateways';
+
+        $this->version = '1.1.17';
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification');
-        $this->need_instance = 1;
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -39,22 +42,12 @@ class Mobbex extends PaymentModule
 
         $this->displayName = $this->l('Mobbex');
         $this->description = $this->l('Plugin de pago utilizando Mobbex');
+
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
-        $this->ps_versions_compliancy = array(
-            'min' => '1.6',
-            'max' => _PS_VERSION_
-        );
-        $this->need_instance = 1;
+        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
-
-        $this->hooks = array(
-            //'header',
-            //'backOfficeHeader',
-            'payment',
-            'paymentReturn'
-        );
     }
 
     /**
@@ -74,12 +67,11 @@ class Mobbex extends PaymentModule
         $this->_createStates();
         $this->_createTable();
 
-        if (parent::install() && $this->registerHook($this->hooks)) {
-            return true;
-        } else {
-            $this->_errors[] = $this->l('There was an error during the installation. Please contact the developer of the module');
+        if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
             return false;
         }
+
+        return true;
     }
 
     /**
@@ -117,7 +109,6 @@ class Mobbex extends PaymentModule
         return $this->renderForm();
     }
 
-
     /**
      * Generate the configuration form HTML markup
      *
@@ -136,7 +127,7 @@ class Mobbex extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submit_mobbex';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-            .'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+        . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = array(
@@ -147,7 +138,6 @@ class Mobbex extends PaymentModule
 
         return $helper->generateForm(array($this->getConfigForm()));
     }
-
 
     /**
      * Define the input of the configuration form
@@ -161,21 +151,21 @@ class Mobbex extends PaymentModule
         return array(
             'form' => array(
                 'legend' => array(
-                'title' => $this->l('Settings'),
-                'icon' => 'icon-cogs',
+                    'title' => $this->l('Settings'),
+                    'icon' => 'icon-cogs',
                 ),
                 'input' => array(
                     array(
                         'type' => 'text',
                         'label' => $this->l('API Key'),
                         'name' => MobbexHelper::K_API_KEY,
-                        'required' => true
+                        'required' => true,
                     ),
                     array(
                         'type' => 'text',
                         'label' => $this->l('Access Token'),
                         'name' => MobbexHelper::K_ACCESS_TOKEN,
-                        'required' => true
+                        'required' => true,
                     ),
                 ),
                 'submit' => array(
@@ -184,7 +174,6 @@ class Mobbex extends PaymentModule
             ),
         );
     }
-
 
     /**
      * Retrieve the current configuration values.
@@ -204,7 +193,8 @@ class Mobbex extends PaymentModule
         );
     }
 
-    public function _createTable() {
+    public function _createTable()
+    {
         DB::getInstance()->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
                 `cart_id` INT(11) NOT NULL,
@@ -236,7 +226,7 @@ class Mobbex extends PaymentModule
                 // Add some image
             }
 
-            Configuration::updateValue(MobbexHelper::K_OS_PENDING, (int)$order_state->id);
+            Configuration::updateValue(MobbexHelper::K_OS_PENDING, (int) $order_state->id);
         }
 
         // Waiting Status
@@ -259,7 +249,7 @@ class Mobbex extends PaymentModule
                 // Add some image
             }
 
-            Configuration::updateValue(MobbexHelper::K_OS_WAITING, (int)$order_state->id);
+            Configuration::updateValue(MobbexHelper::K_OS_WAITING, (int) $order_state->id);
         }
 
         // Rejected Status
@@ -279,10 +269,10 @@ class Mobbex extends PaymentModule
             $order_state->invoice = false;
 
             if ($order_state->add()) {
-                // Add some image 
+                // Add some image
             }
 
-            Configuration::updateValue(MobbexHelper::K_OS_REJECTED, (int)$order_state->id);
+            Configuration::updateValue(MobbexHelper::K_OS_REJECTED, (int) $order_state->id);
         }
     }
 
@@ -298,24 +288,6 @@ class Mobbex extends PaymentModule
         foreach (array_keys($form_values) as $key) {
             Configuration::updateValue($key, Tools::getValue($key));
         }
-    }
-
-    /**
-     * Logic to execute when the hook 'displayPayment' is fired
-     *
-     * @return string
-     */
-    public function hookPayment()
-    {
-        $template = 'views/templates/hooks/payment.tpl';
-
-        $this->context->smarty->assign(
-            array(
-                'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-            )
-        );
-
-        return $this->display(__FILE__, $template);
     }
 
     /**
@@ -335,11 +307,54 @@ class Mobbex extends PaymentModule
         $trx = MobbexTransaction::getTransaction($order->id_cart);
 
         // Assign the Data into Smarty
-        $this->context->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-        $this->context->smarty->assign('total', $order->getTotalPaid());
-        $this->context->smarty->assign('payment', $order->payment);
-        $this->context->smarty->assign('mobbex_data', $trx);
+        $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
+        $this->smarty->assign('total', $order->getTotalPaid());
+        $this->smarty->assign('payment', $order->payment);
+        $this->smarty->assign('mobbex_data', $trx);
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
+    }
+
+    public function checkCurrency($cart)
+    {
+        $currency_order = new Currency($cart->id_currency);
+        $currencies_module = $this->getCurrency($cart->id_currency);
+
+        if (is_array($currencies_module)) {
+            foreach ($currencies_module as $currency_module) {
+                if ($currency_order->id == $currency_module['id_currency']) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public function hookPaymentOptions($params)
+    {
+        if (!$this->active) {
+            return;
+        }
+
+        if (!$this->checkCurrency($params['cart'])) {
+            return;
+        }
+
+        $payment_options = [
+            $this->getExternalPaymentOption(),
+        ];
+
+        return $payment_options;
+    }
+
+    public function getExternalPaymentOption()
+    {
+        $externalOption = new PaymentOption();
+        $externalOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
+            ->setAction($this->context->link->getModuleLink($this->name, 'redirect', array(), true))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/ps17.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
+
+        return $externalOption;
     }
 }
