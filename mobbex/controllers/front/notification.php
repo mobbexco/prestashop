@@ -60,7 +60,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             if ($action == "hook") {
                 $body = file_get_contents('php://input');
 
-                $res = json_decode($response, true);
+                $res = json_decode($body, true);
 
                 $result = MobbexHelper::evaluateTransactionData($res['form']['data']);
             } elseif ($action == "return") {
