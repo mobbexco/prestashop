@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER="1.1.17"
+VER="1.1.19"
 
 # Create 1.6 version
 PRESTAV="1.6"

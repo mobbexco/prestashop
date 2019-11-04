@@ -32,7 +32,7 @@ class Mobbex extends PaymentModule
 
         $this->tab = 'payments_gateways';
 
-        $this->version = '1.1.17';
+        $this->version = '1.1.19';
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification');
         $this->currencies = true;
@@ -302,7 +302,7 @@ class Mobbex extends PaymentModule
         }
 
         // Get the Order
-        $order = $params['objOrder'];
+        $order = $params['order'];
 
         $trx = MobbexTransaction::getTransaction($order->id_cart);
 

@@ -135,7 +135,7 @@ class MobbexHelper
         $status = $res['payment']['status']['code'];
 
         // Get the Reference ( Transaction ID )
-        $transaction_id = $res['payment']['reference'];
+        $transaction_id = $res['payment']['id'];
 
         $source_type = $res['payment']['source']['type'];
         $source_name = $res['payment']['source']['name'];
@@ -147,6 +147,8 @@ class MobbexHelper
             'status' => Configuration::get(MobbexHelper::K_OS_WAITING),
             'message' => $message,
             'name' => $source_name,
+            'transaction_id' => $transaction_id,
+            'source_type' => $source_type,
             'data' => $res
         );
 
