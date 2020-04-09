@@ -32,12 +32,13 @@ class Mobbex extends PaymentModule
 
         $this->tab = 'payments_gateways';
 
-        $this->version = '1.1.19';
+        $this->version = '1.2.1';
         $this->author = 'Mobbex Co';
-        $this->controllers = array('redirect', 'notification');
+        $this->controllers = array('redirect', 'notification', 'webhook');
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
+
         parent::__construct();
 
         $this->displayName = $this->l('Mobbex');
@@ -45,6 +46,10 @@ class Mobbex extends PaymentModule
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
         $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
+
+        // On 1.7.5 ignores the creation and finishes on an Fatal Error
+        // Create the States if not exists because are really important
+        $this->_createStates();
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
@@ -63,8 +68,12 @@ class Mobbex extends PaymentModule
         // Don't forget to check for PHP extensions like curl here
         Configuration::updateValue(MobbexHelper::K_API_KEY, '');
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
+        Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
+        // Theme
+        Configuration::updateValue(MobbexHelper::K_THEME, 'light');
+        Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, '');
+        Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, '');
 
-        $this->_createStates();
         $this->_createTable();
 
         if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
@@ -167,6 +176,60 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_ACCESS_TOKEN,
                         'required' => true,
                     ),
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Test Mode'),
+                        'name' => MobbexHelper::K_TEST_MODE,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_mdv',
+                                'value' => true,
+                                'label' => $this->l('Test Mode'),
+                            ],
+                            [
+                                'id' => 'active_off_mdv',
+                                'value' => false,
+                                'label' => $this->l('Live Mode'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Theme Mode'),
+                        'name' => MobbexHelper::K_THEME,
+                        'is_bool' => false,
+                        'required' => false,
+                        'values' => [
+                            [
+                                'id' => 'm_theme_light',
+                                'value' => 'light',
+                                'label' => $this->l('Light Mode'),
+                            ],
+                            [
+                                'id' => 'm_theme_dark',
+                                'value' => 'dark',
+                                'label' => $this->l('Dark Mode'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Background Color'),
+                        'name' => MobbexHelper::K_THEME_BACKGROUND,
+                        'data-hex' => true,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Checkout Background Color'),
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Primary Color'),
+                        'name' => MobbexHelper::K_THEME_PRIMARY,
+                        'data-hex' => true,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Checkout Primary Color'),
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -187,6 +250,12 @@ class Mobbex extends PaymentModule
         return array(
             MobbexHelper::K_API_KEY => Configuration::get(MobbexHelper::K_API_KEY, ''),
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
+            MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
+            // Theme
+            MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, 'light'),
+            MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, ''),
+            MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, ''),
+            // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
             MobbexHelper::K_OS_PENDING => Configuration::get(MobbexHelper::K_OS_PENDING, ''),
@@ -206,6 +275,12 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
+        // Un-Comment for Debugging
+        // PrestaShopLogger::addLog('Status Paid: ' . Configuration::get('PS_OS_PAYMENT'));
+        // PrestaShopLogger::addLog('Status Pending: ' . Configuration::get(MobbexHelper::K_OS_PENDING));
+        // PrestaShopLogger::addLog('Status Waiting: ' . Configuration::get(MobbexHelper::K_OS_WAITING));
+        // PrestaShopLogger::addLog('Status Rejected: ' . Configuration::get(MobbexHelper::K_OS_REJECTED));
+
         // Pending Status
         if (!Configuration::get(MobbexHelper::K_OS_PENDING)) {
             $order_state = new OrderState();
@@ -221,6 +296,8 @@ class Mobbex extends PaymentModule
             $order_state->delivery = false;
             $order_state->logable = false;
             $order_state->invoice = false;
+
+            $order_state->module_name = $this->name;
 
             if ($order_state->add()) {
                 // Add some image
@@ -245,6 +322,8 @@ class Mobbex extends PaymentModule
             $order_state->logable = false;
             $order_state->invoice = false;
 
+            $order_state->module_name = $this->name;
+
             if ($order_state->add()) {
                 // Add some image
             }
@@ -267,6 +346,8 @@ class Mobbex extends PaymentModule
             $order_state->delivery = false;
             $order_state->logable = false;
             $order_state->invoice = false;
+
+            $order_state->module_name = $this->name;
 
             if ($order_state->add()) {
                 // Add some image
@@ -301,16 +382,18 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        // Get the Order
-        $order = $params['order'];
+        if ($params['order'] && Validate::isLoadedObject($params['order'])) {
+            // Get the Order
+            $order = $params['order'];
 
-        $trx = MobbexTransaction::getTransaction($order->id_cart);
+            $trx = MobbexTransaction::getTransaction($order->id_cart);
 
-        // Assign the Data into Smarty
-        $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-        $this->smarty->assign('total', $order->getTotalPaid());
-        $this->smarty->assign('payment', $order->payment);
-        $this->smarty->assign('mobbex_data', $trx);
+            // Assign the Data into Smarty
+            $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
+            $this->smarty->assign('total', $order->getTotalPaid());
+            $this->smarty->assign('payment', $order->payment);
+            $this->smarty->assign('mobbex_data', $trx);
+        }
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
     }

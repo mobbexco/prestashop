@@ -28,7 +28,7 @@ class Mobbex extends PaymentModule
     {
         $this->name = 'mobbex';
         $this->tab = 'payments_gateway';
-        $this->version = '1.1.19';
+        $this->version = '1.2.1';
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification');
         $this->need_instance = 1;
@@ -75,6 +75,11 @@ class Mobbex extends PaymentModule
         // Don't forget to check for PHP extensions like curl here
         Configuration::updateValue(MobbexHelper::K_API_KEY, '');
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
+        Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
+        // Theme
+        Configuration::updateValue(MobbexHelper::K_THEME, 'light');
+        Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, '');
+        Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, '');
 
         $this->_createStates();
         $this->_createTable();
@@ -180,6 +185,60 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_ACCESS_TOKEN,
                         'required' => true,
                     ),
+                    array(
+                        'type'     => 'switch',
+                        'label'    => $this->l('Test Mode'),
+                        'name'     => MobbexHelper::K_TEST_MODE,
+                        'is_bool'  => true,
+                        'required' => true,
+                        'values'   => [
+                            [
+                                'id'    => 'active_on_mdv',
+                                'value' => true,
+                                'label' => $this->l('Test Mode')
+                            ],
+                            [
+                                'id'    => 'active_off_mdv',
+                                'value' => false,
+                                'label' => $this->l('Live Mode')
+                            ]
+                        ]
+                    ),
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Theme Mode'),
+                        'name' => MobbexHelper::K_THEME,
+                        'is_bool' => false,
+                        'required' => false,
+                        'values' => [
+                            [
+                                'id' => 'm_theme_light',
+                                'value' => 'light',
+                                'label' => $this->l('Light Mode'),
+                            ],
+                            [
+                                'id' => 'm_theme_dark',
+                                'value' => 'dark',
+                                'label' => $this->l('Dark Mode'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Background Color'),
+                        'name' => MobbexHelper::K_THEME_BACKGROUND,
+                        'data-hex' => true,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Checkout Background Color'),
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Primary Color'),
+                        'name' => MobbexHelper::K_THEME_PRIMARY,
+                        'data-hex' => true,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Checkout Primary Color'),
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -200,6 +259,12 @@ class Mobbex extends PaymentModule
         return array(
             MobbexHelper::K_API_KEY => Configuration::get(MobbexHelper::K_API_KEY, ''),
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
+            MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
+            // Theme
+            MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, 'light'),
+            MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, ''),
+            MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, ''),
+            // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
             MobbexHelper::K_OS_PENDING => Configuration::get(MobbexHelper::K_OS_PENDING, ''),
