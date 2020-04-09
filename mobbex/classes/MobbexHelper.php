@@ -23,6 +23,10 @@ class MobbexHelper
     const K_THEME_BACKGROUND = 'MOBBEX_THEME_BACKGROUND';
     const K_THEME_PRIMARY = 'MOBBEX_THEME_PRIMARY';
 
+    const K_DEF_THEME = true;
+    const K_DEF_BACKGROUND = '#ECF2F6';
+    const K_DEF_PRIMARY = '#6f00ff';
+
     const K_OS_PENDING = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
@@ -63,7 +67,7 @@ class MobbexHelper
     public static function getOptions()
     {
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME)
+            "type" => Configuration::get(MobbexHelper::K_THEME) ? 'light' : 'dark'
         );
 
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);

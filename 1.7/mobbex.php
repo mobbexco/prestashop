@@ -70,9 +70,9 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
         // Theme
-        Configuration::updateValue(MobbexHelper::K_THEME, 'light');
-        Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, '');
-        Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, '');
+        Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
+        Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
+        Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY);
 
         $this->_createTable();
 
@@ -196,7 +196,7 @@ class Mobbex extends PaymentModule
                         ],
                     ),
                     array(
-                        'type' => 'switch',
+                        'type' => 'radio',
                         'label' => $this->l('Theme Mode'),
                         'name' => MobbexHelper::K_THEME,
                         'is_bool' => false,
@@ -204,12 +204,12 @@ class Mobbex extends PaymentModule
                         'values' => [
                             [
                                 'id' => 'm_theme_light',
-                                'value' => 'light',
+                                'value' => true,
                                 'label' => $this->l('Light Mode'),
                             ],
                             [
                                 'id' => 'm_theme_dark',
-                                'value' => 'dark',
+                                'value' => false,
                                 'label' => $this->l('Dark Mode'),
                             ],
                         ],
@@ -229,6 +229,7 @@ class Mobbex extends PaymentModule
                         'data-hex' => true,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Checkout Primary Color'),
+
                     ),
                 ),
                 'submit' => array(
@@ -252,9 +253,9 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
             // Theme
-            MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, 'light'),
-            MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, ''),
-            MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, ''),
+            MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
+            MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
+            MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
             // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
