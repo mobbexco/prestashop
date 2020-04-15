@@ -14,6 +14,8 @@
  */
 class MobbexHelper
 {
+    const MOBBEX_VERSION = '1.2.2';
+
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
     const K_TEST_MODE = 'MOBBEX_TEST_MODE';
@@ -54,6 +56,14 @@ class MobbexHelper
         );
     }
 
+    public static function getPlatform() {
+        return array(
+            "name" => "prestashop",
+            "verison" => MobbexHelper::MOBBEX_VERSION,
+            "platform_version" => _PS_VERSION_
+        );
+    }
+
     public static function getHeaders()
     {
         return array(
@@ -88,7 +98,8 @@ class MobbexHelper
         }
 
         $options = array(
-            "theme" => $theme
+            "theme" => $theme,
+            "platform" => MobbexHelper::getPlatform()
         );
 
         return $options;
