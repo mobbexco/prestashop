@@ -32,7 +32,8 @@ class Mobbex extends PaymentModule
 
         $this->tab = 'payments_gateways';
 
-        $this->version = '1.2.1';
+        $this->version = MobbexHelper::MOBBEX_VERSION;
+        
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification', 'webhook');
         $this->currencies = true;
