@@ -40,7 +40,7 @@ class MobbexHelper
 
     public static function getUrl($path)
     {
-        return Tools::getShopDomain(true, true).__PS_BASE_URI__.$path;
+        return Tools::getShopDomain(true, true) . __PS_BASE_URI__ . $path;
     }
 
     public static function getModuleUrl($controller, $action, $path)
@@ -49,10 +49,11 @@ class MobbexHelper
         // controller=notification
         // module=mobbex
         // fc=module
-        return MobbexHelper::getUrl('index.php?controller='.$controller.'&module=mobbex&fc=module&action='.$action.$path);
+        return MobbexHelper::getUrl('index.php?controller=' . $controller . '&module=mobbex&fc=module&action=' . $action . $path);
     }
 
-    public static function getWebhookUrl($params) {
+    public static function getWebhookUrl($params)
+    {
         return Context::getContext()->link->getModuleLink(
             'mobbex',
             'webhook',
@@ -61,11 +62,12 @@ class MobbexHelper
         );
     }
 
-    public static function getPlatform() {
+    public static function getPlatform()
+    {
         return array(
             "name" => "prestashop",
             "verison" => MobbexHelper::MOBBEX_VERSION,
-            "platform_version" => _PS_VERSION_
+            "platform_version" => _PS_VERSION_,
         );
     }
 
@@ -74,8 +76,8 @@ class MobbexHelper
         return array(
             'cache-control: no-cache',
             'content-type: application/x-www-form-urlencoded',
-            'x-access-token: '. Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
-            'x-api-key: '.Configuration::get(MobbexHelper::K_API_KEY)
+            'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
+            'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
         );
     }
 
@@ -84,38 +86,43 @@ class MobbexHelper
         $theme = array(
             "type" => Configuration::get(MobbexHelper::K_THEME) ? 'light' : 'dark',
             "header" => [
-                "name" => Configuration::get('PS_SHOP_NAME')
-            ]
+                "name" => Configuration::get('PS_SHOP_NAME'),
+            ],
         );
 
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
         $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
         $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
 
-        if(isset($theme_background) && $theme_background != '') {
+        if (isset($theme_background) && $theme_background != '') {
             array_merge($theme, array(
-                "background" => $theme_background
+                "background" => $theme_background,
             ));
         }
 
-        if(isset($theme_primary) && $theme_primary != '') {
+        if (isset($theme_primary) && $theme_primary != '') {
             array_merge($theme, array(
                 "colors" => array(
-                    "primary" => $theme_primary
-                )
+                    "primary" => $theme_primary,
+                ),
             ));
         }
 
         // If set add custom logo
-        if(isset($theme_logo) && $theme_logo != '') {
+        if (isset($theme_logo) && $theme_logo != '') {
             array_merge($theme["header"], array(
-                "logo" => $theme_logo
+                "logo" => $theme_logo,
             ));
         }
 
         $options = array(
             "theme" => $theme,
-            "platform" => MobbexHelper::getPlatform()
+            // Will redirect automatically on Successful Payment Result
+            "redirect" => array(
+                "success" => true,
+                "failure" => false
+            ),
+            "platform" => MobbexHelper::getPlatform(),
         );
 
         return $options;
@@ -123,7 +130,7 @@ class MobbexHelper
 
     public static function getReference($customer, $cart)
     {
-        return 'ps_order_customer_'.$customer->id.'_cart_'.$cart->id.'_seed_'.mt_rand(100000, 999999);
+        return 'ps_order_customer_' . $customer->id . '_cart_' . $cart->id . '_seed_' . mt_rand(100000, 999999);
     }
 
     public static function createCheckout($module, $cart, $customer)
@@ -135,7 +142,7 @@ class MobbexHelper
 
         $reseller_id = Configuration::get(MobbexHelper::K_RESELLER_ID);
 
-        if(isset($reseller_id) && $reseller_id != '') {
+        if (isset($reseller_id) && $reseller_id != '') {
             // Add Reseller ID into the Reference
             $tracking_ref = $reseller_id . "-" . $tracking_ref;
         }
@@ -145,13 +152,13 @@ class MobbexHelper
 
         //p($products);
 
-        foreach($products as $product) {
+        foreach ($products as $product) {
             //p($product);
             $image = Image::getCover($product['id_product']);
             $link = new Link; //because getImageLInk is not static function
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            $items[] = array("image" => 'https://'.$imagePath, "description" => $product['name'], "quantity" => $product['cart_quantity'], "total" => round($product['price_wt'],2) );
+            $items[] = array("image" => 'https://' . $imagePath, "description" => $product['name'], "quantity" => $product['cart_quantity'], "total" => round($product['price_wt'], 2));
         }
 
         // Create data
@@ -159,33 +166,33 @@ class MobbexHelper
             'reference' => $tracking_ref,
             'currency' => 'ARS',
             'email' => $customer->email,
-            'description' => 'Orden #'.$cart->id,
+            'description' => 'Orden #' . $cart->id,
             // Test Mode
             'test' => Configuration::get(MobbexHelper::K_TEST_MODE),
             // notification / return => '&id_cart='.$cart->id.'&customer_id='.$customer->id
-            'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart='.$cart->id.'&customer_id='.$customer->id),
+            'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             // notification / hook => '&id_cart='.$cart->id.'&customer_id='.$customer->id.'&key='.$customer->secure_key
             'items' => $items,
             //MobbexHelper::getModuleUrl('notification', 'hook', '&id_cart='.$cart->id.'&customer_id='.$customer->id.'&key='.$customer->secure_key),
             'webhook' => MobbexHelper::getWebhookUrl(array(
                 "id_cart" => $cart->id,
                 "customer_id" => $customer->id,
-                "key" => $customer->secure_key
+                "key" => $customer->secure_key,
             )),
             'options' => MobbexHelper::getOptions(),
             'redirect' => 0,
-            'total' => (float)$cart->getOrderTotal(true, Cart::BOTH),
+            'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
         );
 
-        if(!$customer->isGuest()) {
+        if (!$customer->isGuest()) {
             $crypto = PrestaShop\PrestaShop\Adapter\ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
 
             // If not guest send the Customer Data
-            $customerUniqueStoreId = $crypto->hash( $customer->id_shop . "_" . $customer->id );
+            $customerUniqueStoreId = $crypto->hash($customer->id_shop . "_" . $customer->id);
 
             $data['customer'] = array(
                 "name" => $customer->firstname . " " . $customer->lastname,
-                "email" => $customer->email
+                "email" => $customer->email,
             );
         }
 
@@ -250,7 +257,7 @@ class MobbexHelper
             'name' => $source_name,
             'transaction_id' => $transaction_id,
             'source_type' => $source_type,
-            'data' => $res
+            'data' => $res,
         );
 
         if ($status == 200) {
@@ -272,7 +279,7 @@ class MobbexHelper
 
         // Create data
         $data = array(
-            'id' => $transaction_id
+            'id' => $transaction_id,
         );
 
         curl_setopt_array($curl, array(
