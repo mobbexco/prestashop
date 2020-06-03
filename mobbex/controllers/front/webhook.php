@@ -52,9 +52,6 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
 
         $order = new Order((int) Order::getOrderByCartId($cart_id));
 
-        // Create order history with status
-        $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
-
         $secure_key = $context->customer->secure_key;
         $module_name = $this->module->displayName;
         $currency_id = (int) $context->currency->id;
@@ -67,6 +64,9 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         // Get Transaction ID here
         $transaction_id = $result['transaction_id'];
         $status = (int) $result['status'];
+
+        // Change the Order Total based on how much the client paid
+        $amount = $result['total'];
 
         // Un-Comment for Debugging
         // PrestaShopLogger::addLog('Transaction ID: ' . $transaction_id);

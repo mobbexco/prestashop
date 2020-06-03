@@ -249,6 +249,8 @@ class MobbexHelper
 
         $message = $res['payment']['status']['message'];
 
+        $total = (float) $res['payment']['total'];
+
         // Create Result Array
         $result = array(
             'status' => $status,
@@ -257,17 +259,18 @@ class MobbexHelper
             'name' => $source_name,
             'transaction_id' => $transaction_id,
             'source_type' => $source_type,
+            'total' => $total,
             'data' => $res,
         );
 
         if ($status == 200) {
-            $result['status'] = (int) Configuration::get('PS_OS_PAYMENT');
+            $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
         } elseif ($status == 1 && $source_type != 'card') {
-            $result['status'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING);
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING);
         } elseif ($status == 2 && $source_type != 'card') {
-            $result['status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else {
-            $result['status'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED);
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED);
         }
 
         return $result;
