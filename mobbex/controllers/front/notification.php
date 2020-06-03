@@ -60,13 +60,14 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $currency_id = (int) $context->currency->id;
 
         $transaction_id = Tools::getValue('transactionId');
+        $status = (int) Tools::getValue('status');
 
         $result = MobbexHelper::getTransaction($context, $transaction_id);
 
         // Only validate Status 2 or 200 nothing else
         // Status 2 => Waiting for Payment
         // Status 200 => Paid
-        if ($result['status'] == 200 || $result['status'] == 2) {
+        if ($status == 200 || $status == 2) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 // Hook validate order
                 Hook::exec('actionValidateOrder', array(
@@ -74,7 +75,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                     'order' => $order,
                     'customer' => $context->customer,
                     'currency' => $context->currency,
-                    'orderStatus' => (int) $result['status'],
+                    'orderStatus' => (int) $result['orderStatus'],
                 ));
             }
 

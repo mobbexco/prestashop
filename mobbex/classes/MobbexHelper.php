@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.2.2';
+    const MOBBEX_VERSION = '1.3.0';
 
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
@@ -24,6 +24,11 @@ class MobbexHelper
     const K_THEME = 'MOBBEX_THEME';
     const K_THEME_BACKGROUND = 'MOBBEX_THEME_BACKGROUND';
     const K_THEME_PRIMARY = 'MOBBEX_THEME_PRIMARY';
+
+    const K_THEME_LOGO = 'MOBBEX_THEME_LOGO';
+
+    // RESELLER ID. Will change to Branch ID in the future
+    const K_RESELLER_ID = 'MOBBEX_RESELLER_ID';
 
     const K_DEF_THEME = true;
     const K_DEF_BACKGROUND = '#ECF2F6';
@@ -77,11 +82,15 @@ class MobbexHelper
     public static function getOptions()
     {
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME) ? 'light' : 'dark'
+            "type" => Configuration::get(MobbexHelper::K_THEME) ? 'light' : 'dark',
+            "header" => [
+                "name" => Configuration::get('PS_SHOP_NAME')
+            ]
         );
 
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
         $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
+        $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
 
         if(isset($theme_background) && $theme_background != '') {
             array_merge($theme, array(
@@ -94,6 +103,13 @@ class MobbexHelper
                 "colors" => array(
                     "primary" => $theme_primary
                 )
+            ));
+        }
+
+        // If set add custom logo
+        if(isset($theme_logo) && $theme_logo != '') {
+            array_merge($theme["header"], array(
+                "logo" => $theme_logo
             ));
         }
 
@@ -116,6 +132,13 @@ class MobbexHelper
 
         // Create an unique id
         $tracking_ref = MobbexHelper::getReference($customer, $cart);
+
+        $reseller_id = Configuration::get(MobbexHelper::K_RESELLER_ID);
+
+        if(isset($reseller_id) && $reseller_id != '') {
+            // Add Reseller ID into the Reference
+            $tracking_ref = $reseller_id . "-" . $tracking_ref;
+        }
 
         $items = array();
         $products = $cart->getProducts(true);
@@ -153,6 +176,18 @@ class MobbexHelper
             'redirect' => 0,
             'total' => (float)$cart->getOrderTotal(true, Cart::BOTH),
         );
+
+        if(!$customer->isGuest()) {
+            $crypto = PrestaShop\PrestaShop\Adapter\ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
+
+            // If not guest send the Customer Data
+            $customerUniqueStoreId = $crypto->hash( $customer->id_shop . "_" . $customer->id );
+
+            $data['customer'] = array(
+                "name" => $customer->firstname . " " . $customer->lastname,
+                "email" => $customer->email
+            );
+        }
 
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://mobbex.com/p/checkout/create",
@@ -197,7 +232,7 @@ class MobbexHelper
     public static function evaluateTransactionData($res)
     {
         // Get the Status
-        $status = $res['payment']['status']['code'];
+        $status = (int) $res['payment']['status']['code'];
 
         // Get the Reference ( Transaction ID )
         $transaction_id = $res['payment']['id'];
@@ -209,7 +244,8 @@ class MobbexHelper
 
         // Create Result Array
         $result = array(
-            'status' => (int) Configuration::get(MobbexHelper::K_OS_WAITING),
+            'status' => $status,
+            'orderStatus' => (int) Configuration::get(MobbexHelper::K_OS_WAITING),
             'message' => $message,
             'name' => $source_name,
             'transaction_id' => $transaction_id,

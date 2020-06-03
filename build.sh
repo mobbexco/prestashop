@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER="1.2.2"
+VER="1.3.0"
 CUR_TIME=$(date "+%Y.%m.%d-%H.%M.%S")
 
 # Create 1.6 version

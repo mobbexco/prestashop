@@ -66,6 +66,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
 
         // Get Transaction ID here
         $transaction_id = $result['transaction_id'];
+        $status = (int) $result['status'];
 
         // Un-Comment for Debugging
         // PrestaShopLogger::addLog('Transaction ID: ' . $transaction_id);
@@ -74,11 +75,11 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         // Only validate Status 2 or 200 nothing else
         // Status 2 => Waiting for Payment
         // Status 200 => Paid
-        if ($result['status'] == 200 || $result['status'] == 2) {
+        if ($status == 200 || $status == 2) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 $this->module->validateOrder(
                     $cart_id,
-                    $result['status'],
+                    $result['orderStatus'],
                     $amount,
                     $result['name'], // Add Card name and Installments if exist here
                     $result['message'],
@@ -96,7 +97,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
             MobbexTransaction::saveTransaction($cart_id, $result['data']);
         }
 
-        echo "OK";
+        echo "OK: " . MobbexHelper::MOBBEX_VERSION;
 
         die();
     }

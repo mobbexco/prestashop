@@ -33,7 +33,7 @@ class Mobbex extends PaymentModule
         $this->tab = 'payments_gateways';
 
         $this->version = MobbexHelper::MOBBEX_VERSION;
-        
+
         $this->author = 'Mobbex Co';
         $this->controllers = array('redirect', 'notification', 'webhook');
         $this->currencies = true;
@@ -46,7 +46,8 @@ class Mobbex extends PaymentModule
         $this->description = $this->l('Plugin de pago utilizando Mobbex');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
-        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
+
+        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
@@ -77,8 +78,14 @@ class Mobbex extends PaymentModule
 
         $this->_createTable();
 
-        if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
-            return false;
+        if (_PS_VERSION_ >= '1.7') {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
+                return false;
+            }
+        } else {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn')) {
+                return false;
+            }
         }
 
         return true;
@@ -219,7 +226,7 @@ class Mobbex extends PaymentModule
                         'type' => 'color',
                         'label' => $this->l('Background Color'),
                         'name' => MobbexHelper::K_THEME_BACKGROUND,
-                        'data-hex' => true,
+                        'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Checkout Background Color'),
                     ),
@@ -227,10 +234,24 @@ class Mobbex extends PaymentModule
                         'type' => 'color',
                         'label' => $this->l('Primary Color'),
                         'name' => MobbexHelper::K_THEME_PRIMARY,
-                        'data-hex' => true,
+                        'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Checkout Primary Color'),
-
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => $this->l('Logo Personalizado'),
+                        'name' => MobbexHelper::K_THEME_LOGO,
+                        'required' => false,
+                        'desc' => "Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex.",
+                    ),
+                    // Reseller ID
+                    array(
+                        'type' => 'text',
+                        'label' => $this->l('ID o Clave de Revendedor'),
+                        'name' => MobbexHelper::K_RESELLER_ID,
+                        'required' => false,
+                        'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
                     ),
                 ),
                 'submit' => array(
@@ -257,6 +278,9 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
             MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
+            MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
+            // Reseller ID
+            MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
@@ -277,12 +301,6 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
-        // Un-Comment for Debugging
-        // PrestaShopLogger::addLog('Status Paid: ' . Configuration::get('PS_OS_PAYMENT'));
-        // PrestaShopLogger::addLog('Status Pending: ' . Configuration::get(MobbexHelper::K_OS_PENDING));
-        // PrestaShopLogger::addLog('Status Waiting: ' . Configuration::get(MobbexHelper::K_OS_WAITING));
-        // PrestaShopLogger::addLog('Status Rejected: ' . Configuration::get(MobbexHelper::K_OS_REJECTED));
-
         // Pending Status
         if (!Configuration::get(MobbexHelper::K_OS_PENDING)) {
             $order_state = new OrderState();
@@ -441,5 +459,25 @@ class Mobbex extends PaymentModule
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
 
         return $externalOption;
+    }
+
+    /**
+     * Logic to execute when the hook 'displayPayment' is fired
+     *
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookPayment()
+    {
+        $template = 'views/templates/hooks/payment.tpl';
+
+        $this->context->smarty->assign(
+            array(
+                'payment_label' => $this->l('Pay with Credit/Debit Cards'),
+            )
+        );
+
+        return $this->display(__FILE__, $template);
     }
 }
