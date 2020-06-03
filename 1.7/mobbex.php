@@ -240,10 +240,10 @@ class Mobbex extends PaymentModule
                     ),
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Logo Personalizado'),
+                        'label' => $this->l('Logo Personalizado ( URL )'),
                         'name' => MobbexHelper::K_THEME_LOGO,
                         'required' => false,
-                        'desc' => "Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex.",
+                        'desc' => "Opcional. Debe utilizar la URL completa y debe ser HTTPS. Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex. Dimensiones: 250x250 píxeles. El Logo debe ser cuadrado para optimización.",
                     ),
                     // Reseller ID
                     array(
