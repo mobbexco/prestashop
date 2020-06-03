@@ -53,6 +53,12 @@
             </tr>
 
             <img src="{$mobbex_data['payment']['source']['url']}" style="width: 100%; max-width: 450px; padding: 10px; display: block;" />
+
+            <tr align="center">
+                <th colspan="2">
+                    <span>{$mobbex_data['payment']['status']['message']|escape:'htmlall':'UTF-8'}</span>
+                </th>
+            </tr>
         {/if}
     </table>
     <p/>
