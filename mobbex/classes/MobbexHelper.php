@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.3.0';
+    const MOBBEX_VERSION = '1.3.1';
 
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
@@ -95,13 +95,13 @@ class MobbexHelper
         $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
 
         if (isset($theme_background) && $theme_background != '') {
-            array_merge($theme, array(
+            $theme = array_merge($theme, array(
                 "background" => $theme_background,
             ));
         }
 
         if (isset($theme_primary) && $theme_primary != '') {
-            array_merge($theme, array(
+            $theme = array_merge($theme, array(
                 "colors" => array(
                     "primary" => $theme_primary,
                 ),
@@ -110,7 +110,7 @@ class MobbexHelper
 
         // If set add custom logo
         if (isset($theme_logo) && $theme_logo != '') {
-            array_merge($theme["header"], array(
+            $theme = array_merge($theme["header"], array(
                 "logo" => $theme_logo,
             ));
         }
