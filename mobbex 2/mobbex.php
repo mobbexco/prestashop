@@ -8,6 +8,7 @@
  * @version 1.0.0
  * @see     PaymentModuleCore
  */
+use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
 if (!defined('_PS_VERSION_')) {
     exit;
@@ -21,6 +22,7 @@ require dirname(__FILE__) . '/classes/MobbexTransaction.php';
  */
 class Mobbex extends PaymentModule
 {
+
     /**
      * Constructor
      */
@@ -65,12 +67,6 @@ class Mobbex extends PaymentModule
      */
     public function install()
     {
-        if (extension_loaded('curl') == false) {
-            $this->_errors[] = $this->l('You have to enable the cURL extension ') . $this->l('on your server to install this module.');
-
-            return false;
-        }
-
         // Don't forget to check for PHP extensions like curl here
         Configuration::updateValue(MobbexHelper::K_API_KEY, '');
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
@@ -82,12 +78,12 @@ class Mobbex extends PaymentModule
 
         $this->_createTable();
 
-        if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn')) {
+        if (_PS_VERSION_ >= '1.7') {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn')) {
                 return false;
             }
         }
@@ -406,15 +402,10 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        /** @var Order $order */
-        if (isset($params['order'])) {
+        if ($params['order'] && Validate::isLoadedObject($params['order'])) {
+            // Get the Order
             $order = $params['order'];
-        } else {
-            $order = $params['objOrder'];
-        }
 
-        if ($order) {
-            // Get Transaction Data
             $trx = MobbexTransaction::getTransaction($order->id_cart);
 
             // Assign the Data into Smarty
@@ -461,7 +452,7 @@ class Mobbex extends PaymentModule
 
     public function getExternalPaymentOption()
     {
-        $externalOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $externalOption = new PaymentOption();
         $externalOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
             ->setAction($this->context->link->getModuleLink($this->name, 'redirect', array(), true))
             ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/ps17.tpl'))

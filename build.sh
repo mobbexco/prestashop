@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER="1.3.1"
+VER="1.3.5"
 CUR_TIME=$(date "+%Y.%m.%d-%H.%M.%S")
 
 # Create 1.6 version
@@ -9,17 +9,23 @@ CUR_TIME=$(date "+%Y.%m.%d-%H.%M.%S")
 # cp $PRESTAV/mobbex.php mobbex/mobbex.php
 # zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
 # rm mobbex/mobbex.php
-PRESTAV="1.6"
+# PRESTAV="1.6"
 
-cp 1.7/mobbex.php mobbex/mobbex.php
-zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
-zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
-rm mobbex/mobbex.php
+# cp $PRESTAV/mobbex.php mobbex/mobbex.php
+# zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
+# zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
+# rm mobbex/mobbex.php
 
 # Create 1.7 version
-PRESTAV="1.7"
+# PRESTAV="1.7"
 
-cp $PRESTAV/mobbex.php mobbex/mobbex.php
+# cp $PRESTAV/mobbex.php mobbex/mobbex.php
+# zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
+# zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
+# rm mobbex/mobbex.php
+
+# Unified Version
+PRESTAV="1.6-1.7"
+
 zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
 zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
-rm mobbex/mobbex.php

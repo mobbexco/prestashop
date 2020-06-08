@@ -14,10 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.3.5';
-
-    const PS_16 = "1.6";
-    const PS_17 = "1.7";
+    const MOBBEX_VERSION = '1.3.1';
 
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
@@ -188,6 +185,11 @@ class MobbexHelper
         );
 
         if (!$customer->isGuest()) {
+            $crypto = PrestaShop\PrestaShop\Adapter\ServiceLocator::get('\\PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing');
+
+            // If not guest send the Customer Data
+            $customerUniqueStoreId = $crypto->hash($customer->id_shop . "_" . $customer->id);
+
             $data['customer'] = array(
                 "name" => $customer->firstname . " " . $customer->lastname,
                 "email" => $customer->email,
@@ -284,7 +286,7 @@ class MobbexHelper
         );
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.mobbex.com/2.0/transactions/status",
+            CURLOPT_URL => "https://mobbex.com/2.0/transactions/status",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
@@ -306,14 +308,6 @@ class MobbexHelper
             $res = json_decode($response, true);
 
             return self::evaluateTransactionData($res['data']['transaction']);
-        }
-    }
-
-    public static function getPsVersion() {
-        if (_PS_VERSION_ >= 1.7) {
-            return self::PS_17;
-        } else {
-            return self::PS_16;
         }
     }
 }
