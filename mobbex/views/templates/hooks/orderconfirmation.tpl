@@ -2,20 +2,16 @@
     <table class="table-response">
         <tr align="center">
             <th colspan="2">
-                <h1 class="md-h1">{l s='Payment Information' mod='mobbex'}</h1>
+                <h1 class="md-h1">{l s='Información de Pago' mod='mobbex'}</h1>
             </th>
         </tr>
         <tr align="left">
-            <td>{l s='Transaction State' mod='mobbex'}</td>
+            <td>{l s='Estado de la Transacción' mod='mobbex'}</td>
             <td>{$status|escape:'htmlall':'UTF-8'}</td>
         </tr>
         <tr align="left">
-            <td>{l s='Total Value' mod='mobbex'}</td>
+            <td>{l s='Total' mod='mobbex'}</td>
             <td>${$total|escape:'htmlall':'UTF-8'}</td>
-        </tr>
-        <tr align="left">
-            <td>{l s='Method' mod='mobbex'}</td>
-            <td>{$payment|escape:'htmlall':'UTF-8'}</td>
         </tr>
 
         {if $mobbex_data['payment']['source']['type'] eq "card"}
