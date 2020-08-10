@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.0.0
+ * @version 1.4.0
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.3.5';
+    const MOBBEX_VERSION = '1.4.0';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -32,6 +32,8 @@ class MobbexHelper
 
     // RESELLER ID. Will change to Branch ID in the future
     const K_RESELLER_ID = 'MOBBEX_RESELLER_ID';
+
+    const K_EMBED = false;
 
     const K_DEF_THEME = true;
     const K_DEF_BACKGROUND = '#ECF2F6';

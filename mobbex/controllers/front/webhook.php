@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.0.0
+ * @version 1.4.0
  * @see     PaymentModuleCore
  */
 
@@ -65,8 +65,12 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         $transaction_id = $result['transaction_id'];
         $status = (int) $result['status'];
 
+        // TODO: This is the right way but is not working even being documented
         // Change the Order Total based on how much the client paid
-        $amount = $result['total'];
+        // $amount = $result['total'];
+
+        // Create order history with status
+        $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
 
         // Un-Comment for Debugging
         // PrestaShopLogger::addLog('Transaction ID: ' . $transaction_id);

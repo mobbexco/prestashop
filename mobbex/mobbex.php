@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.0.0
+ * @version 1.4.0
  * @see     PaymentModuleCore
  */
 
@@ -249,6 +249,26 @@ class Mobbex extends PaymentModule
                         'required' => false,
                         'desc' => "Opcional. Debe utilizar la URL completa y debe ser HTTPS. Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex. Dimensiones: 250x250 píxeles. El Logo debe ser cuadrado para optimización.",
                     ),
+                    // Embed SDK
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Experiencia de Pago en el Sitio'),
+                        'name' => MobbexHelper::K_EMBED,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_embed',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_embed',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                     // Reseller ID
                     array(
                         'type' => 'text',
@@ -283,6 +303,8 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
             MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
             MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
+            // Embed SDK
+            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             // Reseller ID
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Status
