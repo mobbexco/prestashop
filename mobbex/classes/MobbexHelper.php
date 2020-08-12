@@ -33,7 +33,7 @@ class MobbexHelper
     // RESELLER ID. Will change to Branch ID in the future
     const K_RESELLER_ID = 'MOBBEX_RESELLER_ID';
 
-    const K_EMBED = false;
+    const K_EMBED = 'MOBBEX_EMBED';
 
     const K_DEF_THEME = true;
     const K_DEF_BACKGROUND = '#ECF2F6';
@@ -196,6 +196,14 @@ class MobbexHelper
             );
         }
 
+        $embed_active = Configuration::get(MobbexHelper::K_EMBED);
+
+        if ($embed_active) {
+            $data['embed'] = 1;
+            $data['button'] = 1;
+            $data['domain'] = "https://mobbexps.ngrok.io/es/pedido";
+        }
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://mobbex.com/p/checkout/create",
             CURLOPT_RETURNTRANSFER => true,
@@ -218,7 +226,11 @@ class MobbexHelper
         } else {
             $res = json_decode($response, true);
 
-            return $res['data']['url'];
+            if (!$embed_active) {
+                return $res['data']['url'];
+            } else {
+                return $res['data']['id'];
+            }
         }
     }
 
@@ -229,6 +241,7 @@ class MobbexHelper
      */
     public static function getPaymentUrl()
     {
+        //if the payment is embedded this function RETURN THE ID
         $module = Context::getContext()->controller->module;
         $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;

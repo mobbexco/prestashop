@@ -75,6 +75,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_API_KEY, '');
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
+        Configuration::updateValue(MobbexHelper::K_EMBED, false);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
@@ -474,9 +475,13 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $payment_options = [
-            $this->getExternalPaymentOption(),
-        ];
+        $embed_active = Configuration::get(MobbexHelper::K_EMBED, false);
+
+        if ($embed_active) {
+            $payment_options = [$this->getIframePaymentOption()];
+        } else {
+            $payment_options = [$this->getExternalPaymentOption()];
+        }
 
         return $payment_options;
     }
@@ -490,6 +495,23 @@ class Mobbex extends PaymentModule
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
 
         return $externalOption;
+    }
+
+    public function getIframePaymentOption()
+    {
+        $this->context->smarty->assign(
+            [
+                'checkout_id' => MobbexHelper::getPaymentUrl(),
+            ]
+        );
+
+        $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros (embebido)'))
+            ->setAction($this->context->link->getModuleLink($this->name, 'iframe', array(), true))
+            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/payment_embed.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/logo_transparent.png'));
+
+        return $iframeOption;
     }
 
     /**
