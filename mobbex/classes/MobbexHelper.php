@@ -197,11 +197,11 @@ class MobbexHelper
         }
 
         $embed_active = Configuration::get(MobbexHelper::K_EMBED);
-
+        
         if ($embed_active) {
             $data['embed'] = 1;
             $data['button'] = 1;
-            $data['domain'] = "https://mobbexps.ngrok.io/es/pedido";
+            $data['domain'] = Context::getContext()->shop->getBaseURL(true);
         }
 
         curl_setopt_array($curl, array(
@@ -226,24 +226,22 @@ class MobbexHelper
         } else {
             $res = json_decode($response, true);
 
-            if (!$embed_active) {
-                return $res['data']['url'];
-            } else {
-                return $res['data']['id'];
-            }
+            // Send return url to use later in js redirect
+            $res['data']['return_url'] = $data['return_url'];
+            
+            return $res['data'];
         }
     }
 
     /**
-     * Get the payment URL
+     * Get the payment data
      *
-     * @return string
+     * @return array
      */
-    public static function getPaymentUrl()
+    public static function getPaymentData()
     {
-        //if the payment is embedded this function RETURN THE ID
-        $module = Context::getContext()->controller->module;
-        $cart = Context::getContext()->cart;
+        $module   = Context::getContext()->controller->module;
+        $cart     = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
 
         return MobbexHelper::createCheckout($module, $cart, $customer);

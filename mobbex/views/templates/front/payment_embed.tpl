@@ -1,28 +1,49 @@
+{literal}
+  <script type="text/javascript">
+    var script = document.createElement('script');
+    script.src = `https://res.mobbex.com/js/embed/mobbex.embed@1.0.8.js?t=${Date.now()}`;
+    script.async = true;
+    script.addEventListener('load', () => {
+      renderMobbexButton();
+    });
+    document.body.appendChild(script);
+    
+    // Remove HTML entities 
+    function htmlDecode(input) 
+    {
+      var doc = new DOMParser().parseFromString(input, "text/html");
+      return doc.documentElement.textContent;
+    }
 
-<script type="text/javascript" class="nose">
-  var checkoutId = {checkout_id};
-  {literal}
+    // Get type from status 
+    function getType(status)
+    {
+      if(status < 2) {
+        return "none";
+      } else if (status == 2 || status == 3) {
+        return "cash";
+      } else if (status == 4 || status >= 200 && status < 400) {
+        return "card";
+      }
+    }
+    
+    // Get checkout data from php
+    var checkoutUrl = htmlDecode('{/literal}{$checkout_url}{literal}');
+    var checkoutId = '{/literal}{$checkout_id}{literal}';
 
-  var script = document.createElement('script');
-  script.src = `https://res.mobbex.com/js/embed/mobbex.embed@1.0.8.js?t=${Date.now()}`;
-  script.async = true;
-  script.addEventListener('load', () => {
-    // Realizá la acción que sea necesaria aca :)
-    renderMobbexButton();
-    initMobbexPayment();
-  });
-  console.log(checkout_id);
-  document.body.appendChild(script);
-  {literal}
     var options = {
       id: checkoutId,
       type: 'checkout',
         onResult: (data) => {
-          // OnResult es llamado cuando se toca el Botón Cerrar
+          console.info('close', data);
           window.MobbexEmbed.close();
         },
         onPayment: (data) => {
           console.info('Payment: ', data);
+          var status = data.data.status.code;
+          var link   = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.data.id;
+
+          window.top.location.href = link; 
         },
         onOpen: () => {
           console.info('Pago iniciado.');
@@ -34,8 +55,12 @@
           console.error("ERROR: ", error);
         }
     }
-    
-  {/literal}
-</script>
 
-  <div id="mbbx-button"></div>
+    function renderMobbexButton() 
+    {
+      window.MobbexEmbed.render(options, '#mbbx-button');
+    }
+
+  </script>
+{/literal}
+<div id="mbbx-button"></div>
