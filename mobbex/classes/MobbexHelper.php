@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.0
+ * @version 1.4.2
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.0';
+    const MOBBEX_VERSION = '1.4.2';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -38,6 +38,13 @@ class MobbexHelper
     const K_DEF_THEME = true;
     const K_DEF_BACKGROUND = '#ECF2F6';
     const K_DEF_PRIMARY = '#6f00ff';
+
+    const K_PLANS = 'MOBBEX_PLANS';
+    const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
+    const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
+
+    const K_DEF_PLANS_TEXT = '#ffffff';
+    const K_DEF_PLANS_BACKGROUND = '#8900ff';
 
     const K_OS_PENDING = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
@@ -71,7 +78,7 @@ class MobbexHelper
     {
         return array(
             "name" => "prestashop",
-            "verison" => MobbexHelper::MOBBEX_VERSION,
+            "version" => MobbexHelper::MOBBEX_VERSION,
             "platform_version" => _PS_VERSION_,
         );
     }

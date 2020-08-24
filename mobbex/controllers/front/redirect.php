@@ -36,6 +36,6 @@ class MobbexRedirectModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         // Create URL and Redirect
-        Tools::redirect(MobbexHelper::getPaymentUrl());
+        Tools::redirect(MobbexHelper::getPaymentData()['url']);
     }
 }

@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.0
+ * @version 1.4.2
  * @see     PaymentModuleCore
  */
 
@@ -80,15 +80,19 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
         Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY);
+        // Plans Widget
+        Configuration::updateValue(MobbexHelper::K_PLANS, false);
+        Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
+        Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
 
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons')) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo')) {
                 return false;
             }
         }
@@ -278,6 +282,42 @@ class Mobbex extends PaymentModule
                         'required' => false,
                         'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
                     ),
+                    // Plans
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Widget de planes'),
+                        'name' => MobbexHelper::K_PLANS,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_plans',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_plans',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Text Color'),
+                        'name' => MobbexHelper::K_PLANS_TEXT,
+                        'data-hex' => false,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Plans Button Text Color'),
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Background Color'),
+                        'name' => MobbexHelper::K_PLANS_BACKGROUND,
+                        'data-hex' => false,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Plans Button Background Color'),
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -299,15 +339,18 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_API_KEY => Configuration::get(MobbexHelper::K_API_KEY, ''),
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
+            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             // Theme
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
             MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
             MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
-            // Embed SDK
-            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             // Reseller ID
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
+            // Plans Widget
+            MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
+            MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_PLANS_TEXT),
+            MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_PLANS_BACKGROUND),
             // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
@@ -516,6 +559,38 @@ class Mobbex extends PaymentModule
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/logo_transparent.png'));
 
         return $iframeOption;
+    }
+
+    public function hookDisplayProductAdditionalInfo($params)
+    {
+        if (Configuration::get(MobbexHelper::K_PLANS) == true) {
+            $style_settings = array(
+                
+                'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
+                'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+        
+            );
+
+            $this->context->smarty->assign(
+                [
+                    'price_amount'   => $params['product']['price_amount'],
+                    'style_settings' => $style_settings,
+                ]
+            );
+
+            return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+        }
+    }
+
+    /** 
+     * Plans widget hook for Prestashop 1.6
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookDisplayProductButtons($params)
+    {
+        return $this->hookDisplayProductAdditionalInfo($params);
     }
 
     /**
