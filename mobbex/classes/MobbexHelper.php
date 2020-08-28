@@ -46,6 +46,9 @@ class MobbexHelper
     const K_DEF_PLANS_TEXT = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
 
+    const K_OWN_DNI = 'MOBBEX_OWN_DNI';
+    const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
+
     const K_OS_PENDING = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
@@ -194,13 +197,18 @@ class MobbexHelper
             'options' => MobbexHelper::getOptions(),
             'redirect' => 0,
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
-        );
-
-        if (!$customer->isGuest()) {
-            $data['customer'] = array(
+            'customer' => array(
                 "name" => $customer->firstname . " " . $customer->lastname,
                 "email" => $customer->email,
-            );
+            )
+        );
+
+        if ($customer->phone) {
+            $data['customer']['phone'] = $customer->phone;
+        }
+
+        if (MobbexHelper::getDni($customer->id)) {
+            $data['customer']['identification'] = MobbexHelper::getDni($customer->id);
         }
 
         $embed_active = Configuration::get(MobbexHelper::K_EMBED);
@@ -327,6 +335,18 @@ class MobbexHelper
 
             return self::evaluateTransactionData($res['data']['transaction']);
         }
+    }
+
+    public static function getDni($customer_id)
+    {
+        $dni_column = "billing_dni";
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI)) {
+            $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
+        }
+
+        return DB::getInstance()->getRow(
+            "SELECT `" . $dni_column . "` FROM `" . _DB_PREFIX_ . "customer` WHERE `id_customer` = " . $customer_id
+        )[$dni_column];
     }
 
     public static function getPsVersion() {
