@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.0
+ * @version 1.4.2
  * @see     PaymentModuleCore
  */
 
@@ -80,15 +80,24 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
         Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY);
+        // Plans Widget
+        Configuration::updateValue(MobbexHelper::K_PLANS, false);
+        Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
+        Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
+        // DNI Fields
+        Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
+        Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
+        $this->createIdentificationColumn();
+        
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter')) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter')) {
                 return false;
             }
         }
@@ -278,6 +287,69 @@ class Mobbex extends PaymentModule
                         'required' => false,
                         'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
                     ),
+                    // Plans
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Widget de planes'),
+                        'name' => MobbexHelper::K_PLANS,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_plans',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_plans',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Text Color'),
+                        'name' => MobbexHelper::K_PLANS_TEXT,
+                        'data-hex' => false,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Plans Button Text Color'),
+                    ),
+                    array(
+                        'type' => 'color',
+                        'label' => $this->l('Background Color'),
+                        'name' => MobbexHelper::K_PLANS_BACKGROUND,
+                        'data-hex' => false,
+                        'class' => 'mColorPicker',
+                        'desc' => $this->l('Plans Button Background Color'),
+                    ),
+                    // DNI
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Agregar campo DNI'),
+                        'name' => MobbexHelper::K_OWN_DNI,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_own_dni',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_own_dni',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
+                    array(
+                        'type' => 'text',
+                        'label' => $this->l('Usar campo DNI existente'),
+                        'name' => MobbexHelper::K_CUSTOM_DNI,
+                        'required' => false,
+                        'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -299,15 +371,21 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_API_KEY => Configuration::get(MobbexHelper::K_API_KEY, ''),
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
+            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             // Theme
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
             MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
             MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
-            // Embed SDK
-            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             // Reseller ID
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
+            // Plans Widget
+            MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
+            MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_PLANS_TEXT),
+            MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_PLANS_BACKGROUND),
+            // DNI Fields
+            MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, true),
+            MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
             // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
             MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
@@ -416,6 +494,38 @@ class Mobbex extends PaymentModule
         foreach (array_keys($form_values) as $key) {
             Configuration::updateValue($key, Tools::getValue($key));
         }
+
+        $this->createIdentificationColumn();
+    }
+
+    public function createIdentificationColumn()
+    {
+        $own_dni    = Configuration::get(MobbexHelper::K_OWN_DNI);
+        $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
+        
+        // If both options are active or inactive at the same time, own_dni takes precedence
+        if ($own_dni && $custom_dni != '') {
+            Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
+            $custom_dni = '';
+        } elseif (!$own_dni && $custom_dni == '') {
+            Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
+            $own_dni = true;
+        }
+
+        if ($custom_dni != '') {
+            $isset_custom_dni = DB::getInstance()->execute(
+                "SELECT `" . $custom_dni . "` FROM `" . _DB_PREFIX_ . "customer` LIMIT 1;"
+            );
+            if ($isset_custom_dni) {
+                return;
+            }
+            Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
+            Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
+        }
+
+        DB::getInstance()->execute(
+            "ALTER TABLE `" . _DB_PREFIX_ . "customer` ADD IF NOT EXISTS `billing_dni` varchar(255);"
+        );
     }
 
     /**
@@ -475,11 +585,10 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $embed_active = Configuration::get(MobbexHelper::K_EMBED, false);
+        $modal_active = Configuration::get(MobbexHelper::K_EMBED, false);
 
-        if ($embed_active) {
+        if ($modal_active) {
             $payment_options = [$this->getIframePaymentOption()];
-            $this->registerHook('displayPaymentByBinaries');
         } else {
             $payment_options = [$this->getExternalPaymentOption()];
         }
@@ -511,11 +620,82 @@ class Mobbex extends PaymentModule
 
         $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setBinary(true)
-            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/payment_embed.tpl'))
+            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/modal_payment.tpl'))
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/logo_transparent.png'));
 
         return $iframeOption;
+    }
+
+    public function hookDisplayProductAdditionalInfo($params)
+    {
+        if (Configuration::get(MobbexHelper::K_PLANS) == true) {
+            $style_settings = array(
+                
+                'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
+                'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+        
+            );
+
+            $this->context->smarty->assign(
+                [
+                    'price_amount'   => $params['product']['price_amount'],
+                    'style_settings' => $style_settings,
+                ]
+            );
+
+            return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+        }
+    }
+
+    public function hookAdditionalCustomerFormFields($params)
+    {
+        if (Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, false) === '') {
+            $customer = Context::getContext()->customer;
+
+            $dni_field = array();
+            $dni_field['billing_dni'] = (new FormField)
+                ->setName('billing_dni')
+                ->setValue(MobbexHelper::getDni($customer->id))
+                ->setType('text')
+                ->setRequired(true)
+                ->setLabel($this->l('DNI'));
+    
+            return $dni_field;
+        }
+    }
+
+    public function hookActionObjectCustomerUpdateAfter(array $params)
+    {
+        $this->updateCustomerDniStatus($params);
+    }
+
+    public function hookActionObjectCustomerAddAfter(array $params)
+    {
+        $this->updateCustomerDniStatus($params);
+    }
+
+    private function updateCustomerDniStatus(array $params)
+    {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false)) {
+            return;
+        }
+        $customer_id = $params['object']->id;
+        $billing_dni = $_POST['billing_dni'];
+        
+        return DB::getInstance()->execute(
+            "UPDATE `" . _DB_PREFIX_ . "customer` SET billing_dni = $billing_dni WHERE `id_customer` = $customer_id;"
+        );
+    }
+
+    /** 
+     * Plans widget hook for Prestashop 1.6
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookDisplayProductButtons($params)
+    {
+        return $this->hookDisplayProductAdditionalInfo($params);
     }
 
     /**

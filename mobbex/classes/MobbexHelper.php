@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.0
+ * @version 1.4.2
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.0';
+    const MOBBEX_VERSION = '1.4.2';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -38,6 +38,16 @@ class MobbexHelper
     const K_DEF_THEME = true;
     const K_DEF_BACKGROUND = '#ECF2F6';
     const K_DEF_PRIMARY = '#6f00ff';
+
+    const K_PLANS = 'MOBBEX_PLANS';
+    const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
+    const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
+
+    const K_DEF_PLANS_TEXT = '#ffffff';
+    const K_DEF_PLANS_BACKGROUND = '#8900ff';
+
+    const K_OWN_DNI = 'MOBBEX_OWN_DNI';
+    const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
     const K_OS_PENDING = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
@@ -71,7 +81,7 @@ class MobbexHelper
     {
         return array(
             "name" => "prestashop",
-            "verison" => MobbexHelper::MOBBEX_VERSION,
+            "version" => MobbexHelper::MOBBEX_VERSION,
             "platform_version" => _PS_VERSION_,
         );
     }
@@ -187,13 +197,22 @@ class MobbexHelper
             'options' => MobbexHelper::getOptions(),
             'redirect' => 0,
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
-        );
-
-        if (!$customer->isGuest()) {
-            $data['customer'] = array(
+            'customer' => array(
                 "name" => $customer->firstname . " " . $customer->lastname,
                 "email" => $customer->email,
-            );
+            )
+        );
+
+        if (defined(MOBBEX_CHECKOUT_INTENT) && MOBBEX_CHECKOUT_INTENT != '') {
+            $data['intent'] = MOBBEX_CHECKOUT_INTENT;
+        }
+
+        if ($customer->phone) {
+            $data['customer']['phone'] = $customer->phone;
+        }
+
+        if (MobbexHelper::getDni($customer->id)) {
+            $data['customer']['identification'] = MobbexHelper::getDni($customer->id);
         }
 
         $embed_active = Configuration::get(MobbexHelper::K_EMBED);
@@ -320,6 +339,18 @@ class MobbexHelper
 
             return self::evaluateTransactionData($res['data']['transaction']);
         }
+    }
+
+    public static function getDni($customer_id)
+    {
+        $dni_column = "billing_dni";
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI)) {
+            $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
+        }
+
+        return DB::getInstance()->getRow(
+            "SELECT `" . $dni_column . "` FROM `" . _DB_PREFIX_ . "customer` WHERE `id_customer` = " . $customer_id
+        )[$dni_column];
     }
 
     public static function getPsVersion() {
