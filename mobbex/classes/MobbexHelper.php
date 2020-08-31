@@ -203,6 +203,10 @@ class MobbexHelper
             )
         );
 
+        if (defined(MOBBEX_CHECKOUT_INTENT) && MOBBEX_CHECKOUT_INTENT != '') {
+            $data['intent'] = MOBBEX_CHECKOUT_INTENT;
+        }
+
         if ($customer->phone) {
             $data['customer']['phone'] = $customer->phone;
         }

@@ -585,11 +585,10 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $embed_active = Configuration::get(MobbexHelper::K_EMBED, false);
+        $modal_active = Configuration::get(MobbexHelper::K_EMBED, false);
 
-        if ($embed_active) {
+        if ($modal_active) {
             $payment_options = [$this->getIframePaymentOption()];
-            $this->registerHook('displayPaymentByBinaries');
         } else {
             $payment_options = [$this->getExternalPaymentOption()];
         }
@@ -621,8 +620,7 @@ class Mobbex extends PaymentModule
 
         $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setBinary(true)
-            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/payment_embed.tpl'))
+            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/modal_payment.tpl'))
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/logo_transparent.png'));
 
         return $iframeOption;
