@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.2
+ * @version 1.4.3
  * @see     PaymentModuleCore
  */
 
@@ -644,10 +644,12 @@ class Mobbex extends PaymentModule
 
             );
 
+            $product = $params['product'];
+
             $this->context->smarty->assign(
                 [
                     'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-                    'price_amount' => $params['product']['price_amount'],
+                    'price_amount' => $product['price_amount'],
                     'style_settings' => $style_settings,
                 ]
             );
@@ -702,9 +704,13 @@ class Mobbex extends PaymentModule
      *
      * @return string
      */
-    public function hookDisplayProductButtons($params)
+    public function hookDisplayProductButtons()
     {
-        return $this->hookDisplayProductAdditionalInfo($params);
+        $product = new Product((int) Tools::getValue('id_product'));
+
+        return $this->hookDisplayProductAdditionalInfo(array(
+            'product' => (array) $product,
+        ));
     }
 
     /**

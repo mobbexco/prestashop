@@ -47,7 +47,10 @@
           // Do nothing
         },
         onClose: (cancelled) => {
-          // Do nothing
+          // Only if cancelled
+          if (cancelled === true) {
+            location.reload();
+          }
         },
         onError: (error) => {
           // Do nothing
