@@ -35,11 +35,12 @@ class MobbexHelper
 
     const K_EMBED = 'MOBBEX_EMBED';
 
-    const K_DEF_THEME = true;
+    const K_DEF_THEME = false;
     const K_DEF_BACKGROUND = '#ECF2F6';
     const K_DEF_PRIMARY = '#6f00ff';
 
     const K_PLANS = 'MOBBEX_PLANS';
+    const K_PLANS_TAX_ID = 'MOBBEX_PLANS_TAX_ID';
     const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
 
@@ -135,7 +136,7 @@ class MobbexHelper
             // Will redirect automatically on Successful Payment Result
             "redirect" => array(
                 "success" => true,
-                "failure" => false
+                "failure" => false,
             ),
             "platform" => MobbexHelper::getPlatform(),
         );
@@ -200,7 +201,7 @@ class MobbexHelper
             'customer' => array(
                 "name" => $customer->firstname . " " . $customer->lastname,
                 "email" => $customer->email,
-            )
+            ),
         );
 
         if (defined(MOBBEX_CHECKOUT_INTENT) && MOBBEX_CHECKOUT_INTENT != '') {
@@ -216,7 +217,7 @@ class MobbexHelper
         }
 
         $embed_active = Configuration::get(MobbexHelper::K_EMBED);
-        
+
         if ($embed_active) {
             $data['embed'] = 1;
             $data['button'] = 1;
@@ -247,7 +248,7 @@ class MobbexHelper
 
             // Send return url to use later in js redirect
             $res['data']['return_url'] = $data['return_url'];
-            
+
             return $res['data'];
         }
     }
@@ -259,8 +260,8 @@ class MobbexHelper
      */
     public static function getPaymentData()
     {
-        $module   = Context::getContext()->controller->module;
-        $cart     = Context::getContext()->cart;
+        $module = Context::getContext()->controller->module;
+        $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
 
         return MobbexHelper::createCheckout($module, $cart, $customer);
@@ -353,7 +354,8 @@ class MobbexHelper
         )[$dni_column];
     }
 
-    public static function getPsVersion() {
+    public static function getPsVersion()
+    {
         if (_PS_VERSION_ >= 1.7) {
             return self::PS_17;
         } else {

@@ -71,7 +71,7 @@
     <button type="button" id="open-mobbex-plans">Planes Mobbex<img src="https://res.mobbex.com/images/sources/mobbex.png" width="40" height="40" style="margin-left: 15px; border-radius: 40px;"></button>
     <div class="mobbex-plans-modal">
         <button type="button" id="close-mobbex-plans"></button>
-        <iframe src="https://mobbex.com/p/sources/widget/arg/20339969532?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
+        <iframe src="https://mobbex.com/p/sources/widget/arg/{$tax_id}?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
     </div>
     {literal}
         <script>
@@ -83,6 +83,7 @@
             mobbexPlansModal.classList.toggle('active');
             document.querySelector('body').classList.toggle('scroll-lock');
         });
+        
         mobbexPlansClose.addEventListener('click', function() {
             mobbexPlansModal.classList.toggle('active');
             document.querySelector('body').classList.toggle('scroll-lock');

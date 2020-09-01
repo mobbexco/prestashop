@@ -34,11 +34,9 @@
       id: checkoutId,
       type: 'checkout',
         onResult: (data) => {
-          console.info('close', data);
           window.MobbexEmbed.close();
         },
         onPayment: (data) => {
-          console.info('Payment: ', data);
           var status = data.data.status.code;
           var link   = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.data.id;
           setTimeout(function () {
@@ -46,13 +44,13 @@
           }, 5000)
         },
         onOpen: () => {
-          console.info('Pago iniciado.');
+          // Do nothing
         },
         onClose: (cancelled) => {
-          console.info(`${cancelled ? 'Cancelado' : 'Cerrado'}`);
+          // Do nothing
         },
         onError: (error) => {
-          console.error("ERROR: ", error);
+          // Do nothing
         }
     }
 

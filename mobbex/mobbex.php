@@ -89,7 +89,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
         $this->createIdentificationColumn();
-        
+
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
@@ -221,7 +221,7 @@ class Mobbex extends PaymentModule
                         'type' => 'radio',
                         'label' => $this->l('Theme Mode'),
                         'name' => MobbexHelper::K_THEME,
-                        'is_bool' => false,
+                        'is_bool' => true,
                         'required' => false,
                         'values' => [
                             [
@@ -308,6 +308,13 @@ class Mobbex extends PaymentModule
                         ],
                     ),
                     array(
+                        'type' => 'text',
+                        'label' => $this->l('Tax ID'),
+                        'name' => MobbexHelper::K_PLANS_TAX_ID,
+                        'required' => false,
+                        'desc' => $this->l('Merchant Tax ID to Show configured plans'),
+                    ),
+                    array(
                         'type' => 'color',
                         'label' => $this->l('Text Color'),
                         'name' => MobbexHelper::K_PLANS_TEXT,
@@ -381,6 +388,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Plans Widget
             MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
+            MobbexHelper::K_PLANS_TAX_ID => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
             MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_PLANS_TEXT),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_PLANS_BACKGROUND),
             // DNI Fields
@@ -500,9 +508,9 @@ class Mobbex extends PaymentModule
 
     public function createIdentificationColumn()
     {
-        $own_dni    = Configuration::get(MobbexHelper::K_OWN_DNI);
+        $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
         $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
-        
+
         // If both options are active or inactive at the same time, own_dni takes precedence
         if ($own_dni && $custom_dni != '') {
             Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
@@ -613,7 +621,7 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'checkout_id'  => $payment_data['id'],
+                'checkout_id' => $payment_data['id'],
                 'checkout_url' => $payment_data['return_url'],
             ]
         );
@@ -621,7 +629,7 @@ class Mobbex extends PaymentModule
         $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
             ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/modal_payment.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_.$this->name.'/logo_transparent.png'));
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
 
         return $iframeOption;
     }
@@ -630,15 +638,16 @@ class Mobbex extends PaymentModule
     {
         if (Configuration::get(MobbexHelper::K_PLANS) == true) {
             $style_settings = array(
-                
+
                 'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
                 'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-        
+
             );
 
             $this->context->smarty->assign(
                 [
-                    'price_amount'   => $params['product']['price_amount'],
+                    'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
+                    'price_amount' => $params['product']['price_amount'],
                     'style_settings' => $style_settings,
                 ]
             );
@@ -659,7 +668,7 @@ class Mobbex extends PaymentModule
                 ->setType('text')
                 ->setRequired(true)
                 ->setLabel($this->l('DNI'));
-    
+
             return $dni_field;
         }
     }
@@ -681,13 +690,13 @@ class Mobbex extends PaymentModule
         }
         $customer_id = $params['object']->id;
         $billing_dni = $_POST['billing_dni'];
-        
+
         return DB::getInstance()->execute(
             "UPDATE `" . _DB_PREFIX_ . "customer` SET billing_dni = $billing_dni WHERE `id_customer` = $customer_id;"
         );
     }
 
-    /** 
+    /**
      * Plans widget hook for Prestashop 1.6
      * Support for 1.6 Only
      *
