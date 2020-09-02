@@ -649,7 +649,7 @@ class Mobbex extends PaymentModule
             $this->context->smarty->assign(
                 [
                     'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-                    'price_amount' => $product['price_amount'],
+                    'price_amount' => $product['price_amount'] != null ? $product['price_amount'] : $product['price'],
                     'style_settings' => $style_settings,
                 ]
             );
