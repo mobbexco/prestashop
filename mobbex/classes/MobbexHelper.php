@@ -204,11 +204,11 @@ class MobbexHelper
             ),
         );
 
-        if (defined(MOBBEX_CHECKOUT_INTENT) && MOBBEX_CHECKOUT_INTENT != '') {
+        if (defined('MOBBEX_CHECKOUT_INTENT')) {
             $data['intent'] = MOBBEX_CHECKOUT_INTENT;
         }
 
-        if ($customer->phone) {
+        if (isset($customer->phone)) {
             $data['customer']['phone'] = $customer->phone;
         }
 
@@ -347,6 +347,12 @@ class MobbexHelper
         $dni_column = "billing_dni";
         if (!Configuration::get(MobbexHelper::K_OWN_DNI)) {
             $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
+        }
+
+        $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $dni_column . "'");
+
+        if (empty($table_columns)) {
+            return false;
         }
 
         return DB::getInstance()->getRow(

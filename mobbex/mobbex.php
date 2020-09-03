@@ -85,10 +85,8 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
         Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
         // DNI Fields
-        Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
+        Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
-
-        $this->createIdentificationColumn();
 
         $this->_createTable();
 
@@ -392,7 +390,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_PLANS_TEXT),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_PLANS_BACKGROUND),
             // DNI Fields
-            MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, true),
+            MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
             // Status
             MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
@@ -521,12 +519,13 @@ class Mobbex extends PaymentModule
         }
 
         if ($custom_dni != '') {
-            $isset_custom_dni = DB::getInstance()->execute(
-                "SELECT `" . $custom_dni . "` FROM `" . _DB_PREFIX_ . "customer` LIMIT 1;"
-            );
-            if ($isset_custom_dni) {
-                return;
+            // Check if column exists
+            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $custom_dni . "'");
+
+            if (empty($table_columns)) {
+                return false;
             }
+
             Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
             Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
         }
@@ -649,7 +648,7 @@ class Mobbex extends PaymentModule
             $this->context->smarty->assign(
                 [
                     'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-                    'price_amount' => $product['price_amount'] != null ? $product['price_amount'] : $product['price'],
+                    'price_amount' => isset($product['price_amount']) ? $product['price_amount'] : $product['price'],
                     'style_settings' => $style_settings,
                 ]
             );
