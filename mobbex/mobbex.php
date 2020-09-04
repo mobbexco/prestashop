@@ -91,7 +91,7 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd')) {
                 return false;
             }
         } else {
@@ -659,19 +659,20 @@ class Mobbex extends PaymentModule
 
     public function hookAdditionalCustomerFormFields($params)
     {
-        if (Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, false) === '') {
-            $customer = Context::getContext()->customer;
-
-            $dni_field = array();
-            $dni_field['billing_dni'] = (new FormField)
-                ->setName('billing_dni')
-                ->setValue(MobbexHelper::getDni($customer->id))
-                ->setType('text')
-                ->setRequired(true)
-                ->setLabel($this->l('DNI'));
-
-            return $dni_field;
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+            return;
         }
+        $customer = Context::getContext()->customer;
+
+        $dni_field = array();
+        $dni_field['billing_dni'] = (new FormField)
+            ->setName('billing_dni')
+            ->setValue(MobbexHelper::getDni($customer->id))
+            ->setType('text')
+            ->setRequired(true)
+            ->setLabel($this->l('DNI'));
+
+        return $dni_field;
     }
 
     public function hookActionObjectCustomerUpdateAfter(array $params)
@@ -686,30 +687,16 @@ class Mobbex extends PaymentModule
 
     private function updateCustomerDniStatus(array $params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false)) {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['billing_dni'])) {
             return;
         }
+
         $customer_id = $params['object']->id;
         $billing_dni = $_POST['billing_dni'];
 
         return DB::getInstance()->execute(
             "UPDATE `" . _DB_PREFIX_ . "customer` SET billing_dni = $billing_dni WHERE `id_customer` = $customer_id;"
         );
-    }
-
-    /**
-     * Plans widget hook for Prestashop 1.6
-     * Support for 1.6 Only
-     *
-     * @return string
-     */
-    public function hookDisplayProductButtons()
-    {
-        $product = new Product((int) Tools::getValue('id_product'));
-
-        return $this->hookDisplayProductAdditionalInfo(array(
-            'product' => (array) $product,
-        ));
     }
 
     /**
@@ -730,5 +717,60 @@ class Mobbex extends PaymentModule
         );
 
         return $this->display(__FILE__, $template);
+    }
+    
+    /**
+     * Plans widget hook for Prestashop 1.6
+     * 
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookDisplayProductButtons()
+    {
+        $product = new Product((int) Tools::getValue('id_product'));
+
+        return $this->hookDisplayProductAdditionalInfo(array(
+            'product' => (array) $product,
+        ));
+    }
+
+    /**
+     * Display DNI field hook for Prestashop 1.6
+     * 
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookDisplayCustomerAccountForm()
+    {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+            return;
+        }
+        $customer = Context::getContext()->customer;
+        $template = 'views/templates/hooks/dnifield.tpl';
+
+        $this->context->smarty->assign(
+            array(
+                'last_dni' => isset($customer->id) ? MobbexHelper::getDni($customer->id) : "",
+            )
+        );
+
+        return $this->display(__FILE__, $template);
+    }
+
+    /**
+     * Create costumer hook for Prestashop 1.6
+     * 
+     * Support for 1.6 Only
+     *
+     * @return string
+     */
+    public function hookActionCustomerAccountAdd()
+    {
+        $customer = Context::getContext()->customer;
+
+        $params['object'] = isset($customer->id) ? $customer->id : "";
+        $this->updateCustomerDniStatus($params);
     }
 }
