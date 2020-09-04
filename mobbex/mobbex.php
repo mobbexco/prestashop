@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.3
+ * @version 1.4.4
  * @see     PaymentModuleCore
  */
 
@@ -501,6 +501,8 @@ class Mobbex extends PaymentModule
             Configuration::updateValue($key, Tools::getValue($key));
         }
 
+        Configuration::updateValue(MobbexHelper::K_EMBED, false);
+
         $this->createIdentificationColumn();
     }
 
@@ -643,12 +645,10 @@ class Mobbex extends PaymentModule
 
             );
 
-            $product = $params['product'];
-
             $this->context->smarty->assign(
                 [
                     'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-                    'price_amount' => isset($product['price_amount']) ? $product['price_amount'] : $product['price'],
+                    'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
                     'style_settings' => $style_settings,
                 ]
             );
@@ -770,7 +770,7 @@ class Mobbex extends PaymentModule
     {
         $customer = Context::getContext()->customer;
 
-        $params['object'] = isset($customer->id) ? $customer->id : "";
+        $params['object'] = isset($customer->id) ? $customer : "";
         $this->updateCustomerDniStatus($params);
     }
 }
