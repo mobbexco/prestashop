@@ -1,5 +1,18 @@
+{if $ps_version === '1.6'}
+  <div class="row">
+    <div class="col-xs-12 col-md-12">
+      <p class="payment_module">
+        <a id="mbbx-anchor" href="#">
+          {$payment_label|escape:'htmlall':'UTF-8'}
+        </a>
+      </p>
+    </div>
+  </div>
+{/if}
+
 <form id="mobbex_checkout" class="mobbex-checkout-form" method="post" action="{$checkout_url|escape:'html':'UTF-8'}"></form>
 <div id="mbbx-container"></div>
+
 {literal}
   <script type="text/javascript">
     var script = document.createElement('script');
@@ -57,11 +70,18 @@
         }
     }
 
-    document.forms['mobbex_checkout'].onsubmit = function () { 
+    {/literal}
+    {if $ps_version === '1.6'}
+      document.querySelector('#mbbx-anchor').onclick =
+    {else}
+      document.forms['mobbex_checkout'].onsubmit =
+    {/if}
+    {literal}
+      function () {
         var mbbxButton = window.MobbexEmbed.init(options);
         mbbxButton.open();
         return false;
-    }
+      };
 
   </script>
 {/literal}

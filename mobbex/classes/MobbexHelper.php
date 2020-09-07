@@ -260,11 +260,10 @@ class MobbexHelper
      */
     public static function getPaymentData()
     {
-        $module = Context::getContext()->controller->module;
         $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
 
-        return MobbexHelper::createCheckout($module, $cart, $customer);
+        return MobbexHelper::createCheckout(null, $cart, $customer);
     }
 
     public static function evaluateTransactionData($res)
@@ -344,6 +343,10 @@ class MobbexHelper
 
     public static function getDni($customer_id)
     {
+        if (!$customer_id) {
+            return false;
+        }
+
         $dni_column = "billing_dni";
         if (!Configuration::get(MobbexHelper::K_OWN_DNI)) {
             $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);

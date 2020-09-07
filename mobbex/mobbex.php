@@ -501,8 +501,6 @@ class Mobbex extends PaymentModule
             Configuration::updateValue($key, Tools::getValue($key));
         }
 
-        Configuration::updateValue(MobbexHelper::K_EMBED, false);
-
         $this->createIdentificationColumn();
     }
 
@@ -622,8 +620,9 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'checkout_id' => $payment_data['id'],
+                'checkout_id'  => $payment_data['id'],
                 'checkout_url' => $payment_data['return_url'],
+                'ps_version'   => MobbexHelper::getPsVersion(),
             ]
         );
 
@@ -637,29 +636,30 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayProductAdditionalInfo($params)
     {
-        if (Configuration::get(MobbexHelper::K_PLANS) == true) {
-            $style_settings = array(
-
-                'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
-                'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-
-            );
-
-            $this->context->smarty->assign(
-                [
-                    'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-                    'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
-                    'style_settings' => $style_settings,
-                ]
-            );
-
-            return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+        if (!Configuration::get(MobbexHelper::K_PLANS)) {
+            return;
         }
+        $style_settings = array(
+
+            'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
+            'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+
+        );
+
+        $this->context->smarty->assign(
+            [
+                'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
+                'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
+                'style_settings' => $style_settings,
+            ]
+        );
+
+        return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
     }
 
     public function hookAdditionalCustomerFormFields($params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
             return;
         }
         $customer = Context::getContext()->customer;
@@ -667,7 +667,7 @@ class Mobbex extends PaymentModule
         $dni_field = array();
         $dni_field['billing_dni'] = (new FormField)
             ->setName('billing_dni')
-            ->setValue(MobbexHelper::getDni($customer->id))
+            ->setValue(isset($customer->id) ? MobbexHelper::getDni($customer->id) : '')
             ->setType('text')
             ->setRequired(true)
             ->setLabel($this->l('DNI'));
@@ -708,6 +708,23 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
+        if (Configuration::get(MobbexHelper::K_EMBED, false)) {
+            $template = 'views/templates/front/modal_payment.tpl';
+
+            $payment_data = MobbexHelper::getPaymentData();
+    
+            $this->context->smarty->assign(
+                [
+                    'checkout_id'   => $payment_data['id'],
+                    'checkout_url'  => $payment_data['return_url'],
+                    'payment_label' => $this->l('Pay with Credit/Debit Cards'),
+                    'ps_version'    => MobbexHelper::getPsVersion(),
+                ]
+            );
+
+            return $this->display(__FILE__, $template);
+        }
+
         $template = 'views/templates/hooks/payment.tpl';
 
         $this->context->smarty->assign(
@@ -728,11 +745,7 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayProductButtons()
     {
-        $product = new Product((int) Tools::getValue('id_product'));
-
-        return $this->hookDisplayProductAdditionalInfo(array(
-            'product' => (array) $product,
-        ));
+        return $this->hookDisplayProductAdditionalInfo(null);
     }
 
     /**
@@ -744,7 +757,7 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayCustomerAccountForm()
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) && Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
             return;
         }
         $customer = Context::getContext()->customer;
