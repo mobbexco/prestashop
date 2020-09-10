@@ -625,9 +625,9 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'checkout_id'  => $payment_data['id'],
+                'checkout_id' => $payment_data['id'],
                 'checkout_url' => $payment_data['return_url'],
-                'ps_version'   => MobbexHelper::getPsVersion(),
+                'ps_version' => MobbexHelper::getPsVersion(),
             ]
         );
 
@@ -717,13 +717,13 @@ class Mobbex extends PaymentModule
             $template = 'views/templates/front/modal_payment.tpl';
 
             $payment_data = MobbexHelper::getPaymentData();
-    
+
             $this->context->smarty->assign(
                 [
-                    'checkout_id'   => $payment_data['id'],
-                    'checkout_url'  => $payment_data['return_url'],
+                    'checkout_id' => $payment_data['id'],
+                    'checkout_url' => $payment_data['return_url'],
                     'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-                    'ps_version'    => MobbexHelper::getPsVersion(),
+                    'ps_version' => MobbexHelper::getPsVersion(),
                 ]
             );
 
@@ -740,10 +740,10 @@ class Mobbex extends PaymentModule
 
         return $this->display(__FILE__, $template);
     }
-    
+
     /**
      * Plans widget hook for Prestashop 1.6
-     * 
+     *
      * Support for 1.6 Only
      *
      * @return string
@@ -755,7 +755,7 @@ class Mobbex extends PaymentModule
 
     /**
      * Display DNI field hook for Prestashop 1.6
-     * 
+     *
      * Support for 1.6 Only
      *
      * @return string
@@ -779,7 +779,7 @@ class Mobbex extends PaymentModule
 
     /**
      * Create costumer hook for Prestashop 1.6
-     * 
+     *
      * Support for 1.6 Only
      *
      * @return string
