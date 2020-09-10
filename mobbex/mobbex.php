@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.5
+ * @version 1.4.6
  * @see     PaymentModuleCore
  */
 
@@ -509,30 +509,35 @@ class Mobbex extends PaymentModule
         $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
         $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
 
-        // If both options are active or inactive at the same time, own_dni takes precedence
-        if ($own_dni && $custom_dni != '') {
-            Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
-            $custom_dni = '';
-        } elseif (!$own_dni && $custom_dni == '') {
-            Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
-            $own_dni = true;
-        }
-
+        
         if ($custom_dni != '') {
             // Check if column exists
             $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $custom_dni . "'");
-
-            if (empty($table_columns)) {
-                return false;
+            
+            if (!empty($table_columns)) {
+                // If both options are active at the same time, custom_dni takes precedence
+                if ($own_dni) {
+                    Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
+                    $own_dni = false;
+                }
+                return;
             }
 
-            Configuration::updateValue(MobbexHelper::K_OWN_DNI, true);
             Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
         }
 
-        DB::getInstance()->execute(
-            "ALTER TABLE `" . _DB_PREFIX_ . "customer` ADD IF NOT EXISTS `billing_dni` varchar(255);"
-        );
+        if ($own_dni) {
+            // Check if column exists
+            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE 'billing_dni'");
+
+            if (!empty($table_columns)) {
+                return;
+            }
+            return DB::getInstance()->execute(
+                "ALTER TABLE `" . _DB_PREFIX_ . "customer` ADD `billing_dni` varchar(255);"
+            );
+        }
+
     }
 
     /**
@@ -687,7 +692,7 @@ class Mobbex extends PaymentModule
 
     private function updateCustomerDniStatus(array $params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['billing_dni'])) {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['billing_dni']) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
             return;
         }
 

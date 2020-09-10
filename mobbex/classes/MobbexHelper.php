@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.5
+ * @version 1.4.6
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.5';
+    const MOBBEX_VERSION = '1.4.6';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -56,7 +56,7 @@ class MobbexHelper
 
     public static function getUrl($path)
     {
-        return Tools::getShopDomain(true, true) . __PS_BASE_URI__ . $path;
+        return Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
     }
 
     public static function getModuleUrl($controller, $action, $path)
@@ -347,9 +347,12 @@ class MobbexHelper
             return false;
         }
 
-        $dni_column = "billing_dni";
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI)) {
+        if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
             $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
+        } elseif (Configuration::get(MobbexHelper::K_OWN_DNI)) {
+            $dni_column = "billing_dni";
+        } else {
+            return false;
         }
 
         $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $dni_column . "'");
