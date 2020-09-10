@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.6
+ * @version 1.4.7
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.6';
+    const MOBBEX_VERSION = '1.4.7';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -126,7 +126,7 @@ class MobbexHelper
 
         // If set add custom logo
         if (isset($theme_logo) && $theme_logo != '') {
-            $theme = array_merge($theme["header"], array(
+            $theme["header"] = array_merge($theme["header"], array(
                 "logo" => $theme_logo,
             ));
         }

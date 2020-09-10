@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER="1.4.5"
+VER="1.4.7"
 CUR_TIME=$(date "+%Y.%m.%d-%H.%M.%S")
 
 # Create 1.6 version
@@ -27,5 +27,11 @@ CUR_TIME=$(date "+%Y.%m.%d-%H.%M.%S")
 # Unified Version
 PRESTAV="1.6-1.7"
 
-zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
-zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
+if type 7z > /dev/null; then
+    7z a -tzip "mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip" mobbex
+    7z a -tzip "mobbex.$VER.ps-$PRESTAV.zip" mobbex
+else
+    zip mobbex.$VER.ps-$PRESTAV.$CUR_TIME.zip -r mobbex
+    zip mobbex.$VER.ps-$PRESTAV.zip -r mobbex
+fi
+

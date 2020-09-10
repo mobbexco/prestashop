@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.6
+ * @version 1.4.7
  * @see     PaymentModuleCore
  */
 
@@ -509,11 +509,10 @@ class Mobbex extends PaymentModule
         $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
         $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
 
-        
         if ($custom_dni != '') {
             // Check if column exists
             $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $custom_dni . "'");
-            
+
             if (!empty($table_columns)) {
                 // If both options are active at the same time, custom_dni takes precedence
                 if ($own_dni) {
