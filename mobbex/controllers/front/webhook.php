@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.7
+ * @version 1.4.8
  * @see     PaymentModuleCore
  */
 
@@ -78,8 +78,9 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
 
         // Only validate Status 2 or 200 nothing else
         // Status 2 => Waiting for Payment
+        // Status 3 => Authorized
         // Status 200 => Paid
-        if ($status == 200 || $status == 2) {
+        if ($status == 200 || $status == 3 || $status == 2) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 $this->module->validateOrder(
                     $cart_id,

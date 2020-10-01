@@ -32,9 +32,9 @@
     {
       if(status < 2) {
         return "none";
-      } else if (status == 2 || status == 3) {
+      } else if (status == 2) {
         return "cash";
-      } else if (status == 4 || status >= 200 && status < 400) {
+      } else if (status == 3 || status == 4 || status >= 200 && status < 400) {
         return "card";
       }
     }
