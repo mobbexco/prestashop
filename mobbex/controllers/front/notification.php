@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.8
+ * @version 1.4.9
  * @see     PaymentModuleCore
  */
 
@@ -64,10 +64,11 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         $result = MobbexHelper::getTransaction($context, $transaction_id);
 
-        // Only validate Status 2 or 200 nothing else
+        // Only validate Status 2, 3 or 200 nothing else
         // Status 2 => Waiting for Payment
+        // Status 3 => Authorized
         // Status 200 => Paid
-        if ($status == 200 || $status == 2) {
+        if ($status == 200 || $status == 3 || $status == 2) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 // Hook validate order
                 Hook::exec('actionValidateOrder', array(

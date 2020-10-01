@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.8
+ * @version 1.4.9
  * @see     PaymentModuleCore
  */
 
@@ -216,20 +216,20 @@ class Mobbex extends PaymentModule
                         ],
                     ),
                     array(
-                        'type' => 'radio',
+                        'type' => 'switch',
                         'label' => $this->l('Theme Mode'),
                         'name' => MobbexHelper::K_THEME,
-                        'is_bool' => true,
+                        'is_bool' => false,
                         'required' => false,
                         'values' => [
                             [
                                 'id' => 'm_theme_light',
-                                'value' => true,
+                                'value' => MobbexHelper::K_THEME_LIGHT,
                                 'label' => $this->l('Light Mode'),
                             ],
                             [
                                 'id' => 'm_theme_dark',
-                                'value' => false,
+                                'value' => MobbexHelper::K_THEME_DARK,
                                 'label' => $this->l('Dark Mode'),
                             ],
                         ],

@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.8
+ * @version 1.4.9
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.8';
+    const MOBBEX_VERSION = '1.4.9';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -35,9 +35,12 @@ class MobbexHelper
 
     const K_EMBED = 'MOBBEX_EMBED';
 
-    const K_DEF_THEME = true;
+    const K_DEF_THEME = 'light';
     const K_DEF_BACKGROUND = '#ECF2F6';
     const K_DEF_PRIMARY = '#6f00ff';
+
+    const K_THEME_LIGHT = 'light';
+    const K_THEME_DARK = 'dark';
 
     const K_PLANS = 'MOBBEX_PLANS';
     const K_PLANS_TAX_ID = 'MOBBEX_PLANS_TAX_ID';
@@ -100,7 +103,7 @@ class MobbexHelper
     public static function getOptions()
     {
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME) ? 'light' : 'dark',
+            "type" => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
             "header" => [
                 "name" => Configuration::get('PS_SHOP_NAME'),
             ],
