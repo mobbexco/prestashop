@@ -118,6 +118,15 @@ class Mobbex extends PaymentModule
             Configuration::deleteByName($key);
         }
 
+        $pendingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_PENDING));
+        $pendingOrderState->delete();
+
+        $waitingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_WAITING));
+        $waitingOrderState->delete();
+
+        $rejectedOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_REJECTED));
+        $rejectedOrderState->delete();
+
         return parent::uninstall();
     }
 
@@ -216,7 +225,7 @@ class Mobbex extends PaymentModule
                         ],
                     ),
                     array(
-                        'type' => 'switch',
+                        'type' => 'radio',
                         'label' => $this->l('Theme Mode'),
                         'name' => MobbexHelper::K_THEME,
                         'is_bool' => false,
@@ -563,7 +572,7 @@ class Mobbex extends PaymentModule
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-            $this->smarty->assign('total', $order->getTotalPaid());
+            $this->smarty->assign('total', $trx['total']);
             $this->smarty->assign('payment', $order->payment);
             $this->smarty->assign('mobbex_data', $trx);
         }

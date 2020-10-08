@@ -300,7 +300,7 @@ class MobbexHelper
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
         } elseif ($status == 1 && $source_type != 'card') {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING);
-        } elseif ($status == 2 && $source_type != 'card') {
+        } elseif ($status == 2 || $status == 3) {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED);

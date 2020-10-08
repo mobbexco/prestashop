@@ -10,7 +10,7 @@
             <td>{$status|escape:'htmlall':'UTF-8'}</td>
         </tr>
         <tr align="left">
-            <td>{l s='Total' mod='mobbex'}</td>
+            <td>{l s='Total de la Operación' mod='mobbex'}</td>
             <td>${$total|escape:'htmlall':'UTF-8'}</td>
         </tr>
 
