@@ -199,12 +199,12 @@ class MobbexHelper
                 "key" => $customer->secure_key,
             )),
             'options' => MobbexHelper::getOptions(),
-            'redirect' => 0,
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer' => array(
                 "name" => $customer->firstname . " " . $customer->lastname,
                 "email" => $customer->email,
             ),
+            'timeout' => 5,
         );
 
         if (defined('MOBBEX_CHECKOUT_INTENT')) {
@@ -225,6 +225,7 @@ class MobbexHelper
             $data['embed'] = 1;
             $data['button'] = 1;
             $data['domain'] = Context::getContext()->shop->getBaseURL(true);
+            unset($data['options']['redirect']);
         }
 
         curl_setopt_array($curl, array(

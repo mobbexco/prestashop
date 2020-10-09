@@ -572,7 +572,7 @@ class Mobbex extends PaymentModule
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-            $this->smarty->assign('total', $trx['total']);
+            $this->smarty->assign('total', $trx['payment']['total']);
             $this->smarty->assign('payment', $order->payment);
             $this->smarty->assign('mobbex_data', $trx);
         }

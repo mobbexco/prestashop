@@ -52,9 +52,14 @@
         onPayment: (data) => {
           var status = data.data.status.code;
           var link   = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.data.id;
-          setTimeout(function () {
-            window.top.location.href = link;
-          }, 5000)
+
+          // If order status is not recoverable
+          if (! ((status >= 400 && status <= 500 && status != 401 && status != 402) || status == 0) ) {
+            // Redirect
+            setTimeout(function () {
+              window.top.location.href = link;
+            }, 5000);
+          }
         },
         onOpen: () => {
           // Do nothing
