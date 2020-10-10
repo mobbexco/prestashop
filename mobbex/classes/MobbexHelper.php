@@ -219,13 +219,14 @@ class MobbexHelper
             $data['customer']['identification'] = MobbexHelper::getDni($customer->id);
         }
 
-        $embed_active = Configuration::get(MobbexHelper::K_EMBED);
-
-        if ($embed_active) {
-            $data['embed'] = 1;
-            $data['button'] = 1;
-            $data['domain'] = Context::getContext()->shop->getBaseURL(true);
+        if (Configuration::get(MobbexHelper::K_EMBED)) {
+            $data['options']['button'] = true;
+            $data['options']['domain'] = Context::getContext()->shop->domain . Context::getContext()->shop->getBaseURI();
             unset($data['options']['redirect']);
+        }
+
+        if (MobbexHelper::getInstallments($products)) {
+            $data['installments'] = MobbexHelper::getInstallments($products);
         }
 
         curl_setopt_array($curl, array(
@@ -377,5 +378,34 @@ class MobbexHelper
         } else {
             return self::PS_16;
         }
+    }
+
+    public static function getInstallments($products)
+    {
+
+        $installments = [];
+
+        $ahora = array(
+            'ahora_3'  => 'Ahora 3',
+            'ahora_6'  => 'Ahora 6',
+            'ahora_12' => 'Ahora 12',
+            'ahora_18' => 'Ahora 18',
+        );
+
+        foreach ($products as $product) {
+
+            foreach ($ahora as $key => $value) {
+                
+                if (MobbexCustomFields::getCustomField($product['id_product'], 'product', $key)['data'] === 'yes') {
+                    $installments[] = '-' . $key;
+                    unset($ahora[$key]);
+                }
+    
+            }
+
+        }
+
+        return $installments;
+
     }
 }
