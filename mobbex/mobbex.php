@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.9
+ * @version 1.5.0
  * @see     PaymentModuleCore
  */
 
@@ -811,7 +811,7 @@ class Mobbex extends PaymentModule
         $params['object'] = isset($customer->id) ? $customer : "";
         $this->updateCustomerDniStatus($params);
     }
-    
+
     public function hookDisplayAdminProductsExtra($params)
     {
         $product_id = $params['id_product'];
@@ -820,11 +820,11 @@ class Mobbex extends PaymentModule
         if (Validate::isLoadedObject($product)) {
 
             $ahora = array(
-                'ahora_3'  => array(
+                'ahora_3' => array(
                     'label' => 'Ahora 3',
                     'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_3')['data'],
                 ),
-                'ahora_6'  => array(
+                'ahora_6' => array(
                     'label' => 'Ahora 6',
                     'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_6')['data'],
                 ),

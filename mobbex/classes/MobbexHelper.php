@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.9
+ * @version 1.5.0
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '1.4.9';
+    const MOBBEX_VERSION = '1.5.0';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -386,8 +386,8 @@ class MobbexHelper
         $installments = [];
 
         $ahora = array(
-            'ahora_3'  => 'Ahora 3',
-            'ahora_6'  => 'Ahora 6',
+            'ahora_3' => 'Ahora 3',
+            'ahora_6' => 'Ahora 6',
             'ahora_12' => 'Ahora 12',
             'ahora_18' => 'Ahora 18',
         );
@@ -395,12 +395,12 @@ class MobbexHelper
         foreach ($products as $product) {
 
             foreach ($ahora as $key => $value) {
-                
+
                 if (MobbexCustomFields::getCustomField($product['id_product'], 'product', $key)['data'] === 'yes') {
                     $installments[] = '-' . $key;
                     unset($ahora[$key]);
                 }
-    
+
             }
 
         }
