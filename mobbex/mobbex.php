@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 
 require dirname(__FILE__) . '/classes/MobbexHelper.php';
 require dirname(__FILE__) . '/classes/MobbexTransaction.php';
+require dirname(__FILE__) . '/classes/MobbexCustomFields.php';
 
 /**
  * Main class of the module
@@ -91,11 +92,11 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
                 return false;
             }
         }
@@ -417,6 +418,17 @@ class Mobbex extends PaymentModule
 				PRIMARY KEY (`cart_id`)
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
+        DB::getInstance()->execute(
+            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `row_id` INT(11) NOT NULL,
+				`object` TEXT NOT NULL,
+				`field_name` TEXT NOT NULL,
+				`data` TEXT NOT NULL,
+				PRIMARY KEY (`id`)
+            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+        );
     }
 
     private function _createStates()
@@ -572,7 +584,7 @@ class Mobbex extends PaymentModule
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-            $this->smarty->assign('total', $trx['total']);
+            $this->smarty->assign('total', $trx['payment']['total']);
             $this->smarty->assign('payment', $order->payment);
             $this->smarty->assign('mobbex_data', $trx);
         }
@@ -798,5 +810,59 @@ class Mobbex extends PaymentModule
 
         $params['object'] = isset($customer->id) ? $customer : "";
         $this->updateCustomerDniStatus($params);
+    }
+    
+    public function hookDisplayAdminProductsExtra($params)
+    {
+        $product_id = $params['id_product'];
+        $product = new Product($product_id);
+
+        if (Validate::isLoadedObject($product)) {
+
+            $ahora = array(
+                'ahora_3'  => array(
+                    'label' => 'Ahora 3',
+                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_3')['data'],
+                ),
+                'ahora_6'  => array(
+                    'label' => 'Ahora 6',
+                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_6')['data'],
+                ),
+                'ahora_12' => array(
+                    'label' => 'Ahora 12',
+                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_12')['data'],
+                ),
+                'ahora_18' => array(
+                    'label' => 'Ahora 18',
+                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_18')['data'],
+                ),
+            );
+
+            $this->context->smarty->assign(
+                array(
+                    'ahora' => $ahora,
+                )
+            );
+
+            return $this->display(__FILE__, 'views/templates/hooks/product_fields.tpl');
+        }
+    }
+
+    public function hookActionProductUpdate($params)
+    {
+        $ahora = array(
+            'ahora_3',
+            'ahora_6',
+            'ahora_12',
+            'ahora_18',
+        );
+
+        foreach ($ahora as $key) {
+            $value = 'no';
+            if (!empty($_POST[$key])) {
+                $value = 'yes';
+            }
+            MobbexCustomFields::saveCustomField($params['id_product'], 'product', $key, $value);
+        }
     }
 }

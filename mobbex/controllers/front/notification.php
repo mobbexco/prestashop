@@ -62,7 +62,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $transaction_id = Tools::getValue('transactionId');
         $status = (int) Tools::getValue('status');
 
-        $result = MobbexHelper::getTransaction($context, $transaction_id);
+        if (!empty($transaction_id) && $transaction_id != '-1') {
+            $result = MobbexHelper::getTransaction($context, $transaction_id);
+        }
 
         // Only validate Status 2, 3 or 200 nothing else
         // Status 2 => Waiting for Payment
