@@ -128,6 +128,10 @@ class Mobbex extends PaymentModule
         $rejectedOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_REJECTED));
         $rejectedOrderState->delete();
 
+        DB::getInstance()->execute(
+            "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields`"
+        );
+
         return parent::uninstall();
     }
 
