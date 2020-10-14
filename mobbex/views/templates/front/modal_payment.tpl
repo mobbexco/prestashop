@@ -30,7 +30,7 @@
     // Get type from status 
     function getType(status)
     {
-      if(status < 2) {
+      if(status < 2 || status > 400) {
         return "none";
       } else if (status == 2) {
         return "cash";
@@ -47,7 +47,10 @@
       id: checkoutId,
       type: 'checkout',
         onResult: (data) => {
-          window.MobbexEmbed.close();
+          var status = data.status.code;
+          var link   = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.id;
+
+          window.top.location.href = link;
         },
         onPayment: (data) => {
           var status = data.data.status.code;

@@ -45,7 +45,8 @@
             background: none;
             border: none;
             cursor: pointer;
-            opacity: .6;
+            opacity: 1;
+            z-index: 10000;
         }
         #close-mobbex-plans::after, #close-mobbex-plans::before {
             content: ' ';
