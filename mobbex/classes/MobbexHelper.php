@@ -34,6 +34,7 @@ class MobbexHelper
     const K_RESELLER_ID = 'MOBBEX_RESELLER_ID';
 
     const K_EMBED = 'MOBBEX_EMBED';
+    const K_WALLET = 'MOBBEX_WALLET';
 
     const K_DEF_THEME = 'light';
     const K_DEF_BACKGROUND = '#ECF2F6';
@@ -45,9 +46,11 @@ class MobbexHelper
     const K_PLANS = 'MOBBEX_PLANS';
     const K_PLANS_TAX_ID = 'MOBBEX_PLANS_TAX_ID';
     const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
+    const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
 
-    const K_DEF_PLANS_TEXT = '#ffffff';
+    const K_DEF_PLANS_TEXT = 'Planes Mobbex';
+    const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
 
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
@@ -94,7 +97,7 @@ class MobbexHelper
     {
         return array(
             'cache-control: no-cache',
-            'content-type: application/x-www-form-urlencoded',
+            'content-type: application/json',
             'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
             'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
         );
@@ -102,45 +105,32 @@ class MobbexHelper
 
     public static function getOptions()
     {
+        $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
+        $shop_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ .Configuration::get('PS_LOGO');
+        $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
+        $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
+
         $theme = array(
             "type" => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
             "header" => [
                 "name" => Configuration::get('PS_SHOP_NAME'),
+                "logo" => !empty($theme_logo) ? $theme_logo : $shop_logo,
+            ],
+            'background' => !empty($theme_background) ? $theme_background : null,
+            'colors' => [
+                'primary' => !empty($theme_primary) ? $theme_primary : null,
             ],
         );
 
-        $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
-        $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
-        $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
-
-        if (isset($theme_background) && $theme_background != '') {
-            $theme = array_merge($theme, array(
-                "background" => $theme_background,
-            ));
-        }
-
-        if (isset($theme_primary) && $theme_primary != '') {
-            $theme = array_merge($theme, array(
-                "colors" => array(
-                    "primary" => $theme_primary,
-                ),
-            ));
-        }
-
-        // If set add custom logo
-        if (isset($theme_logo) && $theme_logo != '') {
-            $theme["header"] = array_merge($theme["header"], array(
-                "logo" => $theme_logo,
-            ));
-        }
-
         $options = array(
+            'button' => Configuration::get(MobbexHelper::K_EMBED),
+            'domain' => Context::getContext()->shop->domain,
             "theme" => $theme,
             // Will redirect automatically on Successful Payment Result
-            "redirect" => array(
+            "redirect" => [
                 "success" => true,
                 "failure" => false,
-            ),
+            ],
             "platform" => MobbexHelper::getPlatform(),
         );
 
@@ -158,7 +148,6 @@ class MobbexHelper
 
         // Create an unique id
         $tracking_ref = MobbexHelper::getReference($customer, $cart);
-
         $reseller_id = Configuration::get(MobbexHelper::K_RESELLER_ID);
 
         if (isset($reseller_id) && $reseller_id != '') {
@@ -166,10 +155,9 @@ class MobbexHelper
             $tracking_ref = $reseller_id . "-" . $tracking_ref;
         }
 
+        // Get items
         $items = array();
         $products = $cart->getProducts(true);
-
-        //p($products);
 
         foreach ($products as $product) {
             //p($product);
@@ -184,50 +172,29 @@ class MobbexHelper
         $data = array(
             'reference' => $tracking_ref,
             'currency' => 'ARS',
-            'email' => $customer->email,
-            'description' => 'Orden #' . $cart->id,
-            // Test Mode
+            'description' => 'Carrito #' . $cart->id,
             'test' => Configuration::get(MobbexHelper::K_TEST_MODE),
-            // notification / return => '&id_cart='.$cart->id.'&customer_id='.$customer->id
             'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            // notification / hook => '&id_cart='.$cart->id.'&customer_id='.$customer->id.'&key='.$customer->secure_key
             'items' => $items,
-            //MobbexHelper::getModuleUrl('notification', 'hook', '&id_cart='.$cart->id.'&customer_id='.$customer->id.'&key='.$customer->secure_key),
+            'installments' => MobbexHelper::getInstallments($products),
             'webhook' => MobbexHelper::getWebhookUrl(array(
-                "id_cart" => $cart->id,
-                "customer_id" => $customer->id,
-                "key" => $customer->secure_key,
+                'id_cart' => $cart->id,
+                'customer_id' => $customer->id,
+                'key' => $customer->secure_key,
             )),
             'options' => MobbexHelper::getOptions(),
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer' => array(
-                "name" => $customer->firstname . " " . $customer->lastname,
-                "email" => $customer->email,
+                'name' => $customer->firstname . ' ' . $customer->lastname,
+                'email' => $customer->email,
+                'phone' => !empty($customer->phone) ? $customer->phone : null,
+                'identification' => !empty(MobbexHelper::getDni($customer->id)) ? MobbexHelper::getDni($customer->id) : null,
+                'uid' => !empty($customer->id) ? $customer->id : null,
             ),
             'timeout' => 5,
+            'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
+            'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
         );
-
-        if (defined('MOBBEX_CHECKOUT_INTENT')) {
-            $data['intent'] = MOBBEX_CHECKOUT_INTENT;
-        }
-
-        if (isset($customer->phone)) {
-            $data['customer']['phone'] = $customer->phone;
-        }
-
-        if (MobbexHelper::getDni($customer->id)) {
-            $data['customer']['identification'] = MobbexHelper::getDni($customer->id);
-        }
-
-        if (Configuration::get(MobbexHelper::K_EMBED)) {
-            $data['options']['button'] = true;
-            $data['options']['domain'] = Context::getContext()->shop->domain . Context::getContext()->shop->getBaseURI();
-            unset($data['options']['redirect']);
-        }
-
-        if (MobbexHelper::getInstallments($products)) {
-            $data['installments'] = MobbexHelper::getInstallments($products);
-        }
 
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://mobbex.com/p/checkout/create",
@@ -237,7 +204,7 @@ class MobbexHelper
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => http_build_query($data),
+            CURLOPT_POSTFIELDS => json_encode($data),
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
@@ -309,41 +276,6 @@ class MobbexHelper
         }
 
         return $result;
-    }
-
-    public static function getTransaction($context, $transaction_id)
-    {
-        $curl = curl_init();
-
-        // Create data
-        $data = array(
-            'id' => $transaction_id,
-        );
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.mobbex.com/2.0/transactions/status",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => http_build_query($data),
-            CURLOPT_HTTPHEADER => self::getHeaders(),
-        ));
-
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            echo "cURL Error #:" . $err;
-        } else {
-            $res = json_decode($response, true);
-
-            return self::evaluateTransactionData($res['data']['transaction']);
-        }
     }
 
     public static function getDni($customer_id)
