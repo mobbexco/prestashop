@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.5.1
+ * @version 2.0.0
  * @see     PaymentModuleCore
  */
 
@@ -41,7 +41,6 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get Data from request
         $cart_id = Tools::getValue('id_cart');
         $customer_id = Tools::getValue('customer_id');
-        $transaction_id = "";
 
         //Restore the context to process the order validation properly
         $context = $this->context;
@@ -52,24 +51,11 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         $order = new Order((int) Order::getOrderByCartId($cart_id));
 
-        // Create order history with status
-        $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
-
         $secure_key = $context->customer->secure_key;
-        $module_name = $this->module->displayName;
-        $currency_id = (int) $context->currency->id;
-
         $transaction_id = Tools::getValue('transactionId');
         $status = (int) Tools::getValue('status');
 
-        if (!empty($transaction_id) && $transaction_id != '-1') {
-            $result = MobbexHelper::getTransaction($context, $transaction_id);
-        }
-
         // Only validate Status 2, 3 or 200 nothing else
-        // Status 2 => Waiting for Payment
-        // Status 3 => Authorized
-        // Status 200 => Paid
         if ($status == 200 || $status == 3 || $status == 2) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 // Hook validate order
@@ -82,12 +68,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 ));
             }
 
-            // Save the data
-            MobbexTransaction::saveTransaction($cart_id, $result['data']);
-
             Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $cart_id . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&transactionId=' . $transaction_id . '&key=' . $secure_key);
         } else {
-            // Tools::redirect('index.php?controller=cart&id_cart=' . $cart_id . '&id_order=' . $order->id . '&key=' . $secure_key);
             Tools::redirect('index.php?controller=order&step=1');
         }
     }

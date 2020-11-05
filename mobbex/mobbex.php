@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.5.1
+ * @version 2.0.0
  * @see     PaymentModuleCore
  */
 
@@ -34,7 +34,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = array('redirect', 'notification', 'webhook');
+        $this->controllers = array('redirect', 'notification', 'webhook', 'wallet');
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -77,6 +77,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
         Configuration::updateValue(MobbexHelper::K_EMBED, false);
+        Configuration::updateValue(MobbexHelper::K_WALLET, false);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
@@ -84,6 +85,7 @@ class Mobbex extends PaymentModule
         // Plans Widget
         Configuration::updateValue(MobbexHelper::K_PLANS, false);
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
+        Configuration::updateValue(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR);
         Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
@@ -291,6 +293,26 @@ class Mobbex extends PaymentModule
                             ],
                         ],
                     ),
+                    // Wallet
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Mobbex Wallet para usuarios logeados'),
+                        'name' => MobbexHelper::K_WALLET,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_wallet',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_wallet',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                     // Reseller ID
                     array(
                         'type' => 'text',
@@ -327,9 +349,16 @@ class Mobbex extends PaymentModule
                         'desc' => $this->l('Merchant Tax ID to Show configured plans'),
                     ),
                     array(
+                        'type' => 'text',
+                        'label' => $this->l('Text'),
+                        'name' => MobbexHelper::K_PLANS_TEXT,
+                        'required' => false,
+                        'desc' => $this->l('Plans Button Text'),
+                    ),
+                    array(
                         'type' => 'color',
                         'label' => $this->l('Text Color'),
-                        'name' => MobbexHelper::K_PLANS_TEXT,
+                        'name' => MobbexHelper::K_PLANS_TEXT_COLOR,
                         'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Plans Button Text Color'),
@@ -391,6 +420,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
             MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
+            MobbexHelper::K_WALLET => Configuration::get(MobbexHelper::K_WALLET, false),
             // Theme
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
@@ -401,8 +431,9 @@ class Mobbex extends PaymentModule
             // Plans Widget
             MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
             MobbexHelper::K_PLANS_TAX_ID => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
-            MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_PLANS_TEXT),
-            MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_PLANS_BACKGROUND),
+            MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT),
+            MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
+            MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
@@ -649,6 +680,8 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
+                'wallet' => !empty($payment_data['wallet']) ? json_encode($payment_data['wallet']) : null,
+                'is_wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
                 'checkout_id' => $payment_data['id'],
                 'checkout_url' => $payment_data['return_url'],
                 'ps_version' => MobbexHelper::getPsVersion(),
@@ -665,21 +698,21 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayProductAdditionalInfo($params)
     {
-        if (!Configuration::get(MobbexHelper::K_PLANS)) {
+        $product = new Product(Tools::getValue('id_product'));
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !($product->show_price)) {
             return;
         }
-        $style_settings = array(
-
-            'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT, '#ffffff'),
-            'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-
-        );
 
         $this->context->smarty->assign(
             [
                 'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
                 'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
-                'style_settings' => $style_settings,
+                'style_settings' => 
+                [
+                    'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
+                    'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
+                    'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+                ],
             ]
         );
 
@@ -740,12 +773,17 @@ class Mobbex extends PaymentModule
         if (Configuration::get(MobbexHelper::K_EMBED, false)) {
             $template = 'views/templates/front/modal_payment.tpl';
 
-            $payment_data = MobbexHelper::getPaymentData();
-
+            // If wallet is inactive create checkout now
+            $is_wallet = (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged());
+            if (!$is_wallet) {
+                $payment_data = MobbexHelper::getPaymentData();
+            }
+                
             $this->context->smarty->assign(
                 [
-                    'checkout_id' => $payment_data['id'],
-                    'checkout_url' => $payment_data['return_url'],
+                    'is_wallet' => $is_wallet,
+                    'checkout_id' => isset($payment_data) ? $payment_data['id'] : null,
+                    'checkout_url' => isset($payment_data) ? $payment_data['return_url'] : null,
                     'payment_label' => $this->l('Pay with Credit/Debit Cards'),
                     'ps_version' => MobbexHelper::getPsVersion(),
                 ]

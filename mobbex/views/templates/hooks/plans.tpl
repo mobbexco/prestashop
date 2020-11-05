@@ -28,7 +28,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 215px;
+            width: fit-content;
             padding: 4px 18px;
             font-size: 17px;
             color: {/literal}{$style_settings['text_color']}{literal};
@@ -36,6 +36,7 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
+            box-shadow: 2px 2px 4px 0 rgba(0,0,0,.2);
         }
         #close-mobbex-plans {
             position: fixed;
@@ -69,7 +70,7 @@
         }
     </style>
     {/literal}
-    <button type="button" id="open-mobbex-plans">Planes Mobbex<img src="https://res.mobbex.com/images/sources/mobbex.png" width="40" height="40" style="margin-left: 15px; border-radius: 40px;"></button>
+    <button type="button" id="open-mobbex-plans">{$style_settings['text']}<img src="https://res.mobbex.com/images/sources/mobbex.png" width="40" height="40" style="margin-left: 15px; border-radius: 40px;"></button>
     <div class="mobbex-plans-modal">
         <button type="button" id="close-mobbex-plans"></button>
         <iframe src="https://mobbex.com/p/sources/widget/arg/{$tax_id}?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
