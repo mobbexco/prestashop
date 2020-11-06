@@ -19,7 +19,7 @@
 <div id="mbbx-container"></div>
 
 {literal}
-  <script type="text/javascript" src="/modules/mobbex/views/js/front.js"></script>
+  <script type="text/javascript" src="../modules/mobbex/views/js/front.js"></script>
   <script type="text/javascript" id="mobbexScript">  
     var script = document.createElement('script');
     script.src = `https://res.mobbex.com/js/embed/mobbex.embed@1.0.17.js?t=${Date.now()}`;
