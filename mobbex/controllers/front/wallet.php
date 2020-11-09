@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.0
+ * @version 2.0.1
  * @see     PaymentModuleCore
  */
 
@@ -57,6 +57,8 @@ class MobbexWalletModuleFrontController extends ModuleFrontController
 			'checkout_url' => $payment_data['return_url'],
 			'total' => $cart->getOrderTotal(true, Cart::BOTH),
 			'path_module' => $this->module->getPathUri(),
+			'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/js/front.js'),
+			'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/css/front.css'),
 		));
 
 		$this->setTemplate('payment_execution.tpl');

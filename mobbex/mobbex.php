@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.0
+ * @version 2.0.1
  * @see     PaymentModuleCore
  */
 
@@ -685,6 +685,8 @@ class Mobbex extends PaymentModule
                 'checkout_id' => $payment_data['id'],
                 'checkout_url' => $payment_data['return_url'],
                 'ps_version' => MobbexHelper::getPsVersion(),
+                'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
+                'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
             ]
         );
 
@@ -786,6 +788,8 @@ class Mobbex extends PaymentModule
                     'checkout_url' => isset($payment_data) ? $payment_data['return_url'] : null,
                     'payment_label' => $this->l('Pay with Credit/Debit Cards'),
                     'ps_version' => MobbexHelper::getPsVersion(),
+                    'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
+                    'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
                 ]
             );
 

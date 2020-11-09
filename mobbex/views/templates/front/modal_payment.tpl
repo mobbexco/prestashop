@@ -19,7 +19,7 @@
 <div id="mbbx-container"></div>
 
 {literal}
-  <script type="text/javascript" src="../modules/mobbex/views/js/front.js"></script>
+  <script type="text/javascript" src="{/literal}{$js_url}{literal}"></script>
   <script type="text/javascript" id="mobbexScript">  
     var script = document.createElement('script');
     script.src = `https://res.mobbex.com/js/embed/mobbex.embed@1.0.17.js?t=${Date.now()}`;
@@ -33,7 +33,7 @@
 
     var stylesheet = document.createElement('link')
     stylesheet.rel = 'stylesheet'
-    stylesheet.href = '../modules/mobbex/views/css/front.css'
+    stylesheet.href = '{/literal}{$css_url}{literal}'
     document.head.appendChild(stylesheet)
 
     renderLock()
