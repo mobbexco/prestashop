@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.0
+ * @version 2.0.1
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.0.0';
+    const MOBBEX_VERSION = '2.0.1';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -197,7 +197,7 @@ class MobbexHelper
         );
 
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://mobbex.com/p/checkout/create",
+            CURLOPT_URL => "https://api.mobbex.com/p/checkout",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
