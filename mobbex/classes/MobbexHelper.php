@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.1
+ * @version 2.0.2
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.0.1';
+    const MOBBEX_VERSION = '2.0.2';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
