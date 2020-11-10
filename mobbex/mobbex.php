@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.1
+ * @version 2.0.2
  * @see     PaymentModuleCore
  */
 
@@ -860,7 +860,7 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayAdminProductsExtra($params)
     {
-        $product_id = $params['id_product'];
+        $product_id = $params['id_product'] ? : Tools::getValue('id_product');
         $product = new Product($product_id);
 
         if (Validate::isLoadedObject($product)) {
@@ -887,6 +887,7 @@ class Mobbex extends PaymentModule
             $this->context->smarty->assign(
                 array(
                     'ahora' => $ahora,
+                    'ps_version' => MobbexHelper::getPsVersion(),
                 )
             );
 
