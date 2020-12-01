@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.2
+ * @version 2.0.3
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.0.2';
+    const MOBBEX_VERSION = '2.0.3';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -28,6 +28,7 @@ class MobbexHelper
     const K_THEME_BACKGROUND = 'MOBBEX_THEME_BACKGROUND';
     const K_THEME_PRIMARY = 'MOBBEX_THEME_PRIMARY';
 
+    const K_THEME_SHOP_LOGO = 'MOBBEX_THEME_SHOP_LOGO';
     const K_THEME_LOGO = 'MOBBEX_THEME_LOGO';
 
     // RESELLER ID. Will change to Branch ID in the future
@@ -105,8 +106,14 @@ class MobbexHelper
 
     public static function getOptions()
     {
-        $theme_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
-        $shop_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ .Configuration::get('PS_LOGO');
+        $custom_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
+
+        // If store's logo option is disabled, use the one configured in mobbex
+        $default_logo = null;
+        if (!empty(Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO))) {
+            $default_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ .Configuration::get('PS_LOGO');
+        }
+
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
         $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
 
@@ -114,7 +121,7 @@ class MobbexHelper
             "type" => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
             "header" => [
                 "name" => Configuration::get('PS_SHOP_NAME'),
-                "logo" => !empty($theme_logo) ? $theme_logo : $shop_logo,
+                "logo" => !empty($custom_logo) ? $custom_logo : $default_logo,
             ],
             'background' => !empty($theme_background) ? $theme_background : null,
             'colors' => [
@@ -123,7 +130,7 @@ class MobbexHelper
         );
 
         $options = array(
-            'button' => Configuration::get(MobbexHelper::K_EMBED),
+            'button' => (Configuration::get(MobbexHelper::K_EMBED) == true),
             'domain' => Context::getContext()->shop->domain,
             "theme" => $theme,
             // Will redirect automatically on Successful Payment Result
@@ -173,7 +180,7 @@ class MobbexHelper
             'reference' => $tracking_ref,
             'currency' => 'ARS',
             'description' => 'Carrito #' . $cart->id,
-            'test' => Configuration::get(MobbexHelper::K_TEST_MODE),
+            'test' => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
             'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items' => $items,
             'installments' => MobbexHelper::getInstallments($products),

@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.2
+ * @version 2.0.3
  * @see     PaymentModuleCore
  */
 
@@ -267,6 +267,26 @@ class Mobbex extends PaymentModule
                         'desc' => $this->l('Checkout Primary Color'),
                     ),
                     array(
+                        'type' => 'switch',
+                        'label' => $this->l('Utilizar logo configurado en la tienda (prestashop)'),
+                        'desc' => "Al desactivarse se utilizará el logo configurado en la cuenta de Mobbex.",
+                        'name' => MobbexHelper::K_THEME_SHOP_LOGO,
+                        'is_bool' => true,
+                        'required' => true,
+                        'values' => [
+                            [
+                                'id' => 'active_on_shop_logo',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_shop_logo',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
+                    array(
                         'type' => 'text',
                         'label' => $this->l('Logo Personalizado ( URL )'),
                         'name' => MobbexHelper::K_THEME_LOGO,
@@ -426,6 +446,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
             MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
             MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
+            MobbexHelper::K_THEME_SHOP_LOGO => Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO, ''),
             // Reseller ID
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Plans Widget
