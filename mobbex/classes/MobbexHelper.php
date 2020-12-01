@@ -144,23 +144,14 @@ class MobbexHelper
         return $options;
     }
 
-    public static function getReference($customer, $cart)
+    public static function getReference($cart)
     {
-        return 'ps_order_customer_' . $customer->id . '_cart_' . $cart->id . '_seed_' . mt_rand(100000, 999999);
+        return 'ps_order_cart_' . $cart->id . '_time_'.time();
     }
 
     public static function createCheckout($module, $cart, $customer)
     {
         $curl = curl_init();
-
-        // Create an unique id
-        $tracking_ref = MobbexHelper::getReference($customer, $cart);
-        $reseller_id = Configuration::get(MobbexHelper::K_RESELLER_ID);
-
-        if (isset($reseller_id) && $reseller_id != '') {
-            // Add Reseller ID into the Reference
-            $tracking_ref = $reseller_id . "-" . $tracking_ref;
-        }
 
         // Get items
         $items = array();
@@ -177,7 +168,7 @@ class MobbexHelper
 
         // Create data
         $data = array(
-            'reference' => $tracking_ref,
+            'reference' => MobbexHelper::getReference($cart),
             'currency' => 'ARS',
             'description' => 'Carrito #' . $cart->id,
             'test' => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
