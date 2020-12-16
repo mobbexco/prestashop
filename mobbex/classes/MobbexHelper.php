@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.3
+ * @version 2.0.4
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.0.3';
+    const MOBBEX_VERSION = '2.0.4';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -267,7 +267,7 @@ class MobbexHelper
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
         } elseif ($status == 1 && $source_type != 'card') {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING);
-        } elseif ($status == 2 || $status == 3) {
+        } elseif ($status == 2 || $status == 3 || $status == 100) {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED);

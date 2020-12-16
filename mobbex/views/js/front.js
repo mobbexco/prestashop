@@ -7,13 +7,13 @@ function getOptions(checkoutUrl, checkoutId) {
     type: 'checkout',
     onResult: (data) => {
       var status = data.status.code;
-      var link = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.id;
+      var link = checkoutUrl + '&status=' + status + '&transactionId=' + data.id;
 
       window.top.location.href = link;
     },
     onPayment: (data) => {
       var status = data.data.status.code;
-      var link = checkoutUrl + '&status=' + status + '&type=' + getType(status) + '&transactionId=' + data.data.id;
+      var link = checkoutUrl + '&status=' + status + '&transactionId=' + data.data.id;
 
       // If order status is not recoverable
       if (!((status >= 400 && status <= 500 && status != 401 && status != 402) || status == 0)) {
@@ -42,17 +42,6 @@ function getOptions(checkoutUrl, checkoutId) {
 function htmlDecode(input) {
   var doc = new DOMParser().parseFromString(input, "text/html");
   return doc.documentElement.textContent;
-}
-
-// Get type from status 
-function getType(status) {
-  if (status < 2 || status > 400) {
-    return "none";
-  } else if (status == 2) {
-    return "cash";
-  } else if (status == 3 || status == 4 || status >= 200 && status < 400) {
-    return "card";
-  }
 }
 
 function renderOptions() {

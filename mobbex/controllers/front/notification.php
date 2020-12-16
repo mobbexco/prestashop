@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.3
+ * @version 2.0.4
  * @see     PaymentModuleCore
  */
 
@@ -55,19 +55,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $transaction_id = Tools::getValue('transactionId');
         $status = (int) Tools::getValue('status');
 
-        // Only validate Status 2, 3 or 200 nothing else
-        if ($status == 200 || $status == 3 || $status == 2) {
-            if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
-                // Hook validate order
-                Hook::exec('actionValidateOrder', array(
-                    'cart' => $context->cart,
-                    'order' => $order,
-                    'customer' => $context->customer,
-                    'currency' => $context->currency,
-                    'orderStatus' => (int) $result['orderStatus'],
-                ));
-            }
-
+        // Redirect
+        if ($status > 1 && $status < 400) {
             Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $cart_id . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&transactionId=' . $transaction_id . '&key=' . $secure_key);
         } else {
             Tools::redirect('index.php?controller=order&step=1');
