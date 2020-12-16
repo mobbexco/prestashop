@@ -4,7 +4,7 @@ Módulo del Gateway Mobbex para Prestashop.
 
 ### Versión Actual
 
-- 2.0.3
+- 2.0.4
 
 ### Versiones de Prestashop Soportadas  
 

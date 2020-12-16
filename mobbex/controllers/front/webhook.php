@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.3
+ * @version 2.0.4
  * @see     PaymentModuleCore
  */
 
@@ -76,11 +76,8 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         // PrestaShopLogger::addLog('Transaction ID: ' . $transaction_id);
         // PrestaShopLogger::addLog('Status ID: ' . $result['status']);
 
-        // Only validate Status 2 or 200 nothing else
-        // Status 2 => Waiting for Payment
-        // Status 3 => Authorized
-        // Status 200 => Paid
-        if ($status == 200 || $status == 3 || $status == 2) {
+        // Validate Status
+        if ($status == 2 || $status == 3 || $status == 100 || $status == 200) {
             if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
                 $this->module->validateOrder(
                     $cart_id,
