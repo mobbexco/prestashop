@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.0.4
+ * @version 2.0.5
  * @see     PaymentModuleCore
  */
 
@@ -14,7 +14,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.0.4';
+    const MOBBEX_VERSION = '2.0.5';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -158,12 +158,24 @@ class MobbexHelper
         $products = $cart->getProducts(true);
 
         foreach ($products as $product) {
-            //p($product);
+
             $image = Image::getCover($product['id_product']);
-            $link = new Link; //because getImageLInk is not static function
+
+            $prd = new Product($product['id_product']);
+            if ($prd->hasCombinations()) {
+                $images = $prd->getCombinationImages(Context::getContext()->language->id);
+                $image = $images[$product['id_product_attribute']][0];
+            }
+
+            $link = new Link;
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            $items[] = array("image" => 'https://' . $imagePath, "description" => $product['name'], "quantity" => $product['cart_quantity'], "total" => round($product['price_wt'], 2));
+            $items[] = [
+                "image" => 'https://' . $imagePath, 
+                "description" => $product['name'], 
+                "quantity" => $product['cart_quantity'], 
+                "total" => round($product['price_wt'], 2)
+            ];
         }
 
         // Create data
