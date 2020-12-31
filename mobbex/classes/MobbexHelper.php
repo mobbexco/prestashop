@@ -162,7 +162,7 @@ class MobbexHelper
             $image = Image::getCover($product['id_product']);
 
             $prd = new Product($product['id_product']);
-            if ($prd->hasCombinations()) {
+            if ($prd->hasAttributes()) {
                 $images = $prd->getCombinationImages(Context::getContext()->language->id);
                 $image = $images[$product['id_product_attribute']][0];
             }
