@@ -322,6 +322,9 @@ class MobbexHelper
         }
     }
 
+    /**
+     * Return the plans that were not selected in the product and category page
+     */
     public static function getInstallments($products)
     {
 
@@ -335,14 +338,21 @@ class MobbexHelper
         );
 
         foreach ($products as $product) {
-
+            $categories = Product::getProductCategoriesFull($product['id_product']);
             foreach ($ahora as $key => $value) {
 
                 if (MobbexCustomFields::getCustomField($product['id_product'], 'product', $key)['data'] === 'yes') {
                     $installments[] = '-' . $key;
                     unset($ahora[$key]);
+                }else{
+                    foreach($categories as $category){
+                        if (MobbexCustomFields::getCustomField($category['id_category'], 'category', $key)['data'] === 'yes') {
+                            $installments[] = '-' . $key;
+                            unset($ahora[$key]);
+                            break;
+                        }
+                    }
                 }
-
             }
 
         }

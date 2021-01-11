@@ -94,11 +94,11 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) { 
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) {
                 return false;
             }
         }
@@ -932,5 +932,82 @@ class Mobbex extends PaymentModule
             }
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', $key, $value);
         }
+    }
+
+    /**
+     * Create costumer hook for Prestashop 1.6 - 1.7
+     *
+     * Support for 1.6 and 1.7
+     *
+     * @return string
+     */
+    public function hookDisplayBackOfficeCategory($params)
+    {
+        //depending on the version $params['request'] can be empty 
+        if($params['request']){
+            $category_id = (int)$params['request']->get('categoryId');
+        }else{
+            $category_id = $params['id_category'] ? : Tools::getValue('id_category');
+        }
+        
+        
+        $ahora = array(
+            'ahora_3' => array(
+                'label' => 'Ahora 3',
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_3')['data'],
+            ),
+            'ahora_6' => array(
+                'label' => 'Ahora 6',
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_6')['data'],
+            ),
+            'ahora_12' => array(
+                'label' => 'Ahora 12',
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_12')['data'],
+            ),
+            'ahora_18' => array(
+                'label' => 'Ahora 18',
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_18')['data'],
+            ),
+        );
+        
+        $this->context->smarty->assign(
+            array(
+                'ahora' => $ahora,
+                'ps_version' => MobbexHelper::getPsVersion(),
+            )
+        );
+
+        return $this->display(__FILE__, 'views/templates/hooks/category_fields.tpl');
+        
+    }
+
+
+    /**
+     * Save the selected payment plans in the category page
+     */
+    public function hookCategoryAddition($params)
+    {
+        $ahora = array(
+            'ahora_3',
+            'ahora_6',
+            'ahora_12',
+            'ahora_18',
+        );
+
+        foreach ($ahora as $key) {
+            $value = 'no';
+            if (!empty($_POST[$key])) {
+                $value = 'yes';
+            }
+            MobbexCustomFields::saveCustomField($params['category']->id, 'category', $key, $value);
+        }
+    }
+ 
+    /**
+     * Save the selected payment plans in the category edit page
+     */
+    public function hookCategoryUpdate($params)
+    {
+        $this->hookCategoryAddition($params);
     }
 }
