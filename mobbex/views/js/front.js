@@ -54,11 +54,12 @@ function renderOptions() {
   <input type="radio" name="walletCard" id="newCard" value="newCard" class="ps-shown-by-js">
   <span></span>
 </span>
-<label for="newCard">
-  Agregar Tarjeta
+<label for="newCard" id="newCardLabel">
+  Utilizar otra tarjeta / Medio de pago
 </label>
 `
   mobbexWallet.appendChild(child)
+  document.getElementById("newCard").checked = true
   document.getElementById("newCard").addEventListener("click", function () {
     let forms = document.getElementsByClassName("walletForm")
     for (let i = 0; i < forms.length; i++) { forms[i].style.display = "none" }
@@ -112,13 +113,15 @@ function renderWallet(wallet, width) {
   })
 }
 
-function renederNoCardsMessage() {
-  let child = document.createElement("div")
+function renderNoCardsMessage() {
+  //let child = document.createElement("div")
   let mobbexWallet = document.getElementById("mobbexWallet")
-  child.classList += "payment-option"
+  document.getElementById("newCardLabel").innerHTML = "Pagar con Mobbex"
+  mobbexWallet.style.display = "none"
+  /* child.classList += "payment-option"
   child.innerHTML = '<p>No hay tarjetas disponibles</p>'
   child.style.margin = "1.5rem 0"
-  mobbexWallet.appendChild(child)
+  mobbexWallet.appendChild(child) */
 }
 
 function executeWallet(checkoutUrl) {
