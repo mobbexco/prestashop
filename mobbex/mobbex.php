@@ -870,71 +870,23 @@ class Mobbex extends PaymentModule
      * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
      * to call the API
      * 
-     * Support for 1.6 Only
+     * Support for 1.6 - 1.7
      *
      * @return string
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
         $idRefunded = (int)Configuration::get('PS_OS_REFUND');//get id of refunded state
-        $order = Db::getInstance()->getRow(' SELECT * FROM '._DB_PREFIX_.'orders WHERE id_order = '.$params['id_order']);
-        if($params['newOrderStatus']->id == $idRefunded && $order['module'] == 'mobbex'){
-            $transactionData = Db::getInstance()->getRow(' SELECT data FROM '._DB_PREFIX_.'mobbex_transaction WHERE cart_id = '.$order['id_cart']);
-            $transaction_id = $this->processOrderData($transactionData['data']);
-            $curl = curl_init();
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => "https://api.mobbex.com/p/operations/".$transaction_id."/refund",
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_ENCODING => "",
-                CURLOPT_MAXREDIRS => 10,
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-                CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_HTTPHEADER => $this->getHeaders(),
-            ));
-
-            $response = curl_exec($curl);
-            $err = curl_error($curl);
-            curl_close($curl);
-
-            if ($err) {
-                d("CURL Error #:" . $err);
-            } else {
-                $res = json_decode($response, true);
-    
-                return $res['result'];
-            }
+        $order = new Order($params['id_order']);
+        if($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex'){
+            $transactionData = MobbexTransaction::getTransaction($order->id_cart);
+            $response = MobbexHelper::porcessRefund($transactionData['payment']['id']);
+            return $response;
         }
         return false;//not a mobbex transaction
     }
 
-    /**
-     * Return headers for api request
-     */
-    private static function getHeaders()
-    {
-        return array(
-            'cache-control: no-cache',
-            'content-type: application/json',
-            'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
-            'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
-        );
-    }
-
-    /**
-     * Process the data string of mobbex_transaction table 
-     * and return the transaction_id of mobbex transaction
-     */
-    private function processOrderData($data){
-        $transactio_id = '';
-        if(strlen($data) > 0){
-            $result = strstr($data,'"id":');
-            $result2 = strstr($result,',',true);
-            $arrayNo= array('"','id:');//strings we need to cut
-            $transactio_id = str_replace($arrayNo, "", $result2);
-        }
-        return $transactio_id;
-    }
+  
 
     /**
      * Create costumer hook for Prestashop 1.6
