@@ -338,15 +338,35 @@ class MobbexHelper
         );
 
         foreach ($products as $product) {
-            $categories = Product::getProductCategoriesFull($product['id_product']);
-            foreach ($ahora as $key => $value) {
+            $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'common_plans'));
+            $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'advanced_plans'));
 
-                if (MobbexCustomFields::getCustomField($product['id_product'], 'product', $key)['data'] === 'yes') {
+            if (!empty($checkedCommonPlans)) {
+                foreach ($checkedCommonPlans as $key => $commonPlan) {
+                    $installments[] = '-' . $commonPlan;
+                    unset($checkedCommonPlans[$key]);
+                }
+            }
+
+            if (!empty($checkedAdvancedPlans)) {
+                foreach ($checkedAdvancedPlans as $key => $advancedPlan) {
+                    $installments[] = '+uid:' . $advancedPlan;
+                    unset($checkedAdvancedPlans[$key]);
+                }
+            }
+
+            // Check "Ahora" custom fields
+            $categories = Product::getProductCategoriesFull($product['id_product']);
+
+            foreach ($ahora as $key => $value) {
+                // If plan is checked and it's not added yet, add to filter
+                $checked = MobbexCustomFields::getCustomField($product['id_product'], 'product', $key);
+                if ($checked === 'yes' && !in_array('-' . $key, $installments)) {
                     $installments[] = '-' . $key;
                     unset($ahora[$key]);
-                }else{
+                } else if (!in_array('-' . $key, $installments)){
                     foreach($categories as $category){
-                        if (MobbexCustomFields::getCustomField($category['id_category'], 'category', $key)['data'] === 'yes') {
+                        if (MobbexCustomFields::getCustomField($category['id_category'], 'category', $key) === 'yes') {
                             $installments[] = '-' . $key;
                             unset($ahora[$key]);
                             break;
@@ -354,11 +374,87 @@ class MobbexHelper
                     }
                 }
             }
-
         }
 
         return $installments;
+    }
 
+    /**
+     * Get sources with common plans from mobbex.
+     * @param integer|null $total
+     */
+    public static function getSources($total = null)
+    {
+        $curl = curl_init();
+
+        $data = $total ? '?total=' . $total : null;
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://api.mobbex.com/p/sources' . $data,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => self::getHeaders(),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            d("cURL Error #:" . $err);
+        } else {
+            $response = json_decode($response, true);
+            $data = $response['data'];
+
+            if ($data) {
+                return $data;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Get sources with advanced rule plans from mobbex.
+     * @param string $rule
+     */
+    public static function getSourcesAdvanced($rule = 'externalMatch')
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => str_replace('{rule}', $rule, 'https://api.mobbex.com/p/sources/rules/{rule}/installments'),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => self::getHeaders(),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+
+        curl_close($curl);
+
+        if ($err) {
+            d("cURL Error #:" . $err);
+        } else {
+            $response = json_decode($response, true);
+            $data = $response['data'];
+
+            if ($data) {
+                return $data;
+            }
+        }
+
+        return [];
     }
 
     /**

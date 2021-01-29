@@ -29,7 +29,7 @@ class MobbexCustomFields extends ObjectModel
     );
 
     /**
-     * Saves the custom field with the data
+     * Saves custom field data
      * 
      * @param int $row_id
      * @param string $object
@@ -40,26 +40,37 @@ class MobbexCustomFields extends ObjectModel
      */
     public static function saveCustomField($row_id, $object, $field_name, $data)
     {
-        // if the field for that object already exists
-        $previous_value = MobbexCustomFields::getCustomField($row_id, $object, $field_name);
+        // If the field for that object already exists
+        $previousValue = MobbexCustomFields::getCustomField($row_id, $object, $field_name, 'id');
 
         // Save custom field
-        $custom_field = new MobbexCustomFields($previous_value['id']?:null);
+        $customField = new MobbexCustomFields($previousValue?:null);
 
-        $custom_field->row_id = $row_id;
-        $custom_field->object = $object;
-        $custom_field->field_name = $field_name;
-        $custom_field->data = $data;
+        $customField->row_id = $row_id;
+        $customField->object = $object;
+        $customField->field_name = $field_name;
+        $customField->data = $data;
 
-        $custom_field->save();
+        $customField->save();
     }
 
-    public static function getCustomField($row_id, $object, $field_name)
+    /**
+     * Get custom field data
+     * 
+     * @param int $row_id
+     * @param string $object
+     * @param string $field_name
+     * @param string $data
+     * @param string $searched_column
+     * 
+     * @return string
+     */
+    public static function getCustomField($row_id, $object, $field_name, $searched_column = 'data')
     {
         $custom_field = new MobbexCustomFields();
 
         $sql = new DbQuery();
-        $sql->select('*');
+        $sql->select($searched_column);
         $sql->from('mobbex_custom_fields', 'f');
         $sql->where('f.row_id = ' . $row_id);
         $sql->where("f.object = '$object'");
@@ -67,6 +78,6 @@ class MobbexCustomFields extends ObjectModel
         $sql->limit(1);
 
         $result = Db::getInstance()->executeS($sql);
-        return !empty($result[0]) ? $result[0] : false;
+        return !empty($result[0][$searched_column]) ? $result[0][$searched_column] : false;
     }
 }

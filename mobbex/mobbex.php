@@ -905,33 +905,76 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayAdminProductsExtra($params)
     {
-        $product_id = $params['id_product'] ? : Tools::getValue('id_product');
-        $product = new Product($product_id);
+        $productId = $params['id_product'] ? : Tools::getValue('id_product');
+        $product = new Product($productId);
 
         if (Validate::isLoadedObject($product)) {
+            $commonPlansFields = [];
+            $advancedPlansFields = [];
 
-            $ahora = array(
-                'ahora_3' => array(
-                    'label' => 'Ahora 3',
-                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_3')['data'],
-                ),
-                'ahora_6' => array(
-                    'label' => 'Ahora 6',
-                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_6')['data'],
-                ),
-                'ahora_12' => array(
-                    'label' => 'Ahora 12',
-                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_12')['data'],
-                ),
-                'ahora_18' => array(
-                    'label' => 'Ahora 18',
-                    'data' => MobbexCustomFields::getCustomField($product_id, 'product', 'ahora_18')['data'],
-                ),
-            );
+            // Get sources with common plans from mobbex and saved values from database
+            $sources = MobbexHelper::getSources();
+            $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'common_plans'));
+
+            foreach ($sources as $source) {
+                // If source has plans assign data for render checkboxes
+                if (!empty($source['installments']['list'])) {
+                    $installments = $source['installments']['list'];
+
+                    foreach ($installments as $installment) {
+                        $reference = $installment['reference'];
+                        
+                        // If it hasn't been added to array yet
+                        if (!array_key_exists('common_plan_' . $reference, $commonPlansFields)) {
+                            $isChecked = is_array($checkedCommonPlans) ? in_array($reference, $checkedCommonPlans) : false;
+
+                            // Check decrepated custom fields for backward support
+                            if (in_array($reference, ['ahora_3', 'ahora_6', 'ahora_12', 'ahora_18'])) {
+                                if (MobbexCustomFields::getCustomField($productId, 'product', $reference) === 'yes') {
+                                    $isChecked = true;
+                                }
+                            }
+
+                            // Add to checkbox data
+                            $commonPlansFields['common_plan_' . $reference] = [
+                                'label'   => $installment['description'] ? : $installment['name'],
+                                'data'   => $isChecked ? 'yes' : false
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Get sources with advanced plans from mobbex and saved values from database
+            $sourcesAdvanced = MobbexHelper::getSourcesAdvanced();
+            $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'advanced_plans'));
+
+            foreach ($sourcesAdvanced as $source) {
+                // If source has plans assign data for render checkboxes
+                if (!empty($source['installments'])) {
+                    foreach ($source['installments'] as $installment) {
+                        $uid = $installment['uid'];
+
+                        // If it hasn't been added to array yet
+                        if (!array_key_exists('advanced_plan_' . $uid, $advancedPlansFields)) {
+                            $isChecked = is_array($checkedAdvancedPlans) ? in_array($uid, $checkedAdvancedPlans) : false;
+
+                            // Add to checkbox data
+                            $advancedPlansFields['advanced_plan_' . $uid] = [
+                                'label'   => $installment['description'] ? : $installment['name'],
+                                'data'   => $isChecked ? 'yes' : false,
+                                'sourceName' => $source['source']['name'],
+                                'sourceRef' => $source['source']['reference'],
+                            ];
+                        }
+                    }
+                }
+            }
 
             $this->context->smarty->assign(
                 array(
-                    'ahora' => $ahora,
+                    'commonPlansFields' => $commonPlansFields,
+                    'advancedPlansFields' => $advancedPlansFields,
                     'ps_version' => MobbexHelper::getPsVersion(),
                 )
             );
@@ -942,20 +985,35 @@ class Mobbex extends PaymentModule
 
     public function hookActionProductUpdate($params)
     {
-        $ahora = array(
-            'ahora_3',
-            'ahora_6',
-            'ahora_12',
-            'ahora_18',
-        );
-
-        foreach ($ahora as $key) {
-            $value = 'no';
-            if (!empty($_POST[$key])) {
-                $value = 'yes';
+        $ahoraFields = ['ahora_3', 'ahora_6', 'ahora_12', 'ahora_18'];
+        
+        // Delete decrepated "Ahora" custom fields from database (are now saved in common_plans field)
+        foreach ($ahoraFields as $key) {
+            $customFieldId = MobbexCustomFields::getCustomField($params['id_product'], 'product', $key, 'id');
+            if (!empty($customFieldId)) {
+                $customField = new MobbexCustomFields($customFieldId);
+                $customField->delete();
             }
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', $key, $value);
         }
+
+        $commonPlans = [];
+        $advancedPlans = [];
+        $postFields = $_POST;
+
+        // Get plans selected and save
+        foreach ($postFields as $id => $value) {
+            if (strpos($id, 'common_plan_') !== false && $value === 'on') {
+                $uid = explode('common_plan_', $id)[1];
+                $commonPlans[] = $uid;
+            } else if (strpos($id, 'advanced_plan_') !== false && $value === 'on') {
+                $uid = explode('advanced_plan_', $id)[1];
+                $advancedPlans[] = $uid;
+            } else {
+                unset($postFields[$id]);
+            }
+        }
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
     }
 
     /**
@@ -973,27 +1031,26 @@ class Mobbex extends PaymentModule
         }else{
             $category_id = $params['id_category'] ? : Tools::getValue('id_category');
         }
-        
-        
+
         $ahora = array(
             'ahora_3' => array(
                 'label' => 'Ahora 3',
-                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_3')['data'],
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_3'),
             ),
             'ahora_6' => array(
                 'label' => 'Ahora 6',
-                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_6')['data'],
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_6'),
             ),
             'ahora_12' => array(
                 'label' => 'Ahora 12',
-                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_12')['data'],
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_12'),
             ),
             'ahora_18' => array(
                 'label' => 'Ahora 18',
-                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_18')['data'],
+                'data' => MobbexCustomFields::getCustomField($category_id, 'category', 'ahora_18'),
             ),
         );
-        
+
         $this->context->smarty->assign(
             array(
                 'ahora' => $ahora,
@@ -1002,7 +1059,6 @@ class Mobbex extends PaymentModule
         );
 
         return $this->display(__FILE__, 'views/templates/hooks/category_fields.tpl');
-        
     }
 
 
