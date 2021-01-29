@@ -73,14 +73,14 @@
     <button type="button" id="open-mobbex-plans">{$style_settings['text']}<img src="https://res.mobbex.com/images/sources/mobbex.png" width="40" height="40" style="margin-left: 15px; border-radius: 40px;"></button>
     <div class="mobbex-plans-modal">
         <button type="button" id="close-mobbex-plans"></button>
-        <iframe id="iframe" src="https://mobbex.com/p/sources/widget/arg/{$tax_id}?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
+        <iframe id="mobbex-plans-iframe" src="https://mobbex.com/p/sources/widget/arg/{$tax_id}?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
     </div>
     
         <script>
         var mobbexPlansOpen  = document.getElementById('open-mobbex-plans');
         var mobbexPlansClose = document.getElementById('close-mobbex-plans');
         var mobbexPlansModal = document.querySelector('.mobbex-plans-modal');
-        var iframe = document.getElementById('iframe');
+        var iframe = document.getElementById('mobbex-plans-iframe');
         //retrieve smarty variables
         var price_one = "{$price_amount}";
         var tax_id = "{$tax_id}";
