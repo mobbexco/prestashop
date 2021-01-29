@@ -94,11 +94,11 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate')) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate')) {
                 return false;
             }
         }
@@ -863,6 +863,30 @@ class Mobbex extends PaymentModule
 
         return $this->display(__FILE__, $template);
     }
+
+
+    /**
+     * Is trigger when the state of an order is change, and works only if it is a mobbex transaction
+     * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
+     * to call the API
+     * 
+     * Support for 1.6 - 1.7
+     *
+     * @return string
+     */
+    public function hookActionOrderStatusPostUpdate($params)
+    {
+        $idRefunded = (int)Configuration::get('PS_OS_REFUND');//get id of refunded state
+        $order = new Order($params['id_order']);
+        if($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex'){
+            $transactionData = MobbexTransaction::getTransaction($order->id_cart);
+            $response = MobbexHelper::porcessRefund($transactionData['payment']['id']);
+            return $response;
+        }
+        return false;//not a mobbex transaction
+    }
+
+  
 
     /**
      * Create costumer hook for Prestashop 1.6
