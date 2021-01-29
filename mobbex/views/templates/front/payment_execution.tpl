@@ -58,7 +58,7 @@
     renderOptions()
 
     var walletJson = '{/literal}{$wallet}{literal}'
-    if (walletJson === '' || typeof walletJson === 'undefined') renederNoCardsMessage()
+    if (walletJson === '' || typeof walletJson === 'undefined') renderNoCardsMessage()
     else renderWallet(JSON.parse(walletJson.replace(/&quot;/g, '"')), true)
 
     let cards = document.getElementsByName("walletCard")

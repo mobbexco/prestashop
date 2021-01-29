@@ -59,7 +59,7 @@
       if (isWallet === 1) {
         renderOptions()
         var walletJson = '{/literal}{$wallet}{literal}'
-        if (walletJson === '' || typeof walletJson === 'undefined') renederNoCardsMessage()
+        if (walletJson === '' || typeof walletJson === 'undefined') renderNoCardsMessage()
         else renderWallet(JSON.parse(walletJson.replace(/&quot;/g,'"')))
       }
       {/literal}
