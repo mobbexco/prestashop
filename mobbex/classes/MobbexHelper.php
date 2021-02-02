@@ -112,6 +112,8 @@ class MobbexHelper
         $default_logo = null;
         if (!empty(Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO))) {
             $default_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ .Configuration::get('PS_LOGO');
+        }else{
+            $custom_logo = null;
         }
 
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
@@ -143,6 +145,7 @@ class MobbexHelper
 
         return $options;
     }
+
 
     public static function getReference($cart)
     {
