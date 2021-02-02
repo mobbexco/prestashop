@@ -488,4 +488,38 @@ class MobbexHelper
             return $res['result'];
         }
     }
+
+    /**
+     * Return payment data from a cart, this additional information is for the invoice pdf
+     * 
+     * @param int $id_cart
+     * @return String
+     */
+    public function getInvoiceData($id_cart)
+    {
+        $mobbexTransactionData = Db::getInstance()->getRow(' SELECT data FROM '._DB_PREFIX_.'mobbex_transaction WHERE cart_id = '.$id_cart);
+        $arrayResult = json_decode($mobbexTransactionData['data'],true);
+        $cardNumber = $arrayResult['payment']['source']['number'];
+        $habienteName= $arrayResult['entity']['name'];
+        $idHabiente = $arrayResult['customer']['identification'];
+
+        $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
+        //card number
+        if(!empty($cardNumber)){
+            $tab = $tab.'<tr><td><b>Número de Tarjeta: </b></td><td>'.$cardNumber.'</td></tr>
+            <tr><td></td><td></td></tr>';
+        }
+        //customer name
+        if(!empty($habienteName)){
+            $tab = $tab.'<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>'.$habienteName.'</td></tr>
+            <tr><td></td><td></td></tr>';
+        }
+        //customer ID
+        if(!empty($idHabiente)){
+            $tab = $tab.'<tr><td><b>ID Tarjeta-habiente: </b></td><td>'.$idHabiente.'</td></tr>
+            <tr><td></td><td></td></tr>';
+        }
+        $tab = $tab.'</table>';
+        return $tab;
+    }
 }

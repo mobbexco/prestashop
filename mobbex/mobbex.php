@@ -1090,4 +1090,19 @@ class Mobbex extends PaymentModule
     {
         $this->hookCategoryAddition($params);
     }
+
+    /**
+     * Add new information to the Invoice  PDF
+     * - Card Number
+     * - Customer Name
+     * - Customer ID
+     * @param array $params
+     * @return String
+     */
+    public function hookDisplayPDFInvoice($params)
+    {
+        $tab = MobbexHelper::getInvoiceData($params['object']->id_order);
+            
+        return $tab;
+    }
 }
