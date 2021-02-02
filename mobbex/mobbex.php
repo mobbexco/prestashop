@@ -94,11 +94,11 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) { 
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) { 
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) {
                 return false;
             }
         }
