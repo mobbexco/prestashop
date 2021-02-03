@@ -122,7 +122,7 @@ class Mobbex extends PaymentModule
         }
 
         DB::getInstance()->execute(
-            "DROP TABLE `" . _DB_PREFIX_ . "mobbex_custom_fields`"
+            "DROP TABLE IF EXISTS`" . _DB_PREFIX_ . "mobbex_custom_fields`"
         );
         
         $this->_deleteConfigurationStates();
