@@ -121,21 +121,30 @@ class Mobbex extends PaymentModule
             Configuration::deleteByName($key);
         }
 
-        $pendingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_PENDING));
-        $pendingOrderState->delete();
-
-        $waitingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_WAITING));
-        $waitingOrderState->delete();
-
-        $rejectedOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_REJECTED));
-        $rejectedOrderState->delete();
-
         DB::getInstance()->execute(
-            "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields`"
+            "DROP TABLE `" . _DB_PREFIX_ . "mobbex_custom_fields`"
         );
-
+        
+        $this->_deleteConfigurationStates();
+        
         return parent::uninstall();
     }
+
+    /**
+     * Deletes all MOBBEX configurations and the new states added 
+     * in the plugin install
+     */
+    private function _deleteConfigurationStates()
+    {
+        Configuration::deleteByName(MobbexHelper::K_OS_PENDING);
+        Configuration::deleteByName(MobbexHelper::K_OS_WAITING);
+        Configuration::deleteByName(MobbexHelper::K_OS_REJECTED);
+        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Pending';");
+        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Waiting';");
+        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Rejected Payment';");
+        
+    }
+    
 
     /**
      * Entry point to the module configuration page
@@ -489,8 +498,9 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
+        
         // Pending Status
-        if (!Configuration::get(MobbexHelper::K_OS_PENDING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_PENDING)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -515,7 +525,7 @@ class Mobbex extends PaymentModule
         }
 
         // Waiting Status
-        if (!Configuration::get(MobbexHelper::K_OS_WAITING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_WAITING)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -540,7 +550,7 @@ class Mobbex extends PaymentModule
         }
 
         // Rejected Status
-        if (!Configuration::get(MobbexHelper::K_OS_REJECTED)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_REJECTED)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
