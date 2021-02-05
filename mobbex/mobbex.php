@@ -116,6 +116,18 @@ class Mobbex extends PaymentModule
      */
     public function uninstall()
     {
+        $id_pending = Configuration::get(MobbexHelper::K_OS_PENDING);
+        $order_state_pending = new OrderState($id_pending);
+        $order_state_pending->delete();
+
+        $id_waiting = Configuration::get(MobbexHelper::K_OS_WAITING);
+        $order_state_waiting = new OrderState($id_waiting);
+        $order_state_waiting->delete();
+        
+        $id_rejected = Configuration::get(MobbexHelper::K_OS_REJECTED);
+        $order_state_rejected = new OrderState($id_rejected);
+        $order_state_rejected->delete();
+        
         $form_values = $this->getConfigFormValues();
         foreach (array_keys($form_values) as $key) {
             Configuration::deleteByName($key);
@@ -125,25 +137,18 @@ class Mobbex extends PaymentModule
             "DROP TABLE IF EXISTS`" . _DB_PREFIX_ . "mobbex_custom_fields`"
         );
         
-        $this->_deleteConfigurationStates();
-        
-        return parent::uninstall();
-    }
-
-    /**
-     * Deletes all MOBBEX configurations and the new states added 
-     * in the plugin install
-     */
-    private function _deleteConfigurationStates()
-    {
-        Configuration::deleteByName(MobbexHelper::K_OS_PENDING);
-        Configuration::deleteByName(MobbexHelper::K_OS_WAITING);
-        Configuration::deleteByName(MobbexHelper::K_OS_REJECTED);
+        /**
+         * Deletes all MOBBEX new states duplicated
+         * in the plugin install
+         */
         DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Pending';");
         DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Waiting';");
         DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Rejected Payment';");
         
+        return parent::uninstall();
     }
+
+    
     
 
     /**
