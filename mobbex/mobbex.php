@@ -50,7 +50,14 @@ class Mobbex extends PaymentModule
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
-        $this->_createStates();
+        $modules = PaymentModuleCore::getInstalledPaymentModules();
+        foreach ($modules as $module) {
+            // Check if the module is installed
+            if ($module['name'] === $this->name) {
+                $this->_createStates();
+                break;
+            }
+        }
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
@@ -123,11 +130,11 @@ class Mobbex extends PaymentModule
         $id_waiting = Configuration::get(MobbexHelper::K_OS_WAITING);
         $order_state_waiting = new OrderState($id_waiting);
         $order_state_waiting->delete();
-        
+
         $id_rejected = Configuration::get(MobbexHelper::K_OS_REJECTED);
         $order_state_rejected = new OrderState($id_rejected);
         $order_state_rejected->delete();
-        
+
         $form_values = $this->getConfigFormValues();
         foreach (array_keys($form_values) as $key) {
             Configuration::deleteByName($key);
@@ -136,15 +143,7 @@ class Mobbex extends PaymentModule
         DB::getInstance()->execute(
             "DROP TABLE IF EXISTS`" . _DB_PREFIX_ . "mobbex_custom_fields`"
         );
-        
-        /**
-         * Deletes all MOBBEX new states duplicated
-         * in the plugin install
-         */
-        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Pending';");
-        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Waiting';");
-        DB::getInstance()->execute("DELETE FROM `" . _DB_PREFIX_ . "order_state_lang` WHERE name='Rejected Payment';");
-        
+
         return parent::uninstall();
     }
 
