@@ -101,11 +101,11 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) { 
+            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) { 
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate')) {
+            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) {
                 return false;
             }
         }
@@ -878,7 +878,6 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, $template);
     }
 
-
     /**
      * Is trigger when the state of an order is change, and works only if it is a mobbex transaction
      * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
@@ -899,8 +898,6 @@ class Mobbex extends PaymentModule
         }
         return false;//not a mobbex transaction
     }
-
-  
 
     /**
      * Create costumer hook for Prestashop 1.6
@@ -1103,5 +1100,20 @@ class Mobbex extends PaymentModule
     public function hookCategoryUpdate($params)
     {
         $this->hookCategoryAddition($params);
+    }
+ 
+    /**
+     * Add new information to the Invoice  PDF
+     * - Card Number
+     * - Customer Name
+     * - Customer ID
+     * @param array $params
+     * @return String
+     */
+    public function hookDisplayPDFInvoice($params)
+    {
+        $tab = MobbexHelper::getInvoiceData($params['object']->id_order);
+            
+        return $tab;
     }
 }
