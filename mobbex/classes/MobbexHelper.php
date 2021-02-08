@@ -495,13 +495,18 @@ class MobbexHelper
      * @param int $id_cart
      * @return String
      */
-    public function getInvoiceData($id_cart)
+    public static function getInvoiceData($id_cart)
     {
-        $mobbexTransactionData = Db::getInstance()->getRow(' SELECT data FROM '._DB_PREFIX_.'mobbex_transaction WHERE cart_id = '.$id_cart);
-        $arrayResult = json_decode($mobbexTransactionData['data'],true);
-        $cardNumber = $arrayResult['payment']['source']['number'];
-        $habienteName= $arrayResult['entity']['name'];
-        $idHabiente = $arrayResult['customer']['identification'];
+        $transactionData = MobbexTransaction::getTransaction($id_cart);
+
+        // Check if data exists
+        if (empty($transactionData) || !is_array($transactionData)) {
+            return false;
+        }
+
+        $cardNumber = $transactionData['payment']['source']['number'];
+        $habienteName= $transactionData['entity']['name'];
+        $idHabiente = $transactionData['customer']['identification'];
 
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
         //card number

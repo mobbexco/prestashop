@@ -864,7 +864,6 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, $template);
     }
 
-
     /**
      * Is trigger when the state of an order is change, and works only if it is a mobbex transaction
      * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
@@ -885,8 +884,6 @@ class Mobbex extends PaymentModule
         }
         return false;//not a mobbex transaction
     }
-
-  
 
     /**
      * Create costumer hook for Prestashop 1.6
