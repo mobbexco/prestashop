@@ -50,7 +50,14 @@ class Mobbex extends PaymentModule
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
-        $this->_createStates();
+        $modules = PaymentModuleCore::getInstalledPaymentModules();
+        foreach ($modules as $module) {
+            // Check if the module is installed
+            if ($module['name'] === $this->name) {
+                $this->_createStates();
+                break;
+            }
+        }
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
@@ -116,26 +123,32 @@ class Mobbex extends PaymentModule
      */
     public function uninstall()
     {
+        $id_pending = Configuration::get(MobbexHelper::K_OS_PENDING);
+        $order_state_pending = new OrderState($id_pending);
+        $order_state_pending->delete();
+
+        $id_waiting = Configuration::get(MobbexHelper::K_OS_WAITING);
+        $order_state_waiting = new OrderState($id_waiting);
+        $order_state_waiting->delete();
+
+        $id_rejected = Configuration::get(MobbexHelper::K_OS_REJECTED);
+        $order_state_rejected = new OrderState($id_rejected);
+        $order_state_rejected->delete();
+
         $form_values = $this->getConfigFormValues();
         foreach (array_keys($form_values) as $key) {
             Configuration::deleteByName($key);
         }
 
-        $pendingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_PENDING));
-        $pendingOrderState->delete();
-
-        $waitingOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_WAITING));
-        $waitingOrderState->delete();
-
-        $rejectedOrderState = new OrderState((int) Configuration::get(MobbexHelper::K_OS_REJECTED));
-        $rejectedOrderState->delete();
-
         DB::getInstance()->execute(
-            "DROP TABLE IF EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields`"
+            "DROP TABLE IF EXISTS`" . _DB_PREFIX_ . "mobbex_custom_fields`"
         );
 
         return parent::uninstall();
     }
+
+    
+    
 
     /**
      * Entry point to the module configuration page
@@ -489,8 +502,9 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
+        
         // Pending Status
-        if (!Configuration::get(MobbexHelper::K_OS_PENDING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_PENDING)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -515,7 +529,7 @@ class Mobbex extends PaymentModule
         }
 
         // Waiting Status
-        if (!Configuration::get(MobbexHelper::K_OS_WAITING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_WAITING)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -540,7 +554,7 @@ class Mobbex extends PaymentModule
         }
 
         // Rejected Status
-        if (!Configuration::get(MobbexHelper::K_OS_REJECTED)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_REJECTED)) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -1087,7 +1101,7 @@ class Mobbex extends PaymentModule
     {
         $this->hookCategoryAddition($params);
     }
-
+ 
     /**
      * Add new information to the Invoice  PDF
      * - Card Number
