@@ -355,28 +355,46 @@ class MobbexHelper
                 }
             }
 
-            // Check "Ahora" custom fields
-            $categories = Product::getProductCategoriesFull($product['id_product']);
+        }
 
-            foreach ($ahora as $key => $value) {
-                // If plan is checked and it's not added yet, add to filter
-                $checked = MobbexCustomFields::getCustomField($product['id_product'], 'product', $key);
-                if ($checked === 'yes' && !in_array('-' . $key, $installments)) {
-                    $installments[] = '-' . $key;
-                    unset($ahora[$key]);
-                } else if (!in_array('-' . $key, $installments)){
-                    foreach($categories as $category){
-                        if (MobbexCustomFields::getCustomField($category['id_category'], 'category', $key) === 'yes') {
-                            $installments[] = '-' . $key;
-                            unset($ahora[$key]);
-                            break;
-                        }
+        // Check "Ahora" custom fields
+        $categoriesId = array();
+        $categoriesId = self::getCategoriesId($products);
+        foreach ($ahora as $key => $value) {
+            //for each key, if it was not added before, then search all categories.
+            if (!in_array('-' . $key, $installments)){
+                foreach($categoriesId as $cat_id){
+                    if (MobbexCustomFields::getCustomField($cat_id, 'category', $key) === 'yes') {
+                        $installments[] = '-' . $key;
+                        unset($ahora[$key]);
+                        break;
                     }
                 }
             }
         }
 
         return $installments;
+    }
+
+    /**
+     * Return an array with categories ids
+     * @param $listProducts : array
+     * @return array()
+     */
+    private function getCategoriesId($listProducts){
+        
+        $categories_id = array();
+        
+		foreach ($listProducts as $product) {
+            $categories = array();
+			$categories = Product::getProductCategoriesFull($product['id_product']);
+			foreach ($categories as $category) {
+				if(!in_array($category['id_category'], $categories_id)){
+					array_push($categories_id,$category['id_category']);
+				}
+			}
+		}
+		return $categories_id;
     }
 
     /**
