@@ -11,29 +11,11 @@ function getOptions(checkoutUrl, checkoutId) {
 
       window.top.location.href = link;
     },
-    onPayment: (data) => {
-      var status = data.data.status.code;
-      var link = checkoutUrl + '&status=' + status + '&transactionId=' + data.data.id;
-
-      // If order status is not recoverable
-      if (!((status >= 400 && status <= 500 && status != 401 && status != 402) || status == 0)) {
-        // Redirect
-        setTimeout(function () {
-          window.top.location.href = link;
-        }, 5000);
-      }
-    },
-    onOpen: () => {
-      // Do nothing
-    },
     onClose: (cancelled) => {
       // Only if cancelled
       if (cancelled === true) {
         location.reload();
       }
-    },
-    onError: (error) => {
-      // Do nothing
     }
   }
 }

@@ -275,14 +275,14 @@ class MobbexHelper
             'data' => $res,
         );
 
-        if ($status == 200) {
+        if ($status >= 200 && $status < 400 && $status != 201) {
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
         } elseif ($status == 1 && $source_type != 'card') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING);
-        } elseif ($status == 2 || $status == 3 || $status == 100) {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING) ? : Configuration::get('PS_OS_COD_VALIDATION');
+        } elseif ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ? : Configuration::get('PS_OS_COD_VALIDATION');
         } else {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED);
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ? : Configuration::get('PS_OS_CANCELED');
         }
 
         return $result;

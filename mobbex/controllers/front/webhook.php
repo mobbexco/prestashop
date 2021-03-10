@@ -37,13 +37,12 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         // Get Data from request
         $cart_id = Tools::getValue('id_cart');
         $customer_id = Tools::getValue('customer_id');
-        $transaction_id = "";
 
-        // Un-Comment for Debugging
-        // PrestaShopLogger::addLog('Card ID: ' . $cart_id);
-        // PrestaShopLogger::addLog('Customer ID: ' . $customer_id);
+        // Get POST data
+        $res = [];
+        parse_str(file_get_contents('php://input'), $res);
 
-        //Restore the context to process the order validation properly
+        // Restore the context to process the order validation properly
         $context = Context::getContext();
         $context->cart = new Cart((int) $cart_id);
         $context->customer = new Customer((int) $customer_id);
@@ -51,48 +50,24 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         $context->language = new Language((int) $context->customer->id_lang);
 
         $order = new Order((int) Order::getOrderByCartId($cart_id));
-
-        $secure_key = $context->customer->secure_key;
-        $module_name = $this->module->displayName;
-        $currency_id = (int) $context->currency->id;
-
-        $res = array();
-        parse_str(file_get_contents('php://input'), $res);
-
         $result = MobbexHelper::evaluateTransactionData($res['data']);
 
-        // Get Transaction ID here
-        $transaction_id = $result['transaction_id'];
         $status = (int) $result['status'];
-
-        // TODO: This is the right way but is not working even being documented
-        // Change the Order Total based on how much the client paid
-        // $amount = $result['total'];
-
-        // Create order history with status
-        $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
-
-        // Un-Comment for Debugging
-        // PrestaShopLogger::addLog('Transaction ID: ' . $transaction_id);
-        // PrestaShopLogger::addLog('Status ID: ' . $result['status']);
-
-        // Validate Status
         if ($status == 2 || $status == 3 || $status == 100 || $status == 200) {
-            if (Validate::isLoadedObject($context->cart) && $context->cart->orderExists() == false) {
-                $this->module->validateOrder(
-                    $cart_id,
-                    $result['orderStatus'],
-                    $amount,
-                    $result['name'], // Add Card name and Installments if exist here
-                    $result['message'],
-                    array(
-                        '{transaction_id}' => $transaction_id,
-                        '{message}' => $result['message'],
-                    ), // Other data like Transaction ID
-                    $currency_id,
-                    false,
-                    $secure_key
-                );
+            if (Validate::isLoadedObject($context->cart)) {
+                // If Order does not exist
+                if (!$context->cart->orderExists()) {
+                    // Validate Order
+                    $validation_response = $this->createOrder($cart_id, $result, $context, $status);
+                    if (!empty($validation_response)) {
+                        // Save validation errors
+                        $result['data']['validation_error'] = $validation_response;
+                    }
+                } elseif ($context->cart->orderExists() && $status == 200) {
+                    // Update order status
+                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                    $order->save();
+                }
             }
 
             // Save the data
@@ -100,7 +75,60 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         }
 
         echo "OK: " . MobbexHelper::MOBBEX_VERSION;
-
         die();
+    }
+
+    /**
+     * Create order
+     * 
+     * @param $cart_id
+     * @param $amount
+     * @param $status
+     * 
+     * @return $order_id
+     */
+    protected function createOrder($cart_id, $result, $context, $status)
+    {
+        try {
+            $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
+            $transaction_id = $result['transaction_id'] ? : '';
+            $secure_key = $context->customer->secure_key;
+            $currency_id = (int) $context->currency->id;
+
+            $this->module->validateOrder(
+                $cart_id,
+                $result['orderStatus'],
+                $amount,
+                $result['name'], // Add Card name and Installments if exist here
+                $result['message'],
+                array(
+                    '{transaction_id}' => $transaction_id,
+                    '{message}' => $result['message'],
+                ), // Other data like Transaction ID
+                $currency_id,
+                false,
+                $secure_key
+            );
+        } catch (\Exception $e) {
+            // Get order state
+            if ($status >= 200) {
+                $state_id = (int) Configuration::get('PS_OS_PAYMENT');
+            } else {
+                $state_id = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ? : Configuration::get('PS_OS_COD_VALIDATION');
+            }
+
+            // Create order
+            $this->module->validateOrder(
+                $cart_id,
+                $state_id,
+                $amount,
+                'Mobbex'
+            );
+            return 'Error creating Order on Webhook (Basic Order created): ' . $e->getMessage();
+        } finally {
+            return 'Error creating Basic Order on Webhook: ' .  $e->getMessage();
+        }
+
+        return;
     }
 }
