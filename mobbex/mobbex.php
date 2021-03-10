@@ -123,18 +123,23 @@ class Mobbex extends PaymentModule
      */
     public function uninstall()
     {
+        // Delete Order States
         $id_pending = Configuration::get(MobbexHelper::K_OS_PENDING);
         $order_state_pending = new OrderState($id_pending);
         $order_state_pending->delete();
+        Configuration::deleteByName(MobbexHelper::K_OS_PENDING);
 
         $id_waiting = Configuration::get(MobbexHelper::K_OS_WAITING);
         $order_state_waiting = new OrderState($id_waiting);
         $order_state_waiting->delete();
+        Configuration::deleteByName(MobbexHelper::K_OS_WAITING);
 
         $id_rejected = Configuration::get(MobbexHelper::K_OS_REJECTED);
         $order_state_rejected = new OrderState($id_rejected);
         $order_state_rejected->delete();
+        Configuration::deleteByName(MobbexHelper::K_OS_REJECTED);
 
+        // Delete form config
         $form_values = $this->getConfigFormValues();
         foreach (array_keys($form_values) as $key) {
             Configuration::deleteByName($key);
@@ -146,9 +151,6 @@ class Mobbex extends PaymentModule
 
         return parent::uninstall();
     }
-
-    
-    
 
     /**
      * Entry point to the module configuration page
@@ -471,10 +473,7 @@ class Mobbex extends PaymentModule
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
-            // Status
-            MobbexHelper::K_OS_REJECTED => Configuration::get(MobbexHelper::K_OS_REJECTED, ''),
-            MobbexHelper::K_OS_WAITING => Configuration::get(MobbexHelper::K_OS_WAITING, ''),
-            MobbexHelper::K_OS_PENDING => Configuration::get(MobbexHelper::K_OS_PENDING, ''),
+            // IMPORTANT! Do not add Order States here. These values are used to save form fields
         );
     }
 
@@ -502,9 +501,11 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
-        
         // Pending Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_PENDING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_PENDING)
+            || empty(Configuration::get(MobbexHelper::K_OS_PENDING))
+            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_PENDING)))
+        ) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -529,7 +530,10 @@ class Mobbex extends PaymentModule
         }
 
         // Waiting Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_WAITING)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_WAITING) 
+            || empty(Configuration::get(MobbexHelper::K_OS_WAITING)) 
+            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_WAITING)))
+        ) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -554,7 +558,10 @@ class Mobbex extends PaymentModule
         }
 
         // Rejected Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_REJECTED)) {
+        if (!Configuration::hasKey(MobbexHelper::K_OS_REJECTED)
+            || empty(Configuration::get(MobbexHelper::K_OS_REJECTED))
+            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_REJECTED)))
+        ) {
             $order_state = new OrderState();
             $order_state->name = array();
 
@@ -1072,7 +1079,6 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, 'views/templates/hooks/category_fields.tpl');
     }
 
-
     /**
      * Save the selected payment plans in the category page
      */
@@ -1093,7 +1099,7 @@ class Mobbex extends PaymentModule
             MobbexCustomFields::saveCustomField($params['category']->id, 'category', $key, $value);
         }
     }
- 
+
     /**
      * Save the selected payment plans in the category edit page
      */
@@ -1101,7 +1107,7 @@ class Mobbex extends PaymentModule
     {
         $this->hookCategoryAddition($params);
     }
- 
+
     /**
      * Add new information to the Invoice  PDF
      * - Card Number

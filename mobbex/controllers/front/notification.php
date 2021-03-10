@@ -41,24 +41,40 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get Data from request
         $cart_id = Tools::getValue('id_cart');
         $customer_id = Tools::getValue('customer_id');
-
-        //Restore the context to process the order validation properly
-        $context = $this->context;
-        $context->cart = new Cart((int) $cart_id);
-        $context->customer = new Customer((int) $customer_id);
-        $context->currency = new Currency((int) $context->cart->id_currency);
-        $context->language = new Language((int) $context->customer->id_lang);
-
-        $order = new Order((int) Order::getOrderByCartId($cart_id));
-
-        $secure_key = $context->customer->secure_key;
         $transaction_id = Tools::getValue('transactionId');
         $status = (int) Tools::getValue('status');
 
-        // Redirect
+        // Restore context
+        $context = Context::getContext();
+        $context->cart = new Cart((int) $cart_id);
+        $context->customer = new Customer((int) $customer_id);
+
+        $secure_key = $context->customer->secure_key;
+        $order_id = Order::getOrderByCartId($cart_id);
+
+        if (empty($order_id)) {
+            // If order was not created, wait for webhook
+            $seconds = 10;
+            while ($seconds > 0 && !$context->cart->orderExists()) {
+                sleep(1);
+                $context->cart = new Cart((int) $cart_id);
+                $seconds--;
+            }
+        }
+
+        // If status is ok
         if ($status > 1 && $status < 400) {
-            Tools::redirect('index.php?controller=order-confirmation&id_cart=' . $cart_id . '&id_module=' . $this->module->id . '&id_order=' . $order->id . '&transactionId=' . $transaction_id . '&key=' . $secure_key);
+            // Redirect to order confirmation
+            $url = 'index.php?controller=order-confirmation';
+            $url .= '&id_cart=' . $cart_id;
+            $url .= '&id_order=' . $order_id;
+            $url .= '&id_module=' . $this->module->id;
+            $url .= '&transactionId=' . $transaction_id;
+            $url .= '&key=' . $secure_key;
+
+            Tools::redirect($url);
         } else {
+            // Go back to step 1
             Tools::redirect('index.php?controller=order&step=1');
         }
     }
