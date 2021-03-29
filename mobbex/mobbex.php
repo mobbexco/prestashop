@@ -101,11 +101,40 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() || !$this->registerHook('payment') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductButtons') || !$this->registerHook('displayCustomerAccountForm') || !$this->registerHook('actionCustomerAccountAdd') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) { 
+            if (!parent::install() 
+            || !$this->registerHook('payment') 
+            || !$this->registerHook('paymentReturn') 
+            || !$this->registerHook('displayProductButtons') 
+            || !$this->registerHook('displayCustomerAccountForm') 
+            || !$this->registerHook('actionCustomerAccountAdd') 
+            || !$this->registerHook('displayAdminProductsExtra') 
+            || !$this->registerHook('actionProductUpdate') 
+            || !$this->registerHook('actionOrderStatusPostUpdate') 
+            || !$this->registerHook('displayBackOfficeCategory') 
+            || !$this->registerHook('categoryAddition') 
+            || !$this->registerHook('categoryUpdate') 
+            || !$this->registerHook('displayPDFInvoice')
+            || !$this->registerHook('displayBackOfficeHeader')
+            ) {
                 return false;
             }
         } else {
-            if (!parent::install() || !$this->registerHook('paymentOptions') || !$this->registerHook('paymentReturn') || !$this->registerHook('displayProductAdditionalInfo') || !$this->registerHook('additionalCustomerFormFields') || !$this->registerHook('actionObjectCustomerUpdateAfter') || !$this->registerHook('actionObjectCustomerAddAfter') || !$this->registerHook('displayAdminProductsExtra') || !$this->registerHook('actionProductUpdate') || !$this->registerHook('actionOrderStatusPostUpdate') || !$this->registerHook('displayBackOfficeCategory') || !$this->registerHook('categoryAddition') || !$this->registerHook('categoryUpdate') || !$this->registerHook('displayPDFInvoice')) {
+            if (!parent::install() 
+            || !$this->registerHook('paymentOptions') 
+            || !$this->registerHook('paymentReturn') 
+            || !$this->registerHook('displayProductAdditionalInfo') 
+            || !$this->registerHook('additionalCustomerFormFields') 
+            || !$this->registerHook('actionObjectCustomerUpdateAfter') 
+            || !$this->registerHook('actionObjectCustomerAddAfter') 
+            || !$this->registerHook('displayAdminProductsExtra') 
+            || !$this->registerHook('actionProductUpdate') 
+            || !$this->registerHook('actionOrderStatusPostUpdate') 
+            || !$this->registerHook('displayBackOfficeCategory') 
+            || !$this->registerHook('categoryAddition') 
+            || !$this->registerHook('categoryUpdate') 
+            || !$this->registerHook('displayPDFInvoice')
+            || !$this->registerHook('displayBackOfficeHeader')
+            ) {
                 return false;
             }
         }
@@ -123,31 +152,16 @@ class Mobbex extends PaymentModule
      */
     public function uninstall()
     {
-        // Delete Order States
-        $id_pending = Configuration::get(MobbexHelper::K_OS_PENDING);
-        $order_state_pending = new OrderState($id_pending);
-        $order_state_pending->delete();
-        Configuration::deleteByName(MobbexHelper::K_OS_PENDING);
+        // IMPORTANT: States and tables will no longer be deleted
+        // from database when the module is uninstalled.
 
-        $id_waiting = Configuration::get(MobbexHelper::K_OS_WAITING);
-        $order_state_waiting = new OrderState($id_waiting);
-        $order_state_waiting->delete();
-        Configuration::deleteByName(MobbexHelper::K_OS_WAITING);
-
-        $id_rejected = Configuration::get(MobbexHelper::K_OS_REJECTED);
-        $order_state_rejected = new OrderState($id_rejected);
-        $order_state_rejected->delete();
-        Configuration::deleteByName(MobbexHelper::K_OS_REJECTED);
-
-        // Delete form config
-        $form_values = $this->getConfigFormValues();
-        foreach (array_keys($form_values) as $key) {
-            Configuration::deleteByName($key);
+        // Delete module config if option is sent
+        if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true') {
+            $form_values = $this->getConfigFormValues();
+            foreach (array_keys($form_values) as $key) {
+                Configuration::deleteByName($key);
+            }
         }
-
-        DB::getInstance()->execute(
-            "DROP TABLE IF EXISTS`" . _DB_PREFIX_ . "mobbex_custom_fields`"
-        );
 
         return parent::uninstall();
     }
@@ -1109,7 +1123,7 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Add new information to the Invoice  PDF
+     * Add new information to the Invoice PDF
      * - Card Number
      * - Customer Name
      * - Customer ID
@@ -1121,5 +1135,23 @@ class Mobbex extends PaymentModule
         $tab = MobbexHelper::getInvoiceData($params['object']->id_order);
             
         return $tab;
+    }
+
+    /**
+     * Show uninstall options on module manager.
+     * @param array $params
+     * @return void
+     */
+    public function hookDisplayBackOfficeHeader()
+    {
+        // Execute only on module manager page
+        $currentPage = Tools::getValue('controller');
+        if ($currentPage !== 'AdminModulesManage') {
+            return;
+        }
+
+        // Add options using JS
+        $jsPath = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/uninstall_options.js');
+        echo "<script src='$jsPath'></script>";
     }
 }
