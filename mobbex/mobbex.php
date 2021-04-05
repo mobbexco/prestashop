@@ -1030,8 +1030,19 @@ class Mobbex extends PaymentModule
                 unset($postFields[$id]);
             }
         }
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+
+        // If is bulk import
+        if (strnatcasecmp(Tools::getValue('controller'), 'adminImport') === 0) {
+            // Only save when they are not empty
+            if (!empty($commonPlans))
+                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
+            if (!empty($advancedPlans))
+                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+        } else {
+            // Save data directly
+            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
+            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+        }
     }
 
     /**
@@ -1092,11 +1103,17 @@ class Mobbex extends PaymentModule
         );
 
         foreach ($ahora as $key) {
-            $value = 'no';
-            if (!empty($_POST[$key])) {
-                $value = 'yes';
+            $value = (!empty($_POST[$key])) ? 'yes' : 'no';
+
+            // If is bulk import
+            if (strnatcasecmp(Tools::getValue('controller'), 'adminImport') === 0) {
+                // Only save when they are not empty
+                if (!empty($_POST[$key]))
+                    MobbexCustomFields::saveCustomField($params['category']->id, 'category', $key, $value);
+            } else {
+                // Save data directly
+                MobbexCustomFields::saveCustomField($params['category']->id, 'category', $key, $value);
             }
-            MobbexCustomFields::saveCustomField($params['category']->id, 'category', $key, $value);
         }
     }
 
