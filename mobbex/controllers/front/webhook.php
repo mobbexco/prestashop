@@ -109,7 +109,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
                 false,
                 $secure_key
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Get order state
             if ($status >= 200) {
                 $state_id = (int) Configuration::get('PS_OS_PAYMENT');
@@ -126,7 +126,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
             );
             return 'Error creating Order on Webhook (Basic Order created): ' . $e->getMessage();
         } finally {
-            return 'Error creating Basic Order on Webhook: ' .  $e->getMessage();
+            return 'Error creating Basic Order on Webhook';
         }
 
         return;
