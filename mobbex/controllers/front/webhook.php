@@ -5,7 +5,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.1.3
+ * @version 2.1.4
  * @see     PaymentModuleCore
  */
 
@@ -109,7 +109,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
                 false,
                 $secure_key
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Get order state
             if ($status >= 200) {
                 $state_id = (int) Configuration::get('PS_OS_PAYMENT');
@@ -126,7 +126,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
             );
             return 'Error creating Order on Webhook (Basic Order created): ' . $e->getMessage();
         } finally {
-            return 'Error creating Basic Order on Webhook: ' .  $e->getMessage();
+            return 'Error creating Basic Order on Webhook';
         }
 
         return;
