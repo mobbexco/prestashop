@@ -59,9 +59,9 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
                 if (!$context->cart->orderExists()) {
                     // Validate Order
                     $validation_response = $this->createOrder($cart_id, $result, $context, $status);
-                    if (!empty($validation_response)) {
+                    foreach ($validation_response as $error) {
                         // Save validation errors
-                        $result['data']['validation_error'] = $validation_response;
+                        $result['data']['validation_error'][] = $error;
                     }
                 } elseif ($context->cart->orderExists() && $status == 200) {
                     // Update order status
@@ -81,19 +81,22 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
     /**
      * Create order
      * 
-     * @param $cart_id
-     * @param $amount
-     * @param $status
+     * @param string|int $cart_id
+     * @param array $result
+     * @param Context $context
+     * @param int $status
      * 
-     * @return $order_id
+     * @return array $errors
      */
     protected function createOrder($cart_id, $result, $context, $status)
     {
+        $errors = [];
+
         try {
-            $amount = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
+            $amount         = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
             $transaction_id = $result['transaction_id'] ? : '';
-            $secure_key = $context->customer->secure_key;
-            $currency_id = (int) $context->currency->id;
+            $secure_key     = $context->customer->secure_key;
+            $currency_id    = (int) $context->currency->id;
 
             $this->module->validateOrder(
                 $cart_id,
@@ -109,7 +112,33 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
                 false,
                 $secure_key
             );
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
+            $errors[] = 'Error creating Order on Webhook: ' . $e->getMessage();
+
+            // Try create order with basic data
+            $response = $this->createBasicOrder($cart_id, $amount, $status);
+
+            // Add possible response errors
+            $errors = array_merge($errors, $response);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Create basic order
+     * 
+     * @param string|int $cart_id
+     * @param float $amount
+     * @param int $status
+     * 
+     * @return array $errors
+     */
+    protected function createBasicOrder($cart_id, $amount, $status)
+    {
+        $errors = [];
+
+        try {
             // Get order state
             if ($status >= 200) {
                 $state_id = (int) Configuration::get('PS_OS_PAYMENT');
@@ -124,11 +153,10 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
                 $amount,
                 'Mobbex'
             );
-            return 'Error creating Order on Webhook (Basic Order created): ' . $e->getMessage();
-        } finally {
-            return 'Error creating Basic Order on Webhook';
+        } catch (\Exception $e) {
+            $errors[] = 'Error creating Basic Order on Webhook: ' .  $e->getMessage();
         }
 
-        return;
-    }
+        return $errors;
+    } 
 }
