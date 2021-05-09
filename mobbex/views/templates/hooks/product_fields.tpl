@@ -26,7 +26,11 @@
     {assign var='sourcesRendered' value=array()}
     {foreach from=$advancedPlansFields item=item key=key name=name}
       {if empty($sourcesRendered)}
-        <h3>{l s='Planes con reglas avanzadas: Habilite para que aparezcan en el checkout de este producto.' mod='mobbex'}</h3>
+        <div class="row" style="margin-top: 15px">
+          <div class="col-md-12">
+            <h3>{l s='Planes con reglas avanzadas: Habilite para que aparezcan en el checkout de este producto.' mod='mobbex'}</h3>
+          </div>
+        </div>
       {/if}
       {* Sources *}
       {if !in_array($item.sourceName, $sourcesRendered)}
