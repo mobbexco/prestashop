@@ -16,7 +16,7 @@ if (!defined('_PS_VERSION_')) {
 /**
  * This class receives a POST request from the PSP and creates the PrestaShop
  * order according to the request parameters
- **/
+ */
 class MobbexWebhookModuleFrontController extends ModuleFrontController
 {
     public function initContent()
@@ -27,86 +27,85 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         $this->executeWebhook();
     }
 
-    /*
-     * Handles the Instant Payment Notification
-     *
-     * @return bool
+    /**
+     * Handles the Instant Payment Notification.
      */
     protected function executeWebhook()
     {
-        // Get Data from request
-        $cart_id = Tools::getValue('id_cart');
+        // Get data from request
+        $cart_id     = Tools::getValue('id_cart');
         $customer_id = Tools::getValue('customer_id');
-
-        // Get POST data
-        $res = [];
+        $res         = [];
         parse_str(file_get_contents('php://input'), $res);
 
+        if (empty($cart_id) || empty($res))
+            die("WebHook Error: Empty cart_id or Mobbex json data. " . MobbexHelper::MOBBEX_VERSION);
+
         // Restore the context to process the order validation properly
-        $context = Context::getContext();
-        $context->cart = new Cart((int) $cart_id);
+        $context           = Context::getContext();
+        $context->cart     = new Cart((int) $cart_id);
         $context->customer = new Customer((int) $customer_id);
         $context->currency = new Currency((int) $context->cart->id_currency);
         $context->language = new Language((int) $context->customer->id_lang);
 
-        $order = new Order((int) Order::getOrderByCartId($cart_id));
-        $result = MobbexHelper::evaluateTransactionData($res['data']);
+        // Get evaluated transaction data
+        $trans_data = MobbexHelper::evaluateTransactionData($res['data']);
+        $status     = $trans_data['status'];
 
-        $status = (int) $result['status'];
-        if ($status == 2 || $status == 3 || $status == 100 || $status == 200) {
-            if (Validate::isLoadedObject($context->cart)) {
-                // If Order does not exist
-                if (!$context->cart->orderExists()) {
-                    // Validate Order
-                    $validation_response = $this->createOrder($cart_id, $result, $context, $status);
-                    foreach ($validation_response as $error) {
-                        // Save validation errors
-                        $result['data']['validation_error'][] = $error;
-                    }
-                } elseif ($context->cart->orderExists() && $status == 200) {
-                    // Update order status
-                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
-                    $order->save();
-                }
+        if (Validate::isLoadedObject($context->cart)) {
+            // Try to get Order
+            $order = $context->cart->orderExists() ? new Order(Order::getOrderByCartId($cart_id)) : false;
+
+            // If Order exists
+            if ($order) {
+                // Update order status
+                $order->setCurrentState($trans_data['orderStatus']);
+                $order->save();
+            } else {
+                // Create and validate Order
+                $validation_response = $this->createOrder($cart_id, $trans_data, $context, $status);
+
+                // Save validation errors
+                foreach ($validation_response as $error)
+                    $trans_data['data']['validation_error'][] = $error;
             }
-
-            // Save the data
-            MobbexTransaction::saveTransaction($cart_id, $result['data']);
         }
 
-        echo "OK: " . MobbexHelper::MOBBEX_VERSION;
-        die();
+        // Save the data
+        MobbexTransaction::saveTransaction($cart_id, $trans_data['data']);
+
+        echo "OK: " . MobbexHelper::MOBBEX_VERSION; die();
     }
 
     /**
      * Create order
      * 
      * @param string|int $cart_id
-     * @param array $result
+     * @param array $trans_data
      * @param Context $context
      * @param int $status
      * 
      * @return array $errors
      */
-    protected function createOrder($cart_id, $result, $context, $status)
+    protected function createOrder($cart_id, $trans_data, $context, $status)
     {
         $errors = [];
 
         try {
             $amount         = (float) $context->cart->getOrderTotal(true, Cart::BOTH);
-            $transaction_id = $result['transaction_id'] ? : '';
+            $transaction_id = $trans_data['transaction_id'] ? : '';
             $secure_key     = $context->customer->secure_key;
             $currency_id    = (int) $context->currency->id;
 
             $this->module->validateOrder(
                 $cart_id,
-                $result['orderStatus'],
+                $trans_data['orderStatus'],
                 $amount,
-                $result['name'], // Add Card name and Installments if exist here
-                $result['message'],
+                $trans_data['name'], // Add Card name and Installments if exist here
+                $trans_data['message'],
                 array(
                     '{transaction_id}' => $transaction_id,
-                    '{message}' => $result['message'],
+                    '{message}' => $trans_data['message'],
                 ), // Other data like Transaction ID
                 $currency_id,
                 false,
@@ -139,11 +138,14 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
         $errors = [];
 
         try {
-            // Get order state
-            if ($status >= 200) {
+            // Get order status
+            $state = MobbexHelper::getState($status);
+            if ($state == 'approved') {
                 $state_id = (int) Configuration::get('PS_OS_PAYMENT');
-            } else {
-                $state_id = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ? : Configuration::get('PS_OS_COD_VALIDATION');
+            } else if ($state == 'on-hold') {
+                $state_id = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ?: (int) Configuration::get(MobbexHelper::K_OS_PENDING);
+            } else if ($state == 'cancelled'){
+                $state_id = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_CANCELED');
             }
 
             // Create order

@@ -524,7 +524,8 @@ class Mobbex extends PaymentModule
             $order_state->name = array();
 
             foreach (Language::getLanguages() as $language) {
-                $order_state->name[$language['id_lang']] = 'Pending';
+                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
+                $order_state->name[$language['id_lang']] = $this->l('Pending');
             }
 
             $order_state->send_email = false;
@@ -536,10 +537,8 @@ class Mobbex extends PaymentModule
 
             $order_state->module_name = $this->name;
 
-            if ($order_state->add()) {
-                // Add some image
-            }
-
+            // Add to database
+            $order_state->add();
             Configuration::updateValue(MobbexHelper::K_OS_PENDING, (int) $order_state->id);
         }
 
@@ -551,9 +550,8 @@ class Mobbex extends PaymentModule
             $order_state = new OrderState();
             $order_state->name = array();
 
-            foreach (Language::getLanguages() as $language) {
-                $order_state->name[$language['id_lang']] = 'Waiting';
-            }
+            foreach (Language::getLanguages() as $language)
+                $order_state->name[$language['id_lang']] = $this->l('Waiting');
 
             $order_state->send_email = false;
             $order_state->color = '#FEFF64';
@@ -564,10 +562,8 @@ class Mobbex extends PaymentModule
 
             $order_state->module_name = $this->name;
 
-            if ($order_state->add()) {
-                // Add some image
-            }
-
+            // Add to database
+            $order_state->add();
             Configuration::updateValue(MobbexHelper::K_OS_WAITING, (int) $order_state->id);
         }
 
@@ -579,9 +575,8 @@ class Mobbex extends PaymentModule
             $order_state = new OrderState();
             $order_state->name = array();
 
-            foreach (Language::getLanguages() as $language) {
-                $order_state->name[$language['id_lang']] = 'Rejected Payment';
-            }
+            foreach (Language::getLanguages() as $language)
+                $order_state->name[$language['id_lang']] = $this->l('Rejected Payment');
 
             $order_state->send_email = false;
             $order_state->color = '#8F0621';
@@ -592,10 +587,8 @@ class Mobbex extends PaymentModule
 
             $order_state->module_name = $this->name;
 
-            if ($order_state->add()) {
-                // Add some image
-            }
-
+            // Add to database
+            $order_state->add();
             Configuration::updateValue(MobbexHelper::K_OS_REJECTED, (int) $order_state->id);
         }
     }

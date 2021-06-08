@@ -266,7 +266,7 @@ class MobbexHelper
         // Create Result Array
         $result = array(
             'status' => $status,
-            'orderStatus' => (int) Configuration::get(MobbexHelper::K_OS_WAITING),
+            'orderStatus' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
             'message' => $message,
             'name' => $source_name,
             'transaction_id' => $transaction_id,
@@ -275,14 +275,15 @@ class MobbexHelper
             'data' => $res,
         );
 
-        if ($status >= 200 && $status < 400 && $status != 201) {
+        // Validate mobbex status and create order status
+        $state = self::getState($status);
+
+        if ($state == 'on-hold') {
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+        } else if ($state == 'approved') {
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
-        } elseif ($status == 1 && $source_type != 'card') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_PENDING) ? : Configuration::get('PS_OS_COD_VALIDATION');
-        } elseif ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ? : Configuration::get('PS_OS_COD_VALIDATION');
-        } else {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ? : Configuration::get('PS_OS_CANCELED');
+        } else if ($state == 'cancelled'){
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_CANCELED');
         }
 
         return $result;
@@ -545,4 +546,22 @@ class MobbexHelper
         $tab = $tab.'</table>';
         return $tab;
     }
+
+    /**
+	 * Get payment state from Mobbex status code.
+     * 
+     * @param int|string $status
+     * 
+     * @return string "approved" | "on-hold" | "cancelled"
+	 */
+    public static function getState($status)
+    {
+        if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+            return 'on-hold';
+        } else if ($status == 4 || $status >= 200 && $status < 400) {
+            return 'approved';
+        } else {
+            return 'cancelled';
+        }
+	}
 }
