@@ -37,6 +37,7 @@
             border-radius: 6px;
             cursor: pointer;
             box-shadow: 2px 2px 4px 0 rgba(0,0,0,.2);
+            min-height: 40px;
         }
         #close-mobbex-plans {
             position: fixed;
@@ -70,7 +71,11 @@
         }
     </style>
     {/literal}
-    <button type="button" id="open-mobbex-plans">{$style_settings['text']}<img src={$style_settings['button_image']} width="40" height="40" style="margin-left: 15px; border-radius: 40px;"></button>
+    <button type="button" id="open-mobbex-plans">{$style_settings['text']}
+        {if !empty($style_settings['button_image'])}
+            <img src="{$style_settings['button_image']}" width="40" height="40" style="margin-left: 15px; border-radius: 40px;">
+        {/if}
+    </button>
     
     <div class="mobbex-plans-modal">
         <button type="button" id="close-mobbex-plans"></button>

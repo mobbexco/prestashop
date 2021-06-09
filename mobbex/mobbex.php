@@ -770,11 +770,9 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $image_url = '';
-        if(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)){
-            $image_url = Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL);
-        }else{
-            $image_url ='https://res.mobbex.com/images/sources/mobbex.png';
+        $image_url ='https://res.mobbex.com/images/sources/mobbex.png';
+        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
+            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
         }
 
         $this->context->smarty->assign(
