@@ -94,6 +94,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR);
         Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
+        Configuration::updateValue(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL);
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
@@ -392,6 +393,13 @@ class Mobbex extends PaymentModule
                     ),
                     array(
                         'type' => 'text',
+                        'label' => $this->l('Imagen del botón de financiación ( URL )'),
+                        'name' => MobbexHelper::K_PLANS_IMAGE_URL,
+                        'required' => false,
+                        'desc' => $this->l('Opcional. Debe utilizar la URL completa y debe ser HTTPS.'),
+                    ),
+                    array(
+                        'type' => 'text',
                         'label' => $this->l('Tax ID'),
                         'name' => MobbexHelper::K_PLANS_TAX_ID,
                         'required' => false,
@@ -484,6 +492,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT),
             MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
+            MobbexHelper::K_PLANS_IMAGE_URL => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
@@ -754,6 +763,11 @@ class Mobbex extends PaymentModule
             return;
         }
 
+        $image_url ='https://res.mobbex.com/images/sources/mobbex.png';
+        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
+            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
+        }
+
         $this->context->smarty->assign(
             [
                 'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
@@ -763,6 +777,7 @@ class Mobbex extends PaymentModule
                     'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
                     'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
                     'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+                    'button_image' => $image_url, 
                 ],
             ]
         );
