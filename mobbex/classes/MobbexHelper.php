@@ -332,7 +332,8 @@ class MobbexHelper
     {
 
         $installments = [];
-
+        $total_advanced_plans = [];
+        
         $ahora = array(
             'ahora_3' => 'Ahora 3',
             'ahora_6' => 'Ahora 6',
@@ -343,7 +344,6 @@ class MobbexHelper
         foreach ($products as $product) {
             $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'common_plans'));
             $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'advanced_plans'));
-
             if (!empty($checkedCommonPlans)) {
                 foreach ($checkedCommonPlans as $key => $commonPlan) {
                     $installments[] = '-' . $commonPlan;
@@ -352,18 +352,27 @@ class MobbexHelper
             }
 
             if (!empty($checkedAdvancedPlans)) {
-                foreach ($checkedAdvancedPlans as $key => $advancedPlan) {
-                    $installments[] = '+uid:' . $advancedPlan;
-                    unset($checkedAdvancedPlans[$key]);
-                }
+                $total_advanced_plans = array_merge($total_advanced_plans, $checkedAdvancedPlans);
             }
+        }
 
+        // Get all the advanced plans with their number of reps
+        $counted_advanced_plans = array_count_values($total_advanced_plans);
+
+        // Advanced plans
+        foreach ($counted_advanced_plans as $plan => $reps) {
+            // Only if the plan is active on all products
+            if ($reps == count($products)) {
+                // Add to installments
+                $installments[] = '+uid:' . $plan;
+            }
         }
 
         // Check "Ahora" custom fields
         $categoriesId = array();
         $categoriesId = self::getCategoriesId($products);
-        foreach ($ahora as $key => $value) {
+        foreach ($ahora as $key => $value) 
+        {
             //for each key, if it was not added before, then search all categories.
             if (!in_array('-' . $key, $installments)){
                 foreach($categoriesId as $cat_id){
