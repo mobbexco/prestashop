@@ -344,6 +344,7 @@ class MobbexHelper
         foreach ($products as $product) {
             $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'common_plans'));
             $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'advanced_plans'));
+
             if (!empty($checkedCommonPlans)) {
                 foreach ($checkedCommonPlans as $key => $commonPlan) {
                     $installments[] = '-' . $commonPlan;
@@ -371,8 +372,7 @@ class MobbexHelper
         // Check "Ahora" custom fields
         $categoriesId = array();
         $categoriesId = self::getCategoriesId($products);
-        foreach ($ahora as $key => $value) 
-        {
+        foreach ($ahora as $key => $value) {
             //for each key, if it was not added before, then search all categories.
             if (!in_array('-' . $key, $installments)){
                 foreach($categoriesId as $cat_id){
