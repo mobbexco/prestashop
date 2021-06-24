@@ -419,14 +419,6 @@ class Mobbex extends PaymentModule
                     ),
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Tax ID'),
-                        'name' => MobbexHelper::K_PLANS_TAX_ID,
-                        'required' => false,
-                        'desc' => $this->l('Merchant Tax ID to Show configured plans'),
-                        'tab' => 'tab_advanced',
-                    ),
-                    array(
-                        'type' => 'text',
                         'label' => $this->l('Text'),
                         'name' => MobbexHelper::K_PLANS_TEXT,
                         'required' => false,
@@ -513,7 +505,6 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Plans Widget
             MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
-            MobbexHelper::K_PLANS_TAX_ID => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
             MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT),
             MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
@@ -795,7 +786,7 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
+                'tax_id' => MobbexHelper::getTaxId(),
                 'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
                 'style_settings' => 
                 [
