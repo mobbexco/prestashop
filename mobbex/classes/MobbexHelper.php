@@ -45,7 +45,6 @@ class MobbexHelper
     const K_THEME_DARK = 'dark';
 
     const K_PLANS = 'MOBBEX_PLANS';
-    const K_PLANS_TAX_ID = 'MOBBEX_PLANS_TAX_ID';
     const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
     const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
@@ -576,7 +575,12 @@ class MobbexHelper
         }
 	}
 
-    public function getTaxId()
+    /**
+     * Get Tax Id from Mobbex using API.
+     * 
+     * @return string $tax_id 
+     */
+    public static function getTaxId()
     {
         $curl = curl_init();
         curl_setopt_array($curl, array(
