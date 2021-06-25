@@ -45,7 +45,6 @@ class MobbexHelper
     const K_THEME_DARK = 'dark';
 
     const K_PLANS = 'MOBBEX_PLANS';
-    const K_PLANS_TAX_ID = 'MOBBEX_PLANS_TAX_ID';
     const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
     const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
@@ -575,4 +574,36 @@ class MobbexHelper
             return 'cancelled';
         }
 	}
+
+    /**
+     * Get Tax Id from Mobbex using API.
+     * 
+     * @return string $tax_id 
+     */
+    public static function getTaxId()
+    {
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => "https://api.mobbex.com/p/entity/validate",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => self::getHeaders(),
+        ));
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        curl_close($curl);
+
+        if ($err) {
+            return d("CURL Error #:" . $err);
+        } else {
+            $res = json_decode($response, true);
+
+            return $res['data']['tax_id'];
+        }
+    }
 }

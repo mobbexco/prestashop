@@ -223,8 +223,14 @@ class Mobbex extends PaymentModule
      */
     protected function getConfigForm()
     {
+
         return array(
             'form' => array(
+                'tabs' => array(
+                    'tab_general' => $this->l('General'),
+                    'tab_appearence' => $this->l('Appearance'),
+                    'tab_advanced' => $this->l('Advanced Configuration'),
+                ),
                 'legend' => array(
                     'title' => $this->l('Settings'),
                     'icon' => 'icon-cogs',
@@ -235,12 +241,14 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('API Key'),
                         'name' => MobbexHelper::K_API_KEY,
                         'required' => true,
+                        'tab' => 'tab_general'
                     ),
                     array(
                         'type' => 'text',
                         'label' => $this->l('Access Token'),
                         'name' => MobbexHelper::K_ACCESS_TOKEN,
                         'required' => true,
+                        'tab' => 'tab_general'
                     ),
                     array(
                         'type' => 'switch',
@@ -260,6 +268,7 @@ class Mobbex extends PaymentModule
                                 'label' => $this->l('Live Mode'),
                             ],
                         ],
+                        'tab' => 'tab_general'
                     ),
                     array(
                         'type' => 'radio',
@@ -267,6 +276,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_THEME,
                         'is_bool' => false,
                         'required' => false,
+                        'tab' => 'tab_appearence',
                         'values' => [
                             [
                                 'id' => 'm_theme_light',
@@ -287,6 +297,7 @@ class Mobbex extends PaymentModule
                         'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Checkout Background Color'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'color',
@@ -295,6 +306,7 @@ class Mobbex extends PaymentModule
                         'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Checkout Primary Color'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'switch',
@@ -303,6 +315,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_THEME_SHOP_LOGO,
                         'is_bool' => true,
                         'required' => true,
+                        'tab' => 'tab_appearence',
                         'values' => [
                             [
                                 'id' => 'active_on_shop_logo',
@@ -322,6 +335,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_THEME_LOGO,
                         'required' => false,
                         'desc' => "Opcional. Debe utilizar la URL completa y debe ser HTTPS. Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex. Dimensiones: 250x250 píxeles. El Logo debe ser cuadrado para optimización.",
+                        'tab' => 'tab_appearence',
                     ),
                     // Embed SDK
                     array(
@@ -330,6 +344,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_EMBED,
                         'is_bool' => true,
                         'required' => true,
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_embed',
@@ -350,6 +365,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_WALLET,
                         'is_bool' => true,
                         'required' => true,
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_wallet',
@@ -369,6 +385,7 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('ID o Clave de Revendedor'),
                         'name' => MobbexHelper::K_RESELLER_ID,
                         'required' => false,
+                        'tab' => 'tab_advanced',
                         'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
                     ),
                     // Plans
@@ -390,6 +407,7 @@ class Mobbex extends PaymentModule
                                 'label' => $this->l('Desactivar'),
                             ],
                         ],
+                        'tab' => 'tab_general',
                     ),
                     array(
                         'type' => 'text',
@@ -397,20 +415,15 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_PLANS_IMAGE_URL,
                         'required' => false,
                         'desc' => $this->l('Opcional. Debe utilizar la URL completa y debe ser HTTPS.'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Tax ID'),
-                        'name' => MobbexHelper::K_PLANS_TAX_ID,
-                        'required' => false,
-                        'desc' => $this->l('Merchant Tax ID to Show configured plans'),
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Text'),
+                        'label' => $this->l('Plans Button Text'),
                         'name' => MobbexHelper::K_PLANS_TEXT,
                         'required' => false,
-                        'desc' => $this->l('Plans Button Text'),
+                        'desc' => $this->l('Optional. Text displayed on finnancing button'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'color',
@@ -419,6 +432,7 @@ class Mobbex extends PaymentModule
                         'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Plans Button Text Color'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'color',
@@ -427,6 +441,7 @@ class Mobbex extends PaymentModule
                         'data-hex' => false,
                         'class' => 'mColorPicker',
                         'desc' => $this->l('Plans Button Background Color'),
+                        'tab' => 'tab_appearence',
                     ),
                     // DNI
                     array(
@@ -435,6 +450,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_OWN_DNI,
                         'is_bool' => true,
                         'required' => true,
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_own_dni',
@@ -453,6 +469,7 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('Usar campo DNI existente'),
                         'name' => MobbexHelper::K_CUSTOM_DNI,
                         'required' => false,
+                        'tab' => 'tab_general',
                         'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
                     ),
                 ),
@@ -488,7 +505,6 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
             // Plans Widget
             MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
-            MobbexHelper::K_PLANS_TAX_ID => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
             MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT),
             MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
@@ -770,7 +786,7 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'tax_id' => Configuration::get(MobbexHelper::K_PLANS_TAX_ID, ''),
+                'tax_id' => MobbexHelper::getTaxId(),
                 'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
                 'style_settings' => 
                 [
