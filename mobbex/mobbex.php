@@ -227,7 +227,7 @@ class Mobbex extends PaymentModule
         return array(
             'form' => array(
                 'tabs' => array(
-                    'tab_general' => $this->l('General Configuration'),
+                    'tab_general' => $this->l('General'),
                     'tab_appearence' => $this->l('Appearance'),
                     'tab_advanced' => $this->l('Advanced Configuration'),
                 ),
@@ -344,7 +344,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_EMBED,
                         'is_bool' => true,
                         'required' => true,
-                        'tab' => 'tab_advanced',
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_embed',
@@ -365,7 +365,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_WALLET,
                         'is_bool' => true,
                         'required' => true,
-                        'tab' => 'tab_advanced',
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_wallet',
@@ -407,7 +407,7 @@ class Mobbex extends PaymentModule
                                 'label' => $this->l('Desactivar'),
                             ],
                         ],
-                        'tab' => 'tab_advanced',
+                        'tab' => 'tab_general',
                     ),
                     array(
                         'type' => 'text',
@@ -419,11 +419,11 @@ class Mobbex extends PaymentModule
                     ),
                     array(
                         'type' => 'text',
-                        'label' => $this->l('Text'),
+                        'label' => $this->l('Plans Button Text'),
                         'name' => MobbexHelper::K_PLANS_TEXT,
                         'required' => false,
-                        'desc' => $this->l('Plans Button Text'),
-                        'tab' => 'tab_advanced',
+                        'desc' => $this->l('Optional. Text displayed on finnancing button'),
+                        'tab' => 'tab_appearence',
                     ),
                     array(
                         'type' => 'color',
@@ -450,7 +450,7 @@ class Mobbex extends PaymentModule
                         'name' => MobbexHelper::K_OWN_DNI,
                         'is_bool' => true,
                         'required' => true,
-                        'tab' => 'tab_advanced',
+                        'tab' => 'tab_general',
                         'values' => [
                             [
                                 'id' => 'active_on_own_dni',
@@ -469,7 +469,7 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('Usar campo DNI existente'),
                         'name' => MobbexHelper::K_CUSTOM_DNI,
                         'required' => false,
-                        'tab' => 'tab_advanced',
+                        'tab' => 'tab_general',
                         'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
                     ),
                 ),
