@@ -135,6 +135,7 @@ class Mobbex extends PaymentModule
             || !$this->registerHook('categoryUpdate') 
             || !$this->registerHook('displayPDFInvoice')
             || !$this->registerHook('displayBackOfficeHeader')
+            || !$this->registerHook('actionEmailSendBefore')
             ) {
                 return false;
             }
@@ -1194,5 +1195,16 @@ class Mobbex extends PaymentModule
         // Add options using JS
         $jsPath = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/uninstall_options.js');
         echo "<script src='$jsPath'></script>";
+    }
+
+    public function hookActionEmailSendBefore($params)
+    {
+        if ($params['template'] == 'order_conf' && !empty(MobbexHelper::$transactionData['status'])) {
+            $state = MobbexHelper::getState(MobbexHelper::$transactionData['status']);
+
+            // If current order state is not approved, block mail sending
+            if ($state != 'approved')
+                return false;
+        }
     }
 }

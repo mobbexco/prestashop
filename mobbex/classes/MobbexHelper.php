@@ -62,6 +62,8 @@ class MobbexHelper
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
 
+    static $transactionData = [];
+
     public static function getUrl($path)
     {
         return Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
@@ -284,9 +286,12 @@ class MobbexHelper
         } else if ($state == 'approved') {
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
         } else if ($state == 'cancelled'){
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_CANCELED');
+            $result['orderStatus'] = (int) Configuration::get('PS_OS_ERROR');
+        } else if ($state == 'rejected') {
+            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
         }
 
+        self::$transactionData = $result;
         return $result;
     }
 
@@ -533,27 +538,30 @@ class MobbexHelper
             return false;
         }
 
-        $cardNumber = $transactionData['payment']['source']['number'];
-        $habienteName= $transactionData['entity']['name'];
-        $idHabiente = $transactionData['customer']['identification'];
+        $cardNumber   = !empty($transactionData['payment']['source']['number']) ? $transactionData['payment']['source']['number'] : false;
+        $habienteName = !empty($transactionData['entity']['name']) ? $transactionData['entity']['name'] : false;
+        $idHabiente   = !empty($transactionData['customer']['identification']) ? $transactionData['customer']['identification'] : false;
 
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
-        //card number
-        if(!empty($cardNumber)){
-            $tab = $tab.'<tr><td><b>Número de Tarjeta: </b></td><td>'.$cardNumber.'</td></tr>
+        // Card number
+        if ($cardNumber) {
+            $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>'.$cardNumber.'</td></tr>
             <tr><td></td><td></td></tr>';
         }
-        //customer name
-        if(!empty($habienteName)){
-            $tab = $tab.'<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>'.$habienteName.'</td></tr>
+
+        // Customer name
+        if ($habienteName) {
+            $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>'.$habienteName.'</td></tr>
             <tr><td></td><td></td></tr>';
         }
-        //customer ID
+
+        // Customer ID
         if(!empty($idHabiente)){
-            $tab = $tab.'<tr><td><b>ID Tarjeta-habiente: </b></td><td>'.$idHabiente.'</td></tr>
+            $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>'.$idHabiente.'</td></tr>
             <tr><td></td><td></td></tr>';
         }
-        $tab = $tab.'</table>';
+
+        $tab .= '</table>';
         return $tab;
     }
 
@@ -562,7 +570,7 @@ class MobbexHelper
      * 
      * @param int|string $status
      * 
-     * @return string "approved" | "on-hold" | "cancelled"
+     * @return string "approved" | "on-hold" | "rejected" | "cancelled"
 	 */
     public static function getState($status)
     {
@@ -570,6 +578,8 @@ class MobbexHelper
             return 'on-hold';
         } else if ($status == 4 || $status >= 200 && $status < 400) {
             return 'approved';
+        } else if ($status == 604) {
+            return 'rejected';
         } else {
             return 'cancelled';
         }

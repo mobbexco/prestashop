@@ -58,9 +58,12 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
 
             // If Order exists
             if ($order) {
-                // Update order status
-                $order->setCurrentState($trans_data['orderStatus']);
-                $order->save();
+                // If it was not updated recently
+                if ($order->getCurrentState() != $trans_data['orderStatus']) {
+                    // Update order status
+                    $order->setCurrentState($trans_data['orderStatus']);
+                    $order->save();
+                }
             } else {
                 // Create and validate Order
                 $validation_response = $this->createOrder($cart_id, $trans_data, $context, $status);
@@ -145,7 +148,9 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
             } else if ($state == 'on-hold') {
                 $state_id = (int) Configuration::get(MobbexHelper::K_OS_WAITING) ?: (int) Configuration::get(MobbexHelper::K_OS_PENDING);
             } else if ($state == 'cancelled'){
-                $state_id = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_CANCELED');
+                $state_id = (int) Configuration::get('PS_OS_ERROR');
+            } else if ($state == 'rejected') {
+                $state_id = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
             }
 
             // Create order
