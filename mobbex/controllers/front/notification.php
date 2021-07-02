@@ -55,7 +55,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (empty($order_id)) {
             // If order was not created, wait for webhook
             $seconds = 10;
-            while ($seconds > 0 && !$context->cart->orderExists()) {
+            while ($seconds > 0 && !MobbexHelper::orderExists($cart_id)) {
                 sleep(1);
                 $context->cart = new Cart((int) $cart_id);
                 $seconds--;
