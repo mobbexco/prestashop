@@ -54,7 +54,7 @@ class MobbexWebhookModuleFrontController extends ModuleFrontController
 
         if (Validate::isLoadedObject($context->cart)) {
             // Try to get Order
-            $order = $context->cart->orderExists() ? new Order(Order::getOrderByCartId($cart_id)) : false;
+            $order = MobbexHelper::orderExists($cart_id) ? new Order(MobbexHelper::getOrderByCartId($cart_id)) : false;
 
             // If Order exists
             if ($order) {

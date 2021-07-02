@@ -394,8 +394,10 @@ class MobbexHelper
 
     /**
      * Return an array with categories ids
+     * 
      * @param $listProducts : array
-     * @return array()
+     * 
+     * @return array
      */
     private function getCategoriesId($listProducts){
         
@@ -415,7 +417,10 @@ class MobbexHelper
 
     /**
      * Get sources with common plans from mobbex.
+     * 
      * @param integer|null $total
+     * 
+     * @return array
      */
     public static function getSources($total = null)
     {
@@ -455,7 +460,10 @@ class MobbexHelper
 
     /**
      * Get sources with advanced rule plans from mobbex.
+     * 
      * @param string $rule
+     * 
+     * @return array
      */
     public static function getSourcesAdvanced($rule = 'externalMatch')
     {
@@ -615,5 +623,41 @@ class MobbexHelper
 
             return $res['data']['tax_id'];
         }
+    }
+
+    /**
+     * Check if an order has been created for cart.
+     * This method avoid fetch data from cache.
+     * 
+     * @param mixed $cart_id
+     * 
+     * @return bool
+     */
+    public static function orderExists($cart_id)
+    {
+        return (bool) Db::getInstance()->getValue(
+            'SELECT count(*) FROM `' . _DB_PREFIX_ . 'orders` WHERE `id_cart` = ' . (int) $cart_id,
+            false
+        );
+    }
+
+    /**
+     * Get Order ID by Cart ID.
+     * This method avoid fetch data from cache.
+     * 
+     * @param mixed $cart_id
+     * 
+     * @return int $order_id
+     */
+    public static function getOrderByCartId($cart_id)
+    {
+        $result = (int) Db::getInstance()->getValue(
+            'SELECT `id_order`
+            FROM `' . _DB_PREFIX_ . 'orders`
+            WHERE `id_cart` = ' . (int) $cart_id .
+            Shop::addSqlRestriction(), false
+        );
+
+        return !empty($result) ? $result : false;
     }
 }
