@@ -626,28 +626,12 @@ class MobbexHelper
     }
 
     /**
-     * Check if an order has been created for cart.
+     * Get Order by Cart ID.
      * This method avoid fetch data from cache.
      * 
      * @param mixed $cart_id
      * 
-     * @return bool
-     */
-    public static function orderExists($cart_id)
-    {
-        return (bool) Db::getInstance()->getValue(
-            'SELECT count(*) FROM `' . _DB_PREFIX_ . 'orders` WHERE `id_cart` = ' . (int) $cart_id,
-            false
-        );
-    }
-
-    /**
-     * Get Order ID by Cart ID.
-     * This method avoid fetch data from cache.
-     * 
-     * @param mixed $cart_id
-     * 
-     * @return int $order_id
+     * @return Order $order
      */
     public static function getOrderByCartId($cart_id)
     {
@@ -658,6 +642,6 @@ class MobbexHelper
             Shop::addSqlRestriction(), false
         );
 
-        return !empty($result) ? $result : false;
+        return !empty($result) ? new Order((int) $result) : false;
     }
 }
