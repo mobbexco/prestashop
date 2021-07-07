@@ -5,7 +5,7 @@
  * Transaction model
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.2.2
+ * @version 2.2.3
  * @see     PaymentModuleCore
  */
 class MobbexTransaction extends ObjectModel
