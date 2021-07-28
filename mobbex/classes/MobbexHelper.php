@@ -281,12 +281,14 @@ class MobbexHelper
         // Validate mobbex status and create order status
         $state = self::getState($status);
 
-        if ($state == 'on-hold') {
+        if ($state == 'onhold') {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else if ($state == 'approved') {
             $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
-        } else if ($state == 'cancelled'){
+        } else if ($state == 'failed') {
             $result['orderStatus'] = (int) Configuration::get('PS_OS_ERROR');
+        } else if ($state == 'refunded') {
+            $result['orderStatus'] = (int) Configuration::get('PS_OS_REFUND');
         } else if ($state == 'rejected') {
             $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
         }
@@ -578,18 +580,20 @@ class MobbexHelper
      * 
      * @param int|string $status
      * 
-     * @return string "approved" | "on-hold" | "rejected" | "cancelled"
+     * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
 	 */
     public static function getState($status)
     {
         if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
-            return 'on-hold';
+            return 'onhold';
         } else if ($status == 4 || $status >= 200 && $status < 400) {
             return 'approved';
+        } else if ($status == 602 || $status == 605) {
+            return 'refunded';
         } else if ($status == 604) {
             return 'rejected';
         } else {
-            return 'cancelled';
+            return 'failed';
         }
 	}
 
