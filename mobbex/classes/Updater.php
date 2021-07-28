@@ -7,6 +7,8 @@ class MobbexUpdater
 
     public $githubApi = 'https://api.github.com/';
 
+    public $latestRelease;
+
     public function __construct()
     {
         $this->zip = new \ZipArchive();
@@ -57,6 +59,9 @@ class MobbexUpdater
      */
     public function getLatestRelease()
     {
+        if ($this->latestRelease)
+            return $this->latestRelease;
+
         $curl = curl_init();
 
         curl_setopt_array($curl, [
@@ -77,7 +82,7 @@ class MobbexUpdater
         if ($error)
             throw new PrestaShopException('Error getting latest release data #' . $error);
 
-        return json_decode($response, true);
+        return $this->latestRelease = json_decode($response, true);
     }
 
     /**

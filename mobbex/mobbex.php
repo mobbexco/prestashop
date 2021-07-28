@@ -13,6 +13,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require dirname(__FILE__) . '/classes/Updater.php';
 require dirname(__FILE__) . '/classes/MobbexHelper.php';
 require dirname(__FILE__) . '/classes/MobbexTransaction.php';
 require dirname(__FILE__) . '/classes/MobbexCustomFields.php';
@@ -22,6 +23,8 @@ require dirname(__FILE__) . '/classes/MobbexCustomFields.php';
  */
 class Mobbex extends PaymentModule
 {
+    /** @var MobbexUpdater */
+    public $updater;
     /**
      * Constructor
      */
@@ -61,6 +64,7 @@ class Mobbex extends PaymentModule
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
+        $this->updater = new MobbexUpdater();
     }
 
     /**
@@ -1180,21 +1184,31 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Show uninstall options on module manager.
-     * @param array $params
+     * Load back office scripts.
+     * 
      * @return void
      */
     public function hookDisplayBackOfficeHeader()
     {
-        // Execute only on module manager page
         $currentPage = Tools::getValue('controller');
-        if ($currentPage !== 'AdminModulesManage') {
-            return;
-        }
+        $mediaPath   = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name);
 
-        // Add options using JS
-        $jsPath = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/uninstall_options.js');
-        echo "<script src='$jsPath'></script>";
+        // Module Manager page
+        if ($currentPage == 'AdminModulesManage')
+            $this->context->controller->addJS("$mediaPath/views/js/uninstall-options.js");
+
+        // Configuration page
+        if ($currentPage == 'AdminModules' && Tools::getValue('configure') == 'mobbex') {
+            $this->context->controller->addJS("$mediaPath/views/js/mobbex-config.js");
+
+            // If plugin has updates, add update data to javascript
+            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION)) {
+                MobbexHelper::addJavascriptData([
+                    'updateVersion' => $this->updater->latestRelease['tag_name'],
+                    'updateUrl'     => $this->context->link->getAdminLink('MobbexUpdate'),
+                ]);
+            }
+        }
     }
 
     public function hookActionEmailSendBefore($params)
