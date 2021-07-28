@@ -184,6 +184,9 @@ class Mobbex extends PaymentModule
             $this->postProcess();
         }
 
+        if (!empty($_GET['run_update']))
+            $this->runUpdate();
+
         $this->context->smarty->assign(array('module_dir' => $this->_path));
 
         return $this->renderForm();
@@ -672,6 +675,20 @@ class Mobbex extends PaymentModule
             );
         }
 
+    }
+
+    /**
+     * Try to update the module.
+     * 
+     * @return void 
+     */
+    public function runUpdate()
+    {
+        try {
+            $this->updater->updateVersion($this, true);
+        } catch (\PrestaShopException $e) {
+            PrestaShopLogger::addLog('Mobbex Update Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
+        }
     }
 
     /**
@@ -1202,12 +1219,8 @@ class Mobbex extends PaymentModule
             $this->context->controller->addJS("$mediaPath/views/js/mobbex-config.js");
 
             // If plugin has updates, add update data to javascript
-            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION)) {
-                MobbexHelper::addJavascriptData([
-                    'updateVersion' => $this->updater->latestRelease['tag_name'],
-                    'updateUrl'     => $this->context->link->getAdminLink('MobbexUpdate'),
-                ]);
-            }
+            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
         }
     }
 
