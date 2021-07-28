@@ -644,4 +644,20 @@ class MobbexHelper
 
         return !empty($result) ? new Order((int) $result) : false;
     }
+
+    /**
+     * Add data to javascript Mobbex variable.
+     * 
+     * @param array $vars 
+     * 
+     * @return void 
+     */
+    public static function addJavascriptData($vars)
+    {
+        ?>
+        <script type='text/javascript'>
+            var mbbx = {...mbbx, ...<?= json_encode($vars) ?>}
+        </script>
+        <?php
+    }
 }
