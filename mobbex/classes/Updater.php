@@ -15,11 +15,11 @@ class MobbexUpdater
     }
 
     /**
-     * Update the plugin to latest version.
+     * Update the module to latest version.
      * 
      * @param Module $module
      */
-    public function updateVersion($module)
+    public function updateVersion($module, $cleanUpdate = false)
     {
         $module->disable(true);
 
@@ -28,6 +28,10 @@ class MobbexUpdater
 
         if ($this->zip->open($assetPath) !== true)
             throw new PrestaShopException('Error extracting Mobbex release');
+
+        // if it is a clean update, remove the module directory first
+        if ($cleanUpdate)
+            $this->removeDirectory(_PS_MODULE_DIR_ . $module->name);
 
         // Extract asset file
         $this->zip->extractTo(_PS_MODULE_DIR_);
@@ -48,6 +52,21 @@ class MobbexUpdater
     public function hasUpdates($version)
     {
         return version_compare($version, $this->getLatestRelease()['tag_name'], '<');
+    }
+
+    /**
+     * Remove a directory recursively.
+     * 
+     * @param string $directory
+     * 
+     * @return void
+     */
+    public function removeDirectory($directory)
+    {
+        $files = glob("{$directory}/*");
+
+        foreach ($files as $file)
+            is_file($file) && !is_link($file) ? unlink($file) : $this->removeDirectory($file);
     }
 
     /**
