@@ -87,7 +87,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_API_KEY, '');
         Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
-        Configuration::updateValue(MobbexHelper::K_EMBED, false);
+        Configuration::updateValue(MobbexHelper::K_EMBED, true);
         Configuration::updateValue(MobbexHelper::K_WALLET, false);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
