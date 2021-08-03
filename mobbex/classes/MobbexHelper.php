@@ -71,21 +71,7 @@ class MobbexHelper
 
     public static function getModuleUrl($controller, $action, $path)
     {
-        // controller / module / fc
-        // controller=notification
-        // module=mobbex
-        // fc=module
         return MobbexHelper::getUrl('index.php?controller=' . $controller . '&module=mobbex&fc=module&action=' . $action . $path);
-    }
-
-    public static function getWebhookUrl($params)
-    {
-        return Context::getContext()->link->getModuleLink(
-            'mobbex',
-            'webhook',
-            $params,
-            true
-        );
     }
 
     public static function getPlatform()
@@ -188,13 +174,9 @@ class MobbexHelper
             'description' => 'Carrito #' . $cart->id,
             'test' => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
             'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'webhook' => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items' => $items,
             'installments' => MobbexHelper::getInstallments($products),
-            'webhook' => MobbexHelper::getWebhookUrl(array(
-                'id_cart' => $cart->id,
-                'customer_id' => $customer->id,
-                'key' => $customer->secure_key,
-            )),
             'options' => MobbexHelper::getOptions(),
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer' => array(
@@ -633,20 +615,25 @@ class MobbexHelper
      * Get Order by Cart ID.
      * This method avoid fetch data from cache.
      * 
-     * @param mixed $cart_id
+     * @param int|string $cart_id
+     * @param bool $instance To return an instance of the order
      * 
-     * @return Order $order
+     * @return Order|string|bool
      */
-    public static function getOrderByCartId($cart_id)
+    public static function getOrderByCartId($cart_id, $instance = false)
     {
-        $result = (int) Db::getInstance()->getValue(
+        $order_id = (int) Db::getInstance()->getValue(
             'SELECT `id_order`
             FROM `' . _DB_PREFIX_ . 'orders`
             WHERE `id_cart` = ' . (int) $cart_id .
             Shop::addSqlRestriction(), false
         );
 
-        return !empty($result) ? new Order((int) $result) : false;
+        // Exit if it does not exist in the database
+        if (empty($order_id))
+            return false;
+
+        return $instance ? new Order($order_id) : $order_id;
     }
 
     /**
