@@ -651,4 +651,56 @@ class MobbexHelper
         </script>
         <?php
     }
+
+    /**
+     * Create an order from Cart.
+     * 
+     * @param string|int $cartId
+     * @param array $transData
+     * @param PaymentModule $module
+     */
+    public static function createOrder($cartId, $transData, $module)
+    {
+        try {
+            $context = self::restoreContext($cartId);
+
+            $module->validateOrder(
+                $cartId,
+                $transData['orderStatus'],
+                (float) $context->cart->getOrderTotal(true, Cart::BOTH),
+                $transData['name'],
+                $transData['message'],
+                [
+                    '{transaction_id}' => $transData['transaction_id'],
+                    '{message}' => $transData['message'],
+                ],
+                (int) $context->currency->id,
+                false,
+                $context->customer->secure_key
+            );
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog('Error in Mobbex order creation: ' . $e->getMessage(), 3, null, 'Mobbex', $cartId, true, null);
+        }
+    }
+
+    /**
+     * Restore the context to process the order validation properly.
+     * 
+     * @param int|string $cartId 
+     * 
+     * @return Context $context 
+     */
+    protected static function restoreContext($cartId)
+    {
+        $context           = Context::getContext();
+        $context->cart     = new Cart((int) $cartId);
+        $context->customer = new Customer((int) Tools::getValue('customer_id'));
+        $context->currency = new Currency((int) $context->cart->id_currency);
+        $context->language = new Language((int) $context->customer->id_lang);
+
+        if (!Validate::isLoadedObject($context->cart))
+            PrestaShopLogger::addLog('Error getting context on Webhook: ', 3, null, 'Mobbex', $cartId, true, null);
+
+        return $context;
+    }
 }
