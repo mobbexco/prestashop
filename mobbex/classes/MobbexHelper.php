@@ -179,13 +179,7 @@ class MobbexHelper
             'installments' => MobbexHelper::getInstallments($products),
             'options' => MobbexHelper::getOptions(),
             'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
-            'customer' => array(
-                'name' => $customer->firstname . ' ' . $customer->lastname,
-                'email' => $customer->email,
-                'phone' => !empty($customer->phone) ? $customer->phone : null,
-                'identification' => !empty(MobbexHelper::getDni($customer->id)) ? MobbexHelper::getDni($customer->id) : null,
-                'uid' => !empty($customer->id) ? $customer->id : null,
-            ),
+            'customer' => self::getCustomer($cart),
             'timeout' => 5,
             'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
             'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
@@ -231,6 +225,27 @@ class MobbexHelper
         $customer = Context::getContext()->customer;
 
         return MobbexHelper::createCheckout(null, $cart, $customer);
+    }
+
+    /**
+     * Get customer data formatted for checkout.
+     * 
+     * @param Cart $cart
+     *
+     * @return array
+     */
+    public static function getCustomer($cart)
+    {
+        // Get address info from cart
+        $address = new Address($cart->id_address_delivery);
+
+        return [
+            'name'           => $address->firstname . ' ' . $address->lastname,
+            'email'          => Context::getContext()->customer->email,
+            'phone'          => $address->phone_mobile ?: $address->phone,
+            'identification' => $address->id_customer ? MobbexHelper::getDni($address->id_customer) : null,
+            'uid'            => $address->id_customer,
+        ];
     }
 
     public static function evaluateTransactionData($res)
@@ -281,27 +296,13 @@ class MobbexHelper
 
     public static function getDni($customer_id)
     {
-        if (!$customer_id) {
-            return false;
-        }
+        $dniColumn = trim(Configuration::get(MobbexHelper::K_CUSTOM_DNI)) ?: 'billing_dni';
 
-        if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
-            $dni_column = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
-        } elseif (Configuration::get(MobbexHelper::K_OWN_DNI)) {
-            $dni_column = "billing_dni";
-        } else {
-            return false;
-        }
+        // Check if dni column exists
+        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM " . _DB_PREFIX_ . "customer LIKE '$dniColumn'")))
+            return;
 
-        $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $dni_column . "'");
-
-        if (empty($table_columns)) {
-            return false;
-        }
-
-        return DB::getInstance()->getRow(
-            "SELECT `" . $dni_column . "` FROM `" . _DB_PREFIX_ . "customer` WHERE `id_customer` = " . $customer_id
-        )[$dni_column];
+        return DB::getInstance()->getValue("SELECT $dniColumn FROM " . _DB_PREFIX_ . "customer WHERE id_customer = $customer_id");
     }
 
     public static function getPsVersion()
