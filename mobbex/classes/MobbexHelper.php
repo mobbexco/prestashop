@@ -49,11 +49,13 @@ class MobbexHelper
     const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
     const K_PLANS_IMAGE_URL = 'MOBBEX_PLANS_IMAGE_URL';
-
+    const K_MULTICARD = 'MOBBEX_MULTICARD';
+    
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
+    const K_DEF_MULTICARD = false;
 
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
@@ -189,6 +191,7 @@ class MobbexHelper
             'timeout' => 5,
             'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
             'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
+            'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
         );
 
         curl_setopt_array($curl, array(
