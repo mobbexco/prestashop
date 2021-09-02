@@ -49,12 +49,18 @@ class MobbexHelper
     const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
     const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
     const K_PLANS_IMAGE_URL = 'MOBBEX_PLANS_IMAGE_URL';
-
+    const K_PLANS_PADDING = 'MOBBEX_PLANS_PADDING';
+    const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
+    const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
+    
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
-
+    const K_DEF_PLANS_PADDING = '4px 18px';
+    const K_DEF_PLANS_FONT_SIZE = '17px';
+    const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
+    
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
