@@ -120,6 +120,7 @@ class Mobbex extends PaymentModule
             || !$this->registerHook('categoryUpdate') 
             || !$this->registerHook('displayPDFInvoice')
             || !$this->registerHook('displayBackOfficeHeader')
+            || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
@@ -140,6 +141,7 @@ class Mobbex extends PaymentModule
             || !$this->registerHook('displayPDFInvoice')
             || !$this->registerHook('displayBackOfficeHeader')
             || !$this->registerHook('actionEmailSendBefore')
+            || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
