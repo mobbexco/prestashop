@@ -16,7 +16,7 @@
         <div class="row">
             <div class="col-xs-12 mbbx-card">
                 <p class="payment_module">
-                    <a class="payment-option" href="#" onclick="return activeCard({$key})">
+                    <a class="payment-option walletAnchor" href="#" card="{$key}">
                         <img src="{$card['source']['card']['product']['logo']}" style="">
                         {$card['name']}
                     </a>

@@ -1,20 +1,24 @@
-// This javascript file is included in the front office
-
-// Execute Embed Checkout
+(function (window) {
+/**
+ * Get embed checkout options.
+ */
 function getOptions() {
   return {
     id: mbbx.checkoutId,
     type: 'checkout',
     onResult: (data) => {
       var status = data.status.code;
-      var link = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
 
-      window.top.location.href = link;
+      if (status > 1 && status < 400) {
+        window.top.location.href = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
+      } else {
+        window.top.location.reload();
+      }
     },
     onClose: (cancelled) => {
       // Only if cancelled
       if (cancelled === true) {
-        location.reload();
+        window.top.location.reload();
       }
     }
   }
@@ -52,13 +56,14 @@ function executeWallet(returnUrl) {
     securityCode: securityCode
   })
     .then(data => {
-      if (data.result) {
-        let status = data.data.status.code;
-        let link = returnUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
-        setTimeout(function(){window.top.location.href = link}, 5000)
-      }
-      else {
-        alert("Error procesando el pago")
+      let status = data.result ? data.data.status.code : 0;
+
+      if (status > 1 && status < 400) {
+        setTimeout(function(){
+          window.top.location.href = returnUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
+        }, 5000);
+      } else {
+        alert('Error procesando el pago')
         unlockForm()
       }
     })
@@ -68,6 +73,9 @@ function executeWallet(returnUrl) {
     })
 }
 
+/**
+ * Check if new card option is selected.
+ */
 function isNewCard() {
   let cards = document.getElementsByName('walletCard');
 
@@ -80,6 +88,9 @@ function isNewCard() {
   return true;
 }
 
+/**
+ * Render form loader element.
+ */
 function renderLock() {
   let loaderModal = document.createElement("div")
   loaderModal.id = "mbbx-loader-modal"
@@ -93,14 +104,25 @@ function renderLock() {
   document.body.appendChild(loaderModal)
 }
 
+/**
+ * Enable loader and lock form.
+ */
 function lockForm() {
   document.getElementById("mbbx-loader-modal").style.display = 'block'
 }
 
+/**
+ * Disable loader and unlock form.
+ */
 function unlockForm() {
   document.getElementById("mbbx-loader-modal").style.display = 'none'
 }
 
+/**
+ * Active a wallet card by card key.
+ * 
+ * @param {number} cardId 
+ */
 function activeCard(cardId) {
   let cards = document.getElementsByName('walletCard');
   let forms = document.getElementsByClassName('walletForm');
@@ -110,13 +132,16 @@ function activeCard(cardId) {
 
   // Only for ps 1.6. In ps 1.7 forms are natively hidden
   if (!window.prestashop) {
-  for (const form of forms)
-    form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
+    for (const form of forms)
+      form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
   }
 
   return false;
 }
 
+/**
+ * Execute mobbex payment.
+ */
 function executePayment() {
   if (mbbx.wallet && !isNewCard()) {
       executeWallet(mbbx.returnUrl);
@@ -147,7 +172,7 @@ window.addEventListener('load', function () {
       form.onsubmit = function (e) {
         activeCard(e.target.attributes.card.value);
         return executePayment();
-    }
+      }
     });
   } else {
     document.querySelector('#mbbx-anchor').onclick = function() {
@@ -155,10 +180,17 @@ window.addEventListener('load', function () {
       return executePayment();
     }
 
+    document.querySelectorAll(".walletAnchor").forEach(anchor => {
+      anchor.onclick = function(e) {
+        return activeCard(e.target.attributes.card.value);
+      }
+    });
+
     document.querySelectorAll("#mobbexExecute").forEach(button => {
       button.onclick = function() {
         return executePayment();
       }
     });
   }
-})
+});
+}) (window);
