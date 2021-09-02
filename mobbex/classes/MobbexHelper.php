@@ -703,4 +703,35 @@ class MobbexHelper
 
         return $context;
     }
+
+    /**
+     * Add an script depending of context and prestashop version.
+     * 
+     * @param string $uri
+     * @param mixed $type
+     * @param Controller $controller
+     */
+    public static function addScript($uri, $remote = false, $controller = null)
+    {
+        if (!$controller)
+            $controller = Context::getContext()->controller;
+
+        if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
+            $controller->registerJavascript(sha1($uri), $uri, ['server' => $remote ? 'remote' : 'local']);
+        } else {
+            $controller->addJS($uri);
+        }
+    }
+
+    /**
+     * Check if it is in payment step.
+     * 
+     * @return bool
+     */
+    public static function isPaymentStep()
+    {
+        $controller = Context::getContext()->controller;
+
+        return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
+    }
 }
