@@ -1,13 +1,13 @@
 // This javascript file is included in the front office
 
 // Execute Embed Checkout
-function getOptions(checkoutUrl, checkoutId) {
+function getOptions() {
   return {
-    id: checkoutId,
+    id: mbbx.checkoutId,
     type: 'checkout',
     onResult: (data) => {
       var status = data.status.code;
-      var link = checkoutUrl + '&status=' + status + '&transactionId=' + data.id;
+      var link = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
 
       window.top.location.href = link;
     },
@@ -106,7 +106,7 @@ function renderNoCardsMessage() {
   mobbexWallet.appendChild(child) */
 }
 
-function executeWallet(checkoutUrl) {
+function executeWallet(returnUrl) {
   lockForm()
   let securityCode;
   let installment;
@@ -135,7 +135,7 @@ function executeWallet(checkoutUrl) {
     .then(data => {
       if (data.result) {
         let status = data.data.status.code;
-        let link = checkoutUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
+        let link = returnUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
         setTimeout(function(){window.top.location.href = link}, 5000)
       }
       else {
@@ -150,15 +150,15 @@ function executeWallet(checkoutUrl) {
 }
 
 function isNewCard() {
-  let cards = document.getElementsByName("walletCard")
-  for (let i = 0; i < cards.length; i++) {
-    if (cards[i].checked) {
-      if (cards[i].value === "newCard") {
-        return true
-      }
-      else return false
-    }
+  let cards = document.getElementsByName('walletCard');
+
+  for (const card of cards) {
+    if (card.checked)
+      return card.value == 'newCard';
   }
+
+  // Returns true if none is selected
+  return true;
 }
 
 function renderLock() {
@@ -181,3 +181,63 @@ function lockForm() {
 function unlockForm() {
   document.getElementById("mbbx-loader-modal").style.display = 'none'
 }
+
+function activeCard(cardId) {
+  let cards = document.getElementsByName('walletCard');
+  let forms = document.getElementsByClassName('walletForm');
+
+  for (const card of cards)
+    card.checked = card.value == cardId;
+
+  for (const form of forms)
+    form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
+
+  return false;
+}
+
+function executePayment() {
+  if (mbbx.wallet && !isNewCard()) {
+      executeWallet(mbbx.returnUrl);
+  } else {
+    if (mbbx.embed) {
+      var mbbxButton = window.MobbexEmbed.init(getOptions());
+      mbbxButton.open();
+    } else {
+      window.top.location.href = mbbx.checkoutUrl;
+    }
+  }
+  return false;
+};
+
+window.addEventListener('load', function () {
+  if (!window.mbbx)
+    return false;
+
+  renderLock();
+
+  // If it is prestashop 1.7
+  if (window.prestashop) {
+    document.forms['mobbex_checkout'].onsubmit = function() {
+      return executePayment();
+    }
+
+    renderOptions();
+
+    if (mbbx.wallet) {
+      renderWallet(mbbx.wallet);
+    } else {
+      renderNoCardsMessage();
+    }
+  } else {
+    document.querySelector('#mbbx-anchor').onclick = function() {
+      activeCard(null);
+      return executePayment();
+    }
+
+    document.querySelectorAll("#mobbexExecute").forEach(button => {
+      button.onclick = function() {
+        return executePayment();
+      }
+    });
+  }
+})
