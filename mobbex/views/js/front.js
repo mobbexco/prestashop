@@ -20,92 +20,11 @@ function getOptions() {
   }
 }
 
-// Remove HTML entities 
-function htmlDecode(input) {
-  var doc = new DOMParser().parseFromString(input, "text/html");
-  return doc.documentElement.textContent;
-}
-
-function renderOptions() {
-  let child = document.createElement("div")
-  let mobbexWallet = document.getElementById("mobbexWallet")
-  child.classList += "payment-option"
-  child.style.margin = "1.5rem 0"
-  child.innerHTML = `
-<span class="custom-radio float-xs-left">
-  <input type="radio" name="walletCard" id="newCard" value="newCard" class="ps-shown-by-js">
-  <span></span>
-</span>
-<label for="newCard" id="newCardLabel">
-  Utilizar otra tarjeta / Medio de pago
-</label>
-`
-  mobbexWallet.appendChild(child)
-  document.getElementById("newCard").checked = true
-  document.getElementById("newCard").addEventListener("click", function () {
-    let forms = document.getElementsByClassName("walletForm")
-    for (let i = 0; i < forms.length; i++) { forms[i].style.display = "none" }
-  })
-}
-
-function renderWallet(wallet, width) {
-  wallet.forEach((card, index) => {
-    let mobbexWallet = document.getElementById("mobbexWallet")
-    let child = document.createElement("div")
-    let installments = card.installments
-    let i = index
-    child.classList += "payment-option"
-    child.style.margin = "1.5rem 0"
-    child.innerHTML = `
-  <span class="custom-radio float-xs-left">
-    <input type="radio" name="walletCard" id="card${index}" value="${index}" class="ps-shown-by-js">
-    <span></span>
-  </span>
-  <label for="card${index}">
-    <img width="30" style="border-radius: 1rem;margin: 0px 4px 0px 0px;" src="${card.source.card.product.logo}"> ${card.card.card_number}
-  </label>
-  <div id="card_${index}_form" class="walletForm additional-information form-group" style="display: none;">
-    <input class="form-control" type="password" name="securityCode" placeholder="${card.source.card.product.code.name}" maxlength="${card.source.card.product.code.length}">
-    <select class="form-control form-control-select" name="installment"></select>
-    <input type="hidden" name="intentToken" value="${card.it}">
-  </div>`
-  
-    mobbexWallet.appendChild(child)
-
-    document.getElementById(`card${index}`).addEventListener("click", function () {
-      let forms = document.getElementsByClassName("walletForm")
-      for (let i = 0; i < forms.length; i++) { forms[i].style.display = "none" }
-      document.getElementById(`card_${index}_form`).style.display = "block"
-    })
-
-    let cardDiv = document.getElementById(`card_${index}_form`)
-    cardDiv.style.margin = '0 2rem'
-    cardDiv.getElementsByTagName("input")[0].style.margin = '1rem 0'
-
-    if (width) { cardDiv.getElementsByTagName("input")[0].style.maxWidth = '184px' }
-
-    installments.forEach(installment => {
-      let div = document.getElementById(`card_${i}_form`)
-      let select = div.getElementsByTagName("select")[0]
-      let option = document.createElement("option")
-      option.value = installment.reference
-      option.text = installment.name
-      select.appendChild(option)
-    })
-  })
-}
-
-function renderNoCardsMessage() {
-  //let child = document.createElement("div")
-  let mobbexWallet = document.getElementById("mobbexWallet")
-  document.getElementById("newCardLabel").innerHTML = "Pagar con Mobbex"
-  mobbexWallet.style.display = "none"
-  /* child.classList += "payment-option"
-  child.innerHTML = '<p>No hay tarjetas disponibles</p>'
-  child.style.margin = "1.5rem 0"
-  mobbexWallet.appendChild(child) */
-}
-
+/**
+ * Execute wallet payment.
+ * 
+ * @param {string} returnUrl 
+ */
 function executeWallet(returnUrl) {
   lockForm()
   let securityCode;
@@ -189,8 +108,11 @@ function activeCard(cardId) {
   for (const card of cards)
     card.checked = card.value == cardId;
 
+  // Only for ps 1.6. In ps 1.7 forms are natively hidden
+  if (!window.prestashop) {
   for (const form of forms)
     form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
+  }
 
   return false;
 }
@@ -221,13 +143,12 @@ window.addEventListener('load', function () {
       return executePayment();
     }
 
-    renderOptions();
-
-    if (mbbx.wallet) {
-      renderWallet(mbbx.wallet);
-    } else {
-      renderNoCardsMessage();
+    document.querySelectorAll('.walletForm').forEach(form => {
+      form.onsubmit = function (e) {
+        activeCard(e.target.attributes.card.value);
+        return executePayment();
     }
+    });
   } else {
     document.querySelector('#mbbx-anchor').onclick = function() {
       activeCard(null);

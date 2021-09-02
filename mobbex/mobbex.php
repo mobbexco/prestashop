@@ -747,6 +747,7 @@ class Mobbex extends PaymentModule
 
         $options      = [];
         $checkoutData = MobbexHelper::getPaymentData();
+        $cards        = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
 
         MobbexHelper::addJavascriptData([
             'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
@@ -762,6 +763,20 @@ class Mobbex extends PaymentModule
             ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'));
 
         $options[] = $option;
+
+        foreach ($cards as $key => $card) {
+            $this->context->smarty->assign([
+                'card' => $card,
+                'key'  => $key
+            ]);
+
+            $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+            $option->setCallToActionText($card['name'])
+                ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/card-form.tpl'))
+                ->setLogo($card['source']['card']['product']['logo']);
+    
+            $options[] = $option;
+        }
 
         return $options;
     }
