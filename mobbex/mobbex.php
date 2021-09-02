@@ -740,58 +740,28 @@ class Mobbex extends PaymentModule
 
     public function hookPaymentOptions($params)
     {
-        if (!$this->active) {
+        if (!$this->active || !$this->checkCurrency($params['cart']) || !MobbexHelper::isPaymentStep())
             return;
-        }
 
-        if (!$this->checkCurrency($params['cart'])) {
-            return;
-        }
+        $options      = [];
+        $checkoutData = MobbexHelper::getPaymentData();
 
-        $modal_active = Configuration::get(MobbexHelper::K_EMBED, false);
+        MobbexHelper::addJavascriptData([
+            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+            'checkoutId'  => $checkoutData['id'],
+            'checkoutUrl' => $checkoutData['url'],
+            'returnUrl'   => $checkoutData['return_url']
+        ]);
 
-        if ($modal_active) {
-            $payment_options = [$this->getIframePaymentOption()];
-        } else {
-            $payment_options = [$this->getExternalPaymentOption()];
-        }
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
+            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/payment.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'));
 
-        return $payment_options;
-    }
+        $options[] = $option;
 
-    public function getExternalPaymentOption()
-    {
-        $externalOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $externalOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'redirect', array(), true))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/ps17.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
-
-        return $externalOption;
-    }
-
-    public function getIframePaymentOption()
-    {
-        $payment_data = MobbexHelper::getPaymentData();
-
-        $this->context->smarty->assign(
-            [
-                'wallet' => !empty($payment_data['wallet']) ? json_encode($payment_data['wallet']) : null,
-                'is_wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
-                'checkout_id' => $payment_data['id'],
-                'checkout_url' => $payment_data['return_url'],
-                'ps_version' => MobbexHelper::getPsVersion(),
-                'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
-                'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
-            ]
-        );
-
-        $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/modal_payment.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
-
-        return $iframeOption;
+        return $options;
     }
 
     public function hookDisplayProductAdditionalInfo($params)
@@ -874,39 +844,21 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        if (Configuration::get(MobbexHelper::K_EMBED, false)) {
-            $template = 'views/templates/front/modal_payment.tpl';
+        $checkoutData = MobbexHelper::getPaymentData();
 
-            // If wallet is inactive create checkout now
-            $is_wallet = (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged());
-            if (!$is_wallet) {
-                $payment_data = MobbexHelper::getPaymentData();
-            }
-                
-            $this->context->smarty->assign(
-                [
-                    'is_wallet' => $is_wallet,
-                    'checkout_id' => isset($payment_data) ? $payment_data['id'] : null,
-                    'checkout_url' => isset($payment_data) ? $payment_data['return_url'] : null,
-                    'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-                    'ps_version' => MobbexHelper::getPsVersion(),
-                    'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
-                    'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
+        Media::addJsDef([
+            'mbbx' => [
+                'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+                'checkoutId'  => $checkoutData['id'],
+                'checkoutUrl' => $checkoutData['url'],
+                'returnUrl'   => $checkoutData['return_url']
                 ]
-            );
+        ]);
 
-            return $this->display(__FILE__, $template);
-        }
+        $this->context->smarty->assign(['cards' => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []]);
 
-        $template = 'views/templates/hooks/payment.tpl';
-
-        $this->context->smarty->assign(
-            array(
-                'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-            )
-        );
-
-        return $this->display(__FILE__, $template);
+        return $this->display(__FILE__, 'views/templates/front/payment.tpl');
     }
 
     /**
