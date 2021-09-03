@@ -652,4 +652,87 @@ class MobbexHelper
         </script>
         <?php
     }
+
+    /**
+     * Create an order from Cart.
+     * 
+     * @param string|int $cartId
+     * @param array $transData
+     * @param PaymentModule $module
+     */
+    public static function createOrder($cartId, $transData, $module)
+    {
+        try {
+            $context = self::restoreContext($cartId);
+
+            $module->validateOrder(
+                $cartId,
+                $transData['orderStatus'],
+                (float) $context->cart->getOrderTotal(true, Cart::BOTH),
+                $transData['name'],
+                $transData['message'],
+                [
+                    '{transaction_id}' => $transData['transaction_id'],
+                    '{message}' => $transData['message'],
+                ],
+                (int) $context->currency->id,
+                false,
+                $context->customer->secure_key
+            );
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog('Error in Mobbex order creation: ' . $e->getMessage(), 3, null, 'Mobbex', $cartId, true, null);
+        }
+    }
+
+    /**
+     * Restore the context to process the order validation properly.
+     * 
+     * @param int|string $cartId 
+     * 
+     * @return Context $context 
+     */
+    protected static function restoreContext($cartId)
+    {
+        $context           = Context::getContext();
+        $context->cart     = new Cart((int) $cartId);
+        $context->customer = new Customer((int) Tools::getValue('customer_id'));
+        $context->currency = new Currency((int) $context->cart->id_currency);
+        $context->language = new Language((int) $context->customer->id_lang);
+
+        if (!Validate::isLoadedObject($context->cart))
+            PrestaShopLogger::addLog('Error getting context on Webhook: ', 3, null, 'Mobbex', $cartId, true, null);
+
+        return $context;
+    }
+
+    /**
+     * Add an script depending of context and prestashop version.
+     * 
+     * @param string $uri
+     * @param mixed $type
+     * @param Controller $controller
+     */
+    public static function addScript($uri, $remote = false, $controller = null)
+    {
+        if (!$controller)
+            $controller = Context::getContext()->controller;
+
+        if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
+            $controller->registerJavascript(sha1($uri), $uri, ['server' => $remote ? 'remote' : 'local']);
+        } else {
+            $controller->addJS($uri);
+        }
+    }
+
+    /**
+     * Check if it is in payment step.
+     * 
+     * @return bool
+     */
+    public static function isPaymentStep()
+    {
+        $controller = Context::getContext()->controller;
+
+        return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
+    }
 }
