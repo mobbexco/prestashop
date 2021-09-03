@@ -15,6 +15,7 @@
             background: rgb(0 0 0 / .4);
             transition: all ease-in-out .3s;
             z-index: 9999;
+         
         }
         .mobbex-plans-modal.active {
             display: grid;
@@ -29,8 +30,8 @@
             justify-content: space-between;
             align-items: center;
             width: fit-content;
-            padding: 4px 18px;
-            font-size: 17px;
+            padding: {/literal}{$style_settings['button_padding']}{literal};
+            font-size: {/literal}{$style_settings['button_font_size']}{literal};
             color: {/literal}{$style_settings['text_color']}{literal};
             background: {/literal}{$style_settings['background']}{literal};
             border: none;
@@ -69,8 +70,11 @@
             padding-right: 17px;
             overflow: hidden;
         }
+        
     </style>
     {/literal}
+    
+
     <button type="button" id="open-mobbex-plans">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" width="40" height="40" style="margin-left: 15px; border-radius: 40px;">

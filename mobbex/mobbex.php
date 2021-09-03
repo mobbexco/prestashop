@@ -1,4 +1,5 @@
 <?php
+
 /**
  * mobbex.php
  *
@@ -106,42 +107,44 @@ class Mobbex extends PaymentModule
         $this->_createTable();
 
         if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (!parent::install() 
-            || !$this->registerHook('payment') 
-            || !$this->registerHook('paymentReturn') 
-            || !$this->registerHook('displayProductButtons') 
-            || !$this->registerHook('displayCustomerAccountForm') 
-            || !$this->registerHook('actionCustomerAccountAdd') 
-            || !$this->registerHook('displayAdminProductsExtra') 
-            || !$this->registerHook('actionProductUpdate') 
-            || !$this->registerHook('actionOrderStatusPostUpdate') 
-            || !$this->registerHook('displayBackOfficeCategory') 
-            || !$this->registerHook('categoryAddition') 
-            || !$this->registerHook('categoryUpdate') 
-            || !$this->registerHook('displayPDFInvoice')
-            || !$this->registerHook('displayBackOfficeHeader')
-            || !$this->registerHook('displayHeader')
+            if (
+                !parent::install()
+                || !$this->registerHook('payment')
+                || !$this->registerHook('paymentReturn')
+                || !$this->registerHook('displayProductButtons')
+                || !$this->registerHook('displayCustomerAccountForm')
+                || !$this->registerHook('actionCustomerAccountAdd')
+                || !$this->registerHook('displayAdminProductsExtra')
+                || !$this->registerHook('actionProductUpdate')
+                || !$this->registerHook('actionOrderStatusPostUpdate')
+                || !$this->registerHook('displayBackOfficeCategory')
+                || !$this->registerHook('categoryAddition')
+                || !$this->registerHook('categoryUpdate')
+                || !$this->registerHook('displayPDFInvoice')
+                || !$this->registerHook('displayBackOfficeHeader')
+                || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
         } else {
-            if (!parent::install() 
-            || !$this->registerHook('paymentOptions') 
-            || !$this->registerHook('paymentReturn') 
-            || !$this->registerHook('displayProductAdditionalInfo') 
-            || !$this->registerHook('additionalCustomerFormFields') 
-            || !$this->registerHook('actionObjectCustomerUpdateAfter') 
-            || !$this->registerHook('actionObjectCustomerAddAfter') 
-            || !$this->registerHook('displayAdminProductsExtra') 
-            || !$this->registerHook('actionProductUpdate') 
-            || !$this->registerHook('actionOrderStatusPostUpdate') 
-            || !$this->registerHook('displayBackOfficeCategory') 
-            || !$this->registerHook('categoryAddition') 
-            || !$this->registerHook('categoryUpdate') 
-            || !$this->registerHook('displayPDFInvoice')
-            || !$this->registerHook('displayBackOfficeHeader')
-            || !$this->registerHook('actionEmailSendBefore')
-            || !$this->registerHook('displayHeader')
+            if (
+                !parent::install()
+                || !$this->registerHook('paymentOptions')
+                || !$this->registerHook('paymentReturn')
+                || !$this->registerHook('displayProductAdditionalInfo')
+                || !$this->registerHook('additionalCustomerFormFields')
+                || !$this->registerHook('actionObjectCustomerUpdateAfter')
+                || !$this->registerHook('actionObjectCustomerAddAfter')
+                || !$this->registerHook('displayAdminProductsExtra')
+                || !$this->registerHook('actionProductUpdate')
+                || !$this->registerHook('actionOrderStatusPostUpdate')
+                || !$this->registerHook('displayBackOfficeCategory')
+                || !$this->registerHook('categoryAddition')
+                || !$this->registerHook('categoryUpdate')
+                || !$this->registerHook('displayPDFInvoice')
+                || !$this->registerHook('displayBackOfficeHeader')
+                || !$this->registerHook('actionEmailSendBefore')
+                || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
@@ -212,7 +215,7 @@ class Mobbex extends PaymentModule
         $helper->identifier = $this->identifier;
         $helper->submit_action = 'submit_mobbex';
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
-        . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+            . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
         $helper->tpl_vars = array(
@@ -453,6 +456,42 @@ class Mobbex extends PaymentModule
                         'desc' => $this->l('Plans Button Background Color'),
                         'tab' => 'tab_appearence',
                     ),
+                    array(
+                        'type' => 'text',
+                        'label' => $this->l('Padding'),
+                        'name' => MobbexHelper::K_PLANS_PADDING,
+                        'required' => false,
+                        'desc' => $this->l('Plans Button Padding'),
+                        'tab' => 'tab_appearence',
+                    ),
+                    array( 
+                        'type' => 'text',
+                        'label' => $this->l('Font-Size'),
+                        'name' => MobbexHelper::K_PLANS_FONT_SIZE,
+                        'required' => false,
+                        'desc' => $this->l('Plans Button Font-Size (Ej: 5px)'),
+                        'tab' => 'tab_appearence',
+                    ),
+                    array(
+                        'type' => 'radio',
+                        'label' => $this->l('Plans Module Theme Mode'),
+                        'name' => MobbexHelper::K_PLANS_THEME,
+                        'is_bool' => false,
+                        'required' => false,
+                        'tab' => 'tab_appearence',
+                        'values' => [
+                            [
+                                'id' => 'm_plans_theme_light',
+                                'value' => MobbexHelper::K_THEME_LIGHT,
+                                'label' => $this->l('Light Mode'),
+                            ],
+                            [
+                                'id' => 'm_plans_theme_dark',
+                                'value' => MobbexHelper::K_THEME_DARK,
+                                'label' => $this->l('Dark Mode'),
+                            ],
+                        ],
+                    ),
                     // DNI
                     array(
                         'type' => 'switch',
@@ -540,6 +579,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
             MobbexHelper::K_PLANS_IMAGE_URL => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
+            MobbexHelper::K_PLANS_PADDING => Configuration::get(MobbexHelper::K_PLANS_PADDING, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
@@ -574,7 +614,8 @@ class Mobbex extends PaymentModule
     private function _createStates()
     {
         // Pending Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_PENDING)
+        if (
+            !Configuration::hasKey(MobbexHelper::K_OS_PENDING)
             || empty(Configuration::get(MobbexHelper::K_OS_PENDING))
             || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_PENDING)))
         ) {
@@ -601,8 +642,9 @@ class Mobbex extends PaymentModule
         }
 
         // Waiting Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_WAITING) 
-            || empty(Configuration::get(MobbexHelper::K_OS_WAITING)) 
+        if (
+            !Configuration::hasKey(MobbexHelper::K_OS_WAITING)
+            || empty(Configuration::get(MobbexHelper::K_OS_WAITING))
             || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_WAITING)))
         ) {
             $order_state = new OrderState();
@@ -626,7 +668,8 @@ class Mobbex extends PaymentModule
         }
 
         // Rejected Status
-        if (!Configuration::hasKey(MobbexHelper::K_OS_REJECTED)
+        if (
+            !Configuration::hasKey(MobbexHelper::K_OS_REJECTED)
             || empty(Configuration::get(MobbexHelper::K_OS_REJECTED))
             || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_REJECTED)))
         ) {
@@ -699,7 +742,6 @@ class Mobbex extends PaymentModule
                 "ALTER TABLE `" . _DB_PREFIX_ . "customer` ADD `billing_dni` varchar(255);"
             );
         }
-
     }
 
     /**
@@ -811,7 +853,7 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $image_url ='https://res.mobbex.com/images/sources/mobbex.png';
+        $image_url = 'https://res.mobbex.com/images/sources/mobbex.png';
         if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
             $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
         }
@@ -820,12 +862,15 @@ class Mobbex extends PaymentModule
             [
                 'tax_id' => MobbexHelper::getTaxId(),
                 'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
-                'style_settings' => 
+                'style_settings' =>
                 [
                     'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
                     'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
                     'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-                    'button_image' => $image_url, 
+                    'button_image' => $image_url,
+                    'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
+                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '17px'),
+                    'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
                 ],
             ]
         );
@@ -948,14 +993,14 @@ class Mobbex extends PaymentModule
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
-        $idRefunded = (int)Configuration::get('PS_OS_REFUND');//get id of refunded state
+        $idRefunded = (int)Configuration::get('PS_OS_REFUND'); //get id of refunded state
         $order = new Order($params['id_order']);
-        if($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex'){
+        if ($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex') {
             $transactionData = MobbexTransaction::getTransaction($order->id_cart);
             $response = MobbexHelper::porcessRefund($transactionData['payment']['id']);
             return $response;
         }
-        return false;//not a mobbex transaction
+        return false; //not a mobbex transaction
     }
 
     /**
@@ -975,7 +1020,7 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayAdminProductsExtra($params)
     {
-        $productId = $params['id_product'] ? : Tools::getValue('id_product');
+        $productId = $params['id_product'] ?: Tools::getValue('id_product');
         $product = new Product($productId);
 
         if (Validate::isLoadedObject($product)) {
@@ -993,7 +1038,7 @@ class Mobbex extends PaymentModule
 
                     foreach ($installments as $installment) {
                         $reference = $installment['reference'];
-                        
+
                         // If it hasn't been added to array yet
                         if (!array_key_exists('common_plan_' . $reference, $commonPlansFields)) {
                             $isChecked = is_array($checkedCommonPlans) ? in_array($reference, $checkedCommonPlans) : false;
@@ -1007,7 +1052,7 @@ class Mobbex extends PaymentModule
 
                             // Add to checkbox data
                             $commonPlansFields['common_plan_' . $reference] = [
-                                'label'   => $installment['description'] ? : $installment['name'],
+                                'label'   => $installment['description'] ?: $installment['name'],
                                 'data'   => $isChecked ? 'yes' : false
                             ];
                         }
@@ -1031,7 +1076,7 @@ class Mobbex extends PaymentModule
 
                             // Add to checkbox data
                             $advancedPlansFields['advanced_plan_' . $uid] = [
-                                'label'   => $installment['description'] ? : $installment['name'],
+                                'label'   => $installment['description'] ?: $installment['name'],
                                 'data'   => $isChecked ? 'yes' : false,
                                 'sourceName' => $source['source']['name'],
                                 'sourceRef' => $source['source']['reference'],
@@ -1056,7 +1101,7 @@ class Mobbex extends PaymentModule
     public function hookActionProductUpdate($params)
     {
         $ahoraFields = ['ahora_3', 'ahora_6', 'ahora_12', 'ahora_18'];
-        
+
         // Delete decrepated "Ahora" custom fields from database (are now saved in common_plans field)
         foreach ($ahoraFields as $key) {
             $customFieldId = MobbexCustomFields::getCustomField($params['id_product'], 'product', $key, 'id');
@@ -1107,10 +1152,10 @@ class Mobbex extends PaymentModule
     public function hookDisplayBackOfficeCategory($params)
     {
         //depending on the version $params['request'] can be empty 
-        if($params['request']){
+        if ($params['request']) {
             $category_id = (int)$params['request']->get('categoryId');
-        }else{
-            $category_id = $params['id_category'] ? : Tools::getValue('id_category');
+        } else {
+            $category_id = $params['id_category'] ?: Tools::getValue('id_category');
         }
 
         $ahora = array(
@@ -1188,7 +1233,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayPDFInvoice($params)
     {
         $tab = MobbexHelper::getInvoiceData($params['object']->id_order);
-            
+
         return $tab;
     }
 
