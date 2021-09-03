@@ -39,3 +39,41 @@ div#mobbexWallet div.payment-option div.walletForm div.selector span {width: 14r
       transform: translateX(-50%) translateY(-50%) rotate(359deg);
   }
 }
+
+#mbbx-anchor {
+  background: 15px 15px no-repeat #fbfbfb;
+}
+
+.mbbx-card .payment_module .payment-option img {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 64px;
+  border-radius: 100%;
+}
+
+.payment-option img[src*="mobbex"] {
+  width: 50px;
+  border-radius: 100%;
+}
+
+.walletForm:not(.ps17) {
+  display: none;
+  padding: 30px;
+  border: 1px solid #d6d4d4;
+  border-top: none;
+  border-radius: 4px;
+  font-size: 15px;
+  transform: translateY(-15px);
+  background: white;
+}
+
+.walletForm.ps17 input[name="securityCode"] {
+  max-width: 70px;
+  display: inline;
+}
+
+.walletForm.ps17 select[name="installment"] {
+  max-width: 200px;
+  display: inline;
+}

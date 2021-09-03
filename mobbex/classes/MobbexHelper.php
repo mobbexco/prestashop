@@ -52,6 +52,7 @@ class MobbexHelper
     const K_PLANS_PADDING = 'MOBBEX_PLANS_PADDING';
     const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
+    const K_MULTICARD = 'MOBBEX_MULTICARD';
     
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
@@ -60,7 +61,8 @@ class MobbexHelper
     const K_DEF_PLANS_PADDING = '4px 18px';
     const K_DEF_PLANS_FONT_SIZE = '17px';
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
-    
+    const K_DEF_MULTICARD = false;
+
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
@@ -189,6 +191,7 @@ class MobbexHelper
             'timeout' => 5,
             'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
             'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
+            'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
         );
 
         curl_setopt_array($curl, array(
@@ -657,5 +660,88 @@ class MobbexHelper
             var mbbx = {...mbbx, ...<?= json_encode($vars) ?>}
         </script>
         <?php
+    }
+
+    /**
+     * Create an order from Cart.
+     * 
+     * @param string|int $cartId
+     * @param array $transData
+     * @param PaymentModule $module
+     */
+    public static function createOrder($cartId, $transData, $module)
+    {
+        try {
+            $context = self::restoreContext($cartId);
+
+            $module->validateOrder(
+                $cartId,
+                $transData['orderStatus'],
+                (float) $context->cart->getOrderTotal(true, Cart::BOTH),
+                $transData['name'],
+                $transData['message'],
+                [
+                    '{transaction_id}' => $transData['transaction_id'],
+                    '{message}' => $transData['message'],
+                ],
+                (int) $context->currency->id,
+                false,
+                $context->customer->secure_key
+            );
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog('Error in Mobbex order creation: ' . $e->getMessage(), 3, null, 'Mobbex', $cartId, true, null);
+        }
+    }
+
+    /**
+     * Restore the context to process the order validation properly.
+     * 
+     * @param int|string $cartId 
+     * 
+     * @return Context $context 
+     */
+    protected static function restoreContext($cartId)
+    {
+        $context           = Context::getContext();
+        $context->cart     = new Cart((int) $cartId);
+        $context->customer = new Customer((int) Tools::getValue('customer_id'));
+        $context->currency = new Currency((int) $context->cart->id_currency);
+        $context->language = new Language((int) $context->customer->id_lang);
+
+        if (!Validate::isLoadedObject($context->cart))
+            PrestaShopLogger::addLog('Error getting context on Webhook: ', 3, null, 'Mobbex', $cartId, true, null);
+
+        return $context;
+    }
+
+    /**
+     * Add an script depending of context and prestashop version.
+     * 
+     * @param string $uri
+     * @param mixed $type
+     * @param Controller $controller
+     */
+    public static function addScript($uri, $remote = false, $controller = null)
+    {
+        if (!$controller)
+            $controller = Context::getContext()->controller;
+
+        if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
+            $controller->registerJavascript(sha1($uri), $uri, ['server' => $remote ? 'remote' : 'local']);
+        } else {
+            $controller->addJS($uri);
+        }
+    }
+
+    /**
+     * Check if it is in payment step.
+     * 
+     * @return bool
+     */
+    public static function isPaymentStep()
+    {
+        $controller = Context::getContext()->controller;
+
+        return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
     }
 }

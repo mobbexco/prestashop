@@ -38,7 +38,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = array('redirect', 'notification', 'webhook', 'wallet');
+        $this->controllers = ['notification'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -122,6 +122,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('categoryUpdate')
                 || !$this->registerHook('displayPDFInvoice')
                 || !$this->registerHook('displayBackOfficeHeader')
+                || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
@@ -143,6 +144,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('displayPDFInvoice')
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('actionEmailSendBefore')
+                || !$this->registerHook('displayHeader')
             ) {
                 return false;
             }
@@ -511,6 +513,27 @@ class Mobbex extends PaymentModule
                             ],
                         ],
                     ),
+                    //Multicard
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Permite el uso de multiples tarjetas'),
+                        'name' => MobbexHelper::K_MULTICARD, //?
+                        'is_bool' => true,
+                        'required' => false,
+                        'tab' => 'tab_advanced',
+                        'values' => [
+                            [
+                                'id' => 'active_on_multicard',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_multicard',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                     array(
                         'type' => 'text',
                         'label' => $this->l('Usar campo DNI existente'),
@@ -560,6 +583,8 @@ class Mobbex extends PaymentModule
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
+            //Multicard field
+            MobbexHelper::K_MULTICARD => Configuration::get(MobbexHelper::K_MULTICARD, false),
             // IMPORTANT! Do not add Order States here. These values are used to save form fields
         );
     }
@@ -782,58 +807,43 @@ class Mobbex extends PaymentModule
 
     public function hookPaymentOptions($params)
     {
-        if (!$this->active) {
+        if (!$this->active || !$this->checkCurrency($params['cart']) || !MobbexHelper::isPaymentStep())
             return;
+
+        $options      = [];
+        $checkoutData = MobbexHelper::getPaymentData();
+        $cards        = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
+
+        MobbexHelper::addJavascriptData([
+            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+            'checkoutId'  => $checkoutData['id'],
+            'checkoutUrl' => $checkoutData['url'],
+            'returnUrl'   => $checkoutData['return_url']
+        ]);
+
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
+            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/payment.tpl'))
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'));
+
+        $options[] = $option;
+
+        foreach ($cards as $key => $card) {
+            $this->context->smarty->assign([
+                'card' => $card,
+                'key'  => $key
+            ]);
+
+            $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+            $option->setCallToActionText($card['name'])
+                ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/card-form.tpl'))
+                ->setLogo($card['source']['card']['product']['logo']);
+    
+            $options[] = $option;
         }
 
-        if (!$this->checkCurrency($params['cart'])) {
-            return;
-        }
-
-        $modal_active = Configuration::get(MobbexHelper::K_EMBED, false);
-
-        if ($modal_active) {
-            $payment_options = [$this->getIframePaymentOption()];
-        } else {
-            $payment_options = [$this->getExternalPaymentOption()];
-        }
-
-        return $payment_options;
-    }
-
-    public function getExternalPaymentOption()
-    {
-        $externalOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $externalOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setAction($this->context->link->getModuleLink($this->name, 'redirect', array(), true))
-            ->setAdditionalInformation($this->context->smarty->fetch('module:mobbex/views/templates/front/ps17.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
-
-        return $externalOption;
-    }
-
-    public function getIframePaymentOption()
-    {
-        $payment_data = MobbexHelper::getPaymentData();
-
-        $this->context->smarty->assign(
-            [
-                'wallet' => !empty($payment_data['wallet']) ? json_encode($payment_data['wallet']) : null,
-                'is_wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
-                'checkout_id' => $payment_data['id'],
-                'checkout_url' => $payment_data['return_url'],
-                'ps_version' => MobbexHelper::getPsVersion(),
-                'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
-                'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
-            ]
-        );
-
-        $iframeOption = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $iframeOption->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/modal_payment.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/logo_transparent.png'));
-
-        return $iframeOption;
+        return $options;
     }
 
     public function hookDisplayProductAdditionalInfo($params)
@@ -919,39 +929,21 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        if (Configuration::get(MobbexHelper::K_EMBED, false)) {
-            $template = 'views/templates/front/modal_payment.tpl';
+        $checkoutData = MobbexHelper::getPaymentData();
 
-            // If wallet is inactive create checkout now
-            $is_wallet = (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged());
-            if (!$is_wallet) {
-                $payment_data = MobbexHelper::getPaymentData();
-            }
-
-            $this->context->smarty->assign(
-                [
-                    'is_wallet' => $is_wallet,
-                    'checkout_id' => isset($payment_data) ? $payment_data['id'] : null,
-                    'checkout_url' => isset($payment_data) ? $payment_data['return_url'] : null,
-                    'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-                    'ps_version' => MobbexHelper::getPsVersion(),
-                    'js_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/js/front.js'),
-                    'css_url' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/css/front.css'),
+        Media::addJsDef([
+            'mbbx' => [
+                'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+                'checkoutId'  => $checkoutData['id'],
+                'checkoutUrl' => $checkoutData['url'],
+                'returnUrl'   => $checkoutData['return_url']
                 ]
-            );
+        ]);
 
-            return $this->display(__FILE__, $template);
-        }
+        $this->context->smarty->assign(['cards' => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []]);
 
-        $template = 'views/templates/hooks/payment.tpl';
-
-        $this->context->smarty->assign(
-            array(
-                'payment_label' => $this->l('Pay with Credit/Debit Cards'),
-            )
-        );
-
-        return $this->display(__FILE__, $template);
+        return $this->display(__FILE__, 'views/templates/front/payment.tpl');
     }
 
     /**
@@ -1243,6 +1235,28 @@ class Mobbex extends PaymentModule
         $tab = MobbexHelper::getInvoiceData($params['object']->id_order);
 
         return $tab;
+    }
+
+    /**
+     * Load front end scripts.
+     */
+    public function hookDisplayHeader()
+    {
+        $currentPage = Tools::getValue('controller');
+        $mediaPath   = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name);
+
+        // Checkout page
+        if ($currentPage == 'order' && MobbexHelper::isPaymentStep()) {
+            $this->context->controller->addCSS("$mediaPath/views/css/front.css");
+
+            MobbexHelper::addScript("$mediaPath/views/js/front.js", true);
+
+            if (Configuration::get(MobbexHelper::K_WALLET))
+                MobbexHelper::addScript('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js', true);
+
+            if (Configuration::get(MobbexHelper::K_EMBED))
+                MobbexHelper::addScript('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js', true);
+        }
     }
 
     /**
