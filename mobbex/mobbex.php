@@ -474,6 +474,27 @@ class Mobbex extends PaymentModule
                             ],
                         ],
                     ),
+                    //Multicard
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Permite el uso de multiples tarjetas'),
+                        'name' => MobbexHelper::K_MULTICARD, //?
+                        'is_bool' => true,
+                        'required' => false,
+                        'tab' => 'tab_advanced',
+                        'values' => [
+                            [
+                                'id' => 'active_on_multicard',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_multicard',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                     array(
                         'type' => 'text',
                         'label' => $this->l('Usar campo DNI existente'),
@@ -522,6 +543,8 @@ class Mobbex extends PaymentModule
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
+            //Multicard field
+            MobbexHelper::K_MULTICARD => Configuration::get(MobbexHelper::K_MULTICARD, false),
             // IMPORTANT! Do not add Order States here. These values are used to save form fields
         );
     }
