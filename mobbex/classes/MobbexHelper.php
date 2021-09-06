@@ -744,4 +744,56 @@ class MobbexHelper
 
         return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
     }
+
+    /**
+     * Retrieve plans filter fields data for product/category settings.
+     * 
+     * @param int|string $id
+     * @param string $catalogType
+     * 
+     * @return array
+     */
+    public static function getPlansFilterFields($id, $catalogType = 'product')
+    {
+        $commonFields = $advancedFields = $sourceNames = [];
+
+        // Get current checked plans from db
+        $checkedCommonPlans   = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans')) ?: [];
+        $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans')) ?: [];
+
+        foreach (MobbexHelper::getSources() as $source) {
+            // Only if have installments
+            if (empty($source['installments']['list']))
+                continue;
+
+            // Create field array data
+            foreach ($source['installments']['list'] as $plan) {
+                $commonFields[$plan['reference']] = [
+                    'id'    => 'common_plan_' . $plan['reference'],
+                    'value' => !in_array($plan['reference'], $checkedCommonPlans),
+                    'label' => $plan['description'] ?: $plan['name'],
+                ];
+            }
+        }
+
+        foreach (MobbexHelper::getSourcesAdvanced() as $source) {
+            // Only if have installments
+            if (empty($source['installments']))
+                continue;
+
+            // Save source name
+            $sourceNames[$source['source']['reference']] = $source['source']['name'];
+
+            // Create field array data
+            foreach ($source['installments'] as $plan) {
+                $advancedFields[$source['source']['reference']][] = [
+                    'id'      => 'advanced_plan_' . $plan['uid'],
+                    'value'   => in_array($plan['uid'], $checkedAdvancedPlans),
+                    'label'   => $plan['description'] ?: $plan['name'],
+                ];
+            }
+        }
+
+        return compact('commonFields', 'advancedFields', 'sourceNames');
+    }
 }
