@@ -7,7 +7,7 @@
                 justify-content: space-between;
                 align-items: center;
                 width: fit-content;
-                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px'{/if}{literal};
+                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px{/if}{literal};
                 font-size: {/literal}{if $style_settings['button_font_size']}{$style_settings['button_font_size']}{else}16px{/if}{literal};
                 color: {/literal}{if $style_settings['text_color']}{$style_settings['text_color']}{else}#ffffff{/if}{literal};
                 background: {/literal}{if $style_settings['background']}{$style_settings['background']}{else}#8900ff{/if}{literal};
