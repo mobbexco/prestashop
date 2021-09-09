@@ -60,7 +60,7 @@ class MobbexHelper
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
     const K_DEF_PLANS_PADDING = '4px 18px';
-    const K_DEF_PLANS_FONT_SIZE = '25px';
+    const K_DEF_PLANS_FONT_SIZE = '16px';
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
     const K_DEF_MULTICARD = false;
     
@@ -514,7 +514,7 @@ class MobbexHelper
         $categories =  $product->getCategories();
 
         $checkedCommonPlans = [];
-        $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'common_plans'));
+        $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'common_plans')) ? : [];
 
         foreach ($categories as $cat_id) {
             $checkedCommonPlans = array_merge($checkedCommonPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'common_plans')) ? : []);

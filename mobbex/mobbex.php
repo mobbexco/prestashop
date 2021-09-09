@@ -883,7 +883,7 @@ class Mobbex extends PaymentModule
                     'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
                     'button_image' => $image_url,
                     'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '25px'),
+                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
                     'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
                 ],
             ]

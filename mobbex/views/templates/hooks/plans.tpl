@@ -7,30 +7,27 @@
                 justify-content: space-between;
                 align-items: center;
                 width: fit-content;
-                padding: {/literal}{$style_settings['button_padding']}{literal};
-                font-size: {/literal}{$style_settings['button_font_size']}{literal};
-                color: {/literal}{$style_settings['text_color']}{literal};
-                background: {/literal}{$style_settings['background']}{literal};
+                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px'{/if}{literal};
+                font-size: {/literal}{if $style_settings['button_font_size']}{$style_settings['button_font_size']}{else}16px{/if}{literal};
+                color: {/literal}{if $style_settings['text_color']}{$style_settings['text_color']}{else}#ffffff{/if}{literal};
+                background: {/literal}{if $style_settings['background']}{$style_settings['background']}{else}#8900ff{/if}{literal};
                 border: none;
                 border-radius: 6px;
                 cursor: pointer;
                 box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);
                 min-height: 40px;
             }
-
             #closembbxProduct {
                 font-size: 35px;
                 color: rgb(0, 0, 0);
                 cursor: pointer;
-                opacity: 1;
-                padding-bottom: 20px;
+                margin-bottom: 10px;
             }
             .dark #closembbxProduct {
                 color: white;   
             }
-
             #closembbxProduct:hover {
-                opacity: 1;
+
                 cursor: pointer;
             }
 
@@ -173,9 +170,9 @@
 
     <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}">
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
-            <div id="mbbxProductModalHeader">
-                <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
-                <span id="closembbxProduct">&times;</span>
+        <div id="mbbxProductModalHeader">
+        <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
+        <span id="closembbxProduct">&times;</span>
                 <select name="mbbx-method-select" id="mbbx-method-select">
                     <option id="0" value="0">Todos</option>
                     {foreach item=$source  from=$sources}
@@ -215,7 +212,6 @@
         </div>
     </div>
 
-
     <button type="button" id="mbbxProductBtn">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" width="40" height="40"
@@ -223,24 +219,23 @@
         {/if}
     </button>
 
-
     <script>
+    
         // Get modal action buttons
+        var body = document.querySelector('body')
         var openBtn = document.getElementById('mbbxProductBtn');
-        var closeBtn = document.getElementById('closembbxProduct');
-        var mobbexPlansModal = document.querySelector('#mbbxProductModal');
+        var closeBtn = document.querySelector('#closembbxProduct');
+        var mobbexPlansModal = document.body.insertBefore(document.querySelector('#mbbxProductModal'), document.body.firstChild);
+        var mbbxModalContainer = document.querySelector('#mbbxProductModal');
 
         // Add events to toggle modal
-        openBtn.addEventListener('click', function() {
-            mobbexPlansModal.classList.toggle('active');
-            document.querySelector('body').classList.toggle('scroll-lock');
+        document.body.addEventListener('click', function(e) {
+            if(e.target === openBtn || e.target === closeBtn || e.target === mbbxModalContainer) {
+                mobbexPlansModal.classList.toggle('active');
+                document.querySelector('body').classList.toggle('scroll-lock');
+            } 
         });
-
-        closeBtn.addEventListener('click', function() {
-            mobbexPlansModal.classList.toggle('active');
-            document.querySelector('body').classList.toggle('scroll-lock');
-        });
-
+    
         // Get sources and payment method selector 
         var sources = document.querySelectorAll('.mobbexSource');
         var methodSelect = document.getElementById('mbbx-method-select');
@@ -250,6 +245,7 @@
             for (source of sources)
                 source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
         });
+
     </script>
 
 </div>
