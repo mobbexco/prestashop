@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Mobbex.php
  *
@@ -52,15 +53,15 @@ class MobbexHelper
     const K_PLANS_PADDING = 'MOBBEX_PLANS_PADDING';
     const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
-    
+
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
     const K_DEF_PLANS_PADDING = '4px 18px';
-    const K_DEF_PLANS_FONT_SIZE = '17px';
+    const K_DEF_PLANS_FONT_SIZE = '25px';
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
-    
+
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
@@ -106,7 +107,7 @@ class MobbexHelper
         // If store's logo option is disabled, use the one configured in mobbex
         $default_logo = null;
         if (!empty(Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO))) {
-            $default_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ .Configuration::get('PS_LOGO');
+            $default_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ . Configuration::get('PS_LOGO');
         }
 
         $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
@@ -141,7 +142,7 @@ class MobbexHelper
 
     public static function getReference($cart)
     {
-        return 'ps_order_cart_' . $cart->id . '_time_'.time();
+        return 'ps_order_cart_' . $cart->id . '_time_' . time();
     }
 
     public static function createCheckout($module, $cart, $customer)
@@ -166,9 +167,9 @@ class MobbexHelper
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
             $items[] = [
-                "image" => 'https://' . $imagePath, 
-                "description" => $product['name'], 
-                "quantity" => $product['cart_quantity'], 
+                "image" => 'https://' . $imagePath,
+                "description" => $product['name'],
+                "quantity" => $product['cart_quantity'],
                 "total" => round($product['price_wt'], 2)
             ];
         }
@@ -328,7 +329,7 @@ class MobbexHelper
 
         $installments = [];
         $total_advanced_plans = [];
-        
+
         $ahora = array(
             'ahora_3' => 'Ahora 3',
             'ahora_6' => 'Ahora 6',
@@ -369,8 +370,8 @@ class MobbexHelper
         $categoriesId = self::getCategoriesId($products);
         foreach ($ahora as $key => $value) {
             //for each key, if it was not added before, then search all categories.
-            if (!in_array('-' . $key, $installments)){
-                foreach($categoriesId as $cat_id){
+            if (!in_array('-' . $key, $installments)) {
+                foreach ($categoriesId as $cat_id) {
                     if (MobbexCustomFields::getCustomField($cat_id, 'category', $key) === 'yes') {
                         $installments[] = '-' . $key;
                         unset($ahora[$key]);
@@ -390,20 +391,21 @@ class MobbexHelper
      * 
      * @return array
      */
-    private function getCategoriesId($listProducts){
-        
+    private function getCategoriesId($listProducts)
+    {
+
         $categories_id = array();
-        
-		foreach ($listProducts as $product) {
+
+        foreach ($listProducts as $product) {
             $categories = array();
-			$categories = Product::getProductCategoriesFull($product['id_product']);
-			foreach ($categories as $category) {
-				if(!in_array($category['id_category'], $categories_id)){
-					array_push($categories_id,$category['id_category']);
-				}
-			}
-		}
-		return $categories_id;
+            $categories = Product::getProductCategoriesFull($product['id_product']);
+            foreach ($categories as $category) {
+                if (!in_array($category['id_category'], $categories_id)) {
+                    array_push($categories_id, $category['id_category']);
+                }
+            }
+        }
+        return $categories_id;
     }
 
     /**
@@ -413,11 +415,18 @@ class MobbexHelper
      * 
      * @return array
      */
-    public static function getSources($total = null)
+    public static function getSources($total = null, $inactivePlans = null)
     {
         $curl = curl_init();
 
         $data = $total ? '?total=' . $total : null;
+
+        if ($data && $inactivePlans) {
+            $data .= '&';
+            foreach ($inactivePlans as $plan) {
+                $data .= '&installments[]=-' . $plan;
+            }
+        }
 
         curl_setopt_array($curl, array(
             CURLOPT_URL => 'https://api.mobbex.com/p/sources' . $data,
@@ -491,15 +500,110 @@ class MobbexHelper
     }
 
     /**
-    * Inform to Mobbex a total order refund 
-    *
-    * @return array
-    */
+     * Retrive active advanced plans from a product and its categories.
+     * 
+     * @param int $product_id
+     * 
+     * @return array
+     */
+    public static function getInactivePlans($product) //nuevo codigo
+    {
+        $categories =  $product->getCategories();
+
+        $checkedCommonPlans = [];
+        $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'common_plans'));
+
+        foreach ($categories as $cat_id) {
+            $checkedCommonPlans = array_merge($checkedCommonPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'common_plans')) ? : []);
+        }
+
+        // Remove duplicated and return
+        return array_unique($checkedCommonPlans);
+    }
+
+    /**
+     * Retrive inactive common plans from a product and its categories.
+     * 
+     * @param int $product_id
+     * 
+     * @return array
+     */
+    public static function getActivePlans($product)
+    {
+        $categories = $product->getCategories();
+        $checkedAdvancedPlans = [];
+
+        // Get plans from product and product categories
+        $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'advanced_plans'));
+
+        foreach ($categories as $cat_id) {
+            if (MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans') !== false) {
+                $checkedAdvancedPlans = array_merge($checkedAdvancedPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans')));
+            }
+        }
+
+        // Remove duplicated and return
+        return array_unique($checkedAdvancedPlans);
+    }
+
+    /**
+     * Filter advanced sources 
+     *
+     * @return array
+     */
+    public static function filterAdvancedSources($sources, $advancedPlans)
+    {
+        foreach ($sources as $firstKey => $source) {
+            foreach ($source['installments'] as $key => $installment) {
+                if (!in_array($installment['uid'], $advancedPlans)) {
+                    unset($sources[$firstKey]['installments'][$key]);
+                }
+            }
+        }
+        return $sources;
+    }
+
+    /**
+     * Merge common sources with sources obtained by advanced rules.
+     * 
+     * @param mixed $sources
+     * @param mixed $advanced_sources
+     * 
+     * @return array
+     */
+    public static function mergeSources($sources, $advanced_sources)
+    {
+        foreach ($advanced_sources as $advanced_source) {
+            $key = array_search($advanced_source['sourceReference'], array_column(array_column($sources, 'source'), 'reference'));
+
+            // If source exists in common sources array
+            if ($key !== false) {
+                // Only add installments
+                $sources[$key]['installments']['list'] = array_merge($sources[$key]['installments']['list'], $advanced_source['installments']);
+            } else {
+                $sources[] = [
+                    'source'       => $advanced_source['source'],
+                    'installments' => [
+                        'list' => $advanced_source['installments']
+                    ]
+                ];
+            }
+        }
+
+        return $sources;
+    }
+
+
+    /**
+     * Inform to Mobbex a total order refund 
+     *
+     * @return array
+     */
     public static function porcessRefund($id_transaction)
     {
         $curl = curl_init();
         curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.mobbex.com/p/operations/".$id_transaction."/refund",
+            CURLOPT_URL => "https://api.mobbex.com/p/operations/" . $id_transaction . "/refund",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
@@ -544,19 +648,19 @@ class MobbexHelper
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
         // Card number
         if ($cardNumber) {
-            $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>'.$cardNumber.'</td></tr>
+            $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>' . $cardNumber . '</td></tr>
             <tr><td></td><td></td></tr>';
         }
 
         // Customer name
         if ($habienteName) {
-            $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>'.$habienteName.'</td></tr>
+            $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>' . $habienteName . '</td></tr>
             <tr><td></td><td></td></tr>';
         }
 
         // Customer ID
-        if(!empty($idHabiente)){
-            $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>'.$idHabiente.'</td></tr>
+        if (!empty($idHabiente)) {
+            $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>' . $idHabiente . '</td></tr>
             <tr><td></td><td></td></tr>';
         }
 
@@ -565,12 +669,12 @@ class MobbexHelper
     }
 
     /**
-	 * Get payment state from Mobbex status code.
+     * Get payment state from Mobbex status code.
      * 
      * @param int|string $status
      * 
      * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
-	 */
+     */
     public static function getState($status)
     {
         if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
@@ -584,7 +688,7 @@ class MobbexHelper
         } else {
             return 'failed';
         }
-	}
+    }
 
     /**
      * Get Tax Id from Mobbex using API.
@@ -633,7 +737,8 @@ class MobbexHelper
             'SELECT `id_order`
             FROM `' . _DB_PREFIX_ . 'orders`
             WHERE `id_cart` = ' . (int) $cart_id .
-            Shop::addSqlRestriction(), false
+                Shop::addSqlRestriction(),
+            false
         );
 
         // Exit if it does not exist in the database
@@ -652,10 +757,13 @@ class MobbexHelper
      */
     public static function addJavascriptData($vars)
     {
-        ?>
+?>
         <script type='text/javascript'>
-            var mbbx = {...mbbx, ...<?= json_encode($vars) ?>}
+            var mbbx = {
+                ...mbbx,
+                ...<?= json_encode($vars) ?>
+            }
         </script>
-        <?php
+<?php
     }
 }
