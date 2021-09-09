@@ -1,112 +1,35 @@
-// This javascript file is included in the front office
-
-// Execute Embed Checkout
-function getOptions(checkoutUrl, checkoutId) {
+(function (window) {
+/**
+ * Get embed checkout options.
+ */
+function getOptions() {
   return {
-    id: checkoutId,
+    id: mbbx.checkoutId,
     type: 'checkout',
     onResult: (data) => {
       var status = data.status.code;
-      var link = checkoutUrl + '&status=' + status + '&transactionId=' + data.id;
 
-      window.top.location.href = link;
+      if (status > 1 && status < 400) {
+        window.top.location.href = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
+      } else {
+        window.top.location.reload();
+      }
     },
     onClose: (cancelled) => {
       // Only if cancelled
       if (cancelled === true) {
-        location.reload();
+        window.top.location.reload();
       }
     }
   }
 }
 
-// Remove HTML entities 
-function htmlDecode(input) {
-  var doc = new DOMParser().parseFromString(input, "text/html");
-  return doc.documentElement.textContent;
-}
-
-function renderOptions() {
-  let child = document.createElement("div")
-  let mobbexWallet = document.getElementById("mobbexWallet")
-  child.classList += "payment-option"
-  child.style.margin = "1.5rem 0"
-  child.innerHTML = `
-<span class="custom-radio float-xs-left">
-  <input type="radio" name="walletCard" id="newCard" value="newCard" class="ps-shown-by-js">
-  <span></span>
-</span>
-<label for="newCard" id="newCardLabel">
-  Utilizar otra tarjeta / Medio de pago
-</label>
-`
-  mobbexWallet.appendChild(child)
-  document.getElementById("newCard").checked = true
-  document.getElementById("newCard").addEventListener("click", function () {
-    let forms = document.getElementsByClassName("walletForm")
-    for (let i = 0; i < forms.length; i++) { forms[i].style.display = "none" }
-  })
-}
-
-function renderWallet(wallet, width) {
-  wallet.forEach((card, index) => {
-    let mobbexWallet = document.getElementById("mobbexWallet")
-    let child = document.createElement("div")
-    let installments = card.installments
-    let i = index
-    child.classList += "payment-option"
-    child.style.margin = "1.5rem 0"
-    child.innerHTML = `
-  <span class="custom-radio float-xs-left">
-    <input type="radio" name="walletCard" id="card${index}" value="${index}" class="ps-shown-by-js">
-    <span></span>
-  </span>
-  <label for="card${index}">
-    <img width="30" style="border-radius: 1rem;margin: 0px 4px 0px 0px;" src="${card.source.card.product.logo}"> ${card.card.card_number}
-  </label>
-  <div id="card_${index}_form" class="walletForm additional-information form-group" style="display: none;">
-    <input class="form-control" type="password" name="securityCode" placeholder="${card.source.card.product.code.name}" maxlength="${card.source.card.product.code.length}">
-    <select class="form-control form-control-select" name="installment"></select>
-    <input type="hidden" name="intentToken" value="${card.it}">
-  </div>`
-  
-    mobbexWallet.appendChild(child)
-
-    document.getElementById(`card${index}`).addEventListener("click", function () {
-      let forms = document.getElementsByClassName("walletForm")
-      for (let i = 0; i < forms.length; i++) { forms[i].style.display = "none" }
-      document.getElementById(`card_${index}_form`).style.display = "block"
-    })
-
-    let cardDiv = document.getElementById(`card_${index}_form`)
-    cardDiv.style.margin = '0 2rem'
-    cardDiv.getElementsByTagName("input")[0].style.margin = '1rem 0'
-
-    if (width) { cardDiv.getElementsByTagName("input")[0].style.maxWidth = '184px' }
-
-    installments.forEach(installment => {
-      let div = document.getElementById(`card_${i}_form`)
-      let select = div.getElementsByTagName("select")[0]
-      let option = document.createElement("option")
-      option.value = installment.reference
-      option.text = installment.name
-      select.appendChild(option)
-    })
-  })
-}
-
-function renderNoCardsMessage() {
-  //let child = document.createElement("div")
-  let mobbexWallet = document.getElementById("mobbexWallet")
-  document.getElementById("newCardLabel").innerHTML = "Pagar con Mobbex"
-  mobbexWallet.style.display = "none"
-  /* child.classList += "payment-option"
-  child.innerHTML = '<p>No hay tarjetas disponibles</p>'
-  child.style.margin = "1.5rem 0"
-  mobbexWallet.appendChild(child) */
-}
-
-function executeWallet(checkoutUrl) {
+/**
+ * Execute wallet payment.
+ * 
+ * @param {string} returnUrl 
+ */
+function executeWallet(returnUrl) {
   lockForm()
   let securityCode;
   let installment;
@@ -133,13 +56,14 @@ function executeWallet(checkoutUrl) {
     securityCode: securityCode
   })
     .then(data => {
-      if (data.result) {
-        let status = data.data.status.code;
-        let link = checkoutUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
-        setTimeout(function(){window.top.location.href = link}, 5000)
-      }
-      else {
-        alert("Error procesando el pago")
+      let status = data.result ? data.data.status.code : 0;
+
+      if (status > 1 && status < 400) {
+        setTimeout(function(){
+          window.top.location.href = returnUrl + '&status=' + status + '&type=card' + '&transactionId=' + data.data.id;
+        }, 5000);
+      } else {
+        alert('Error procesando el pago')
         unlockForm()
       }
     })
@@ -149,18 +73,24 @@ function executeWallet(checkoutUrl) {
     })
 }
 
+/**
+ * Check if new card option is selected.
+ */
 function isNewCard() {
-  let cards = document.getElementsByName("walletCard")
-  for (let i = 0; i < cards.length; i++) {
-    if (cards[i].checked) {
-      if (cards[i].value === "newCard") {
-        return true
-      }
-      else return false
-    }
+  let cards = document.getElementsByName('walletCard');
+
+  for (const card of cards) {
+    if (card.checked)
+      return card.value == 'newCard';
   }
+
+  // Returns true if none is selected
+  return true;
 }
 
+/**
+ * Render form loader element.
+ */
 function renderLock() {
   let loaderModal = document.createElement("div")
   loaderModal.id = "mbbx-loader-modal"
@@ -174,11 +104,93 @@ function renderLock() {
   document.body.appendChild(loaderModal)
 }
 
+/**
+ * Enable loader and lock form.
+ */
 function lockForm() {
   document.getElementById("mbbx-loader-modal").style.display = 'block'
 }
 
+/**
+ * Disable loader and unlock form.
+ */
 function unlockForm() {
   document.getElementById("mbbx-loader-modal").style.display = 'none'
 }
 
+/**
+ * Active a wallet card by card key.
+ * 
+ * @param {number} cardId 
+ */
+function activeCard(cardId) {
+  let cards = document.getElementsByName('walletCard');
+  let forms = document.getElementsByClassName('walletForm');
+
+  for (const card of cards)
+    card.checked = card.value == cardId;
+
+  // Only for ps 1.6. In ps 1.7 forms are natively hidden
+  if (!window.prestashop) {
+    for (const form of forms)
+      form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
+  }
+
+  return false;
+}
+
+/**
+ * Execute mobbex payment.
+ */
+function executePayment() {
+  if (mbbx.wallet && !isNewCard()) {
+      executeWallet(mbbx.returnUrl);
+  } else {
+    if (mbbx.embed) {
+      var mbbxButton = window.MobbexEmbed.init(getOptions());
+      mbbxButton.open();
+    } else {
+      window.top.location.href = mbbx.checkoutUrl;
+    }
+  }
+  return false;
+};
+
+window.addEventListener('load', function () {
+  if (!window.mbbx)
+    return false;
+
+  renderLock();
+
+  // If it is prestashop 1.7
+  if (window.prestashop) {
+    document.forms['mobbex_checkout'].onsubmit = function() {
+      return executePayment();
+    }
+
+    document.querySelectorAll('.walletForm').forEach(form => {
+      form.onsubmit = function (e) {
+        activeCard(e.target.attributes.card.value);
+        return executePayment();
+      }
+    });
+  } else {
+    document.querySelector('#mbbx-anchor').onclick = function() {
+      activeCard(null);
+      return executePayment();
+    }
+
+    document.querySelectorAll(".walletAnchor").forEach(anchor => {
+      anchor.onclick = function(e) {
+        return activeCard(e.target.attributes.card.value);
+      }
+    });
+
+    document.querySelectorAll("#mobbexExecute").forEach(button => {
+      button.onclick = function() {
+        return executePayment();
+      }
+    });
+  }
+});
+}) (window);
