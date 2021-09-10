@@ -464,7 +464,7 @@ class Mobbex extends PaymentModule
                         'desc' => $this->l('Plans Button Padding'),
                         'tab' => 'tab_appearence',
                     ),
-                    array( 
+                    array(
                         'type' => 'text',
                         'label' => $this->l('Font-Size'),
                         'name' => MobbexHelper::K_PLANS_FONT_SIZE,
@@ -579,7 +579,9 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
             MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
             MobbexHelper::K_PLANS_IMAGE_URL => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
-            MobbexHelper::K_PLANS_PADDING => Configuration::get(MobbexHelper::K_PLANS_PADDING, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
+            MobbexHelper::K_PLANS_PADDING => Configuration::get(MobbexHelper::K_PLANS_PADDING, MobbexHelper::K_DEF_PLANS_PADDING),
+            MobbexHelper::K_PLANS_FONT_SIZE => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, MobbexHelper::K_DEF_PLANS_FONT_SIZE),
+            MobbexHelper::K_PLANS_THEME => Configuration::get(MobbexHelper::K_PLANS_THEME, MobbexHelper::K_DEF_PLANS_THEME),
             // DNI Fields
             MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
@@ -858,10 +860,22 @@ class Mobbex extends PaymentModule
             $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
         }
 
+        $total = $product->getPrice();
+
+        //Get product and category plans
+        $active_plans = MobbexHelper::getActivePlans($product);
+        $inactive_plans = MobbexHelper::getInactivePlans($product);
+
+        //get sources
+        $sources = MobbexHelper::getSources($total, $inactive_plans);
+        $sources_advanced = MobbexHelper::getSourcesAdvanced();
+        $sources_advanced = MobbexHelper::filterAdvancedSources($sources_advanced, $active_plans);
+        $sources = MobbexHelper::mergeSources($sources, $sources_advanced);
+
         $this->context->smarty->assign(
             [
-                'tax_id' => MobbexHelper::getTaxId(),
-                'price_amount' => Product::getPriceStatic(Tools::getValue('id_product'), true, null, 6),
+                'product_price' => $total,
+                'sources' => $sources,
                 'style_settings' =>
                 [
                     'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
@@ -869,7 +883,7 @@ class Mobbex extends PaymentModule
                     'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
                     'button_image' => $image_url,
                     'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '17px'),
+                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
                     'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
                 ],
             ]

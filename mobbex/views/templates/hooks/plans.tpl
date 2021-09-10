@@ -1,117 +1,251 @@
 <div class="mobbex-plans">
     {literal}
-    <style>
-        .mobbex-plans {
-            padding: 10px;
-        }
-        .mobbex-plans-modal {
-            display: none;
-            place-items: center;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            box-sizing: border-box;
-            background: rgb(0 0 0 / .4);
-            transition: all ease-in-out .3s;
-            z-index: 9999;
-         
-        }
-        .mobbex-plans-modal.active {
-            display: grid;
-        }
-        .mobbex-plans-modal iframe {
-            max-width: 665px; max-height: 700px;
-            height: 100%; width: 100%;
-            background: #f3f3f3;
-        }
-        #open-mobbex-plans {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: fit-content;
-            padding: {/literal}{$style_settings['button_padding']}{literal};
-            font-size: {/literal}{$style_settings['button_font_size']}{literal};
-            color: {/literal}{$style_settings['text_color']}{literal};
-            background: {/literal}{$style_settings['background']}{literal};
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 2px 2px 4px 0 rgba(0,0,0,.2);
-            min-height: 40px;
-        }
-        #close-mobbex-plans {
-            position: fixed;
-            top: 20px; right: 20px;
-            font-size: large;
-            color: white;
-            background: none;
-            border: none;
-            cursor: pointer;
-            opacity: 1;
-            z-index: 10000;
-        }
-        #close-mobbex-plans::after, #close-mobbex-plans::before {
-            content: ' ';
-            position: absolute;
-            left: 8px;
-            height: 16px;
-            width: 2px;
-            background-color: white;
-            transform: rotate(45deg);
-        }
-        #close-mobbex-plans::before{
-            transform: rotate(-45deg);
-        }
-        #close-mobbex-plans:hover{
-            opacity: 1;
-        }
-        .scroll-lock {
-            padding-right: 17px;
-            overflow: hidden;
-        }
-        
-    </style>
-    {/literal}
-    
+        <style>
+            /* CLOSE-OPEN BUTTONS */
+            #mbbxProductBtn {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: fit-content;
+                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px{/if}{literal};
+                font-size: {/literal}{if $style_settings['button_font_size']}{$style_settings['button_font_size']}{else}16px{/if}{literal};
+                color: {/literal}{if $style_settings['text_color']}{$style_settings['text_color']}{else}#ffffff{/if}{literal};
+                background: {/literal}{if $style_settings['background']}{$style_settings['background']}{else}#8900ff{/if}{literal};
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);
+                min-height: 40px;
+            }
+            #closembbxProduct {
+                font-size: 35px;
+                color: rgb(0, 0, 0);
+                cursor: pointer;
+                margin-bottom: 10px;
+            }
+            .dark #closembbxProduct {
+                color: white;   
+            }
+            #closembbxProduct:hover {
 
-    <button type="button" id="open-mobbex-plans">{$style_settings['text']}
+                cursor: pointer;
+            }
+
+            .scroll-lock {
+                padding-right: 17px;
+                overflow: hidden;
+            }
+
+            /* MODAL STYLES */
+
+            /* The Modal (background) */
+            #mbbxProductModal {
+                display: none;
+                /* Hidden by default */
+                position: fixed;
+                /* Stay in place */
+                left: 0;
+                top: 0;
+                width: 100%;
+                /* Full width */
+                height: 100%;
+                /* Full height */
+                overflow: auto;
+                /* Enable scroll if needed */
+                background-color: rgb(0, 0, 0);
+                /* Fallback color */
+                background-color: rgba(0, 0, 0, 0.4);
+                /* Black w/ opacity */
+                z-index: 9999;
+                place-items: center;
+            }
+
+            #mbbxProductModal.active {
+                display: grid;
+            }
+
+            /* Modal Content/Box */
+            #mbbxProductModalContent {
+                background-color: #fefefe;
+                padding: 20px;
+                border: 1px solid #888;
+                max-width: 650px;
+                /* Could be more or less, depending on screen size */
+                height: 90%;
+                /* Full height */
+                width: 100%;
+                z-index: 10000;
+                overflow-y: scroll;
+                border-radius: 10px;
+            }
+
+            #mbbxProductModalHeader {
+                display: flex;
+                justify-content: space-between;
+                flex-flow: wrap;
+                align-items: center;
+            }
+
+            /* Modal Scrollbar */
+            #mbbxProductModalContent::-webkit-scrollbar {
+                width: 20px;
+            }
+
+            #mbbxProductModalContent::-webkit-scrollbar-track {
+                background-color: transparent;
+            }
+
+            #mbbxProductModalContent::-webkit-scrollbar-thumb {
+                background-color: #d6dee1;
+                border-radius: 20px;
+                border: 6px solid transparent;
+                background-clip: content-box;
+            }
+
+            #mbbxProductModalContent::-webkit-scrollbar-thumb:hover {
+                background-color: #a8bbbf;
+            }
+
+            .mobbexPaymentMethod {
+                display: flex;
+                align-items: center;
+                padding: 1em 0;
+                margin: 0;
+                font-weight: bold;
+            }
+
+            #mbbxProductModalBody td {
+                width: 65%;
+            }
+
+            .mobbexPaymentMethod img {
+                height: 40px;
+                border-radius: 100%;
+                margin-right: 10px;
+            }
+
+            #mbbx-method-select {
+                width: 100%;
+                min-height: 40px;
+                padding: 0.5rem;
+                border: 1px #d8d8d8 solid;
+                border-radius: 5px;
+            }
+
+            .installmentsTable {
+                margin-bottom: 20px;
+                width: 80%;
+                margin: 0 auto;
+            }
+
+            .installmentsTable tr {
+                width: 100%;
+                padding: 10px;
+                padding-left: 20px;
+            }
+
+            .installmentsTable td {
+                padding: 10px 0;
+                width: 70%;
+            }
+
+            .mbbxPlansPrice {
+                text-align: end;
+            }
+
+            /* DARK MODE  */
+            .dark #mbbxProductModalContent,
+            .dark #mbbxProductModalContent table td {
+                background-color: rgb(39, 31, 36);
+                color: rgb(226, 226, 226);
+            }
+
+            .dark #mbbxProductModalContent #mobbex_select_title,
+            .dark #mbbxProductModalContent .mobbexPaymentMethod {
+                color: rgb(226, 226, 226);
+            }
+
+        </style>
+    {/literal}
+
+    <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}">
+        <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
+        <div id="mbbxProductModalHeader">
+        <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
+        <span id="closembbxProduct">&times;</span>
+                <select name="mbbx-method-select" id="mbbx-method-select">
+                    <option id="0" value="0">Todos</option>
+                    {foreach item=$source  from=$sources}
+                        {if !empty($source['source']['name'])}
+                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">
+                                {$source['source']['name']}</option>
+                        {/if}
+                    {/foreach}
+                </select>
+            </div>
+            <div id="mbbxProductModalBody">
+                {foreach from=$sources key=$key item=$source }
+                    {if !empty($source['source']['name'])}
+                        <div id="{$source['source']['reference']}" class="mobbexSource">
+                            <p class="mobbexPaymentMethod">
+                                <img
+                                    src="https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg">{$source['source']['name']}
+                            </p>
+                            {if !empty($source['installments']['list'])}
+                                <table class="installmentsTable">
+                                    {foreach from=$source['installments']['list'] key=$key item=$installment }
+                                        <tr>
+                                            <td>{$installment['name']}</td>
+                                            {if isset($installment['totals']['total'])}
+                                                <td class="mbbxPlansPrice">${$installment['totals']['total']}</td>
+                                            {else}
+                                                <td></td>
+                                            {/if}
+                                        </tr>
+                                    {/foreach}
+                                </table>
+                            {/if}
+                        </div>
+                    {/if}
+                {/foreach}
+            </div>
+        </div>
+    </div>
+
+    <button type="button" id="mbbxProductBtn">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
-            <img src="{$style_settings['button_image']}" width="40" height="40" style="margin-left: 15px; border-radius: 40px;">
+            <img src="{$style_settings['button_image']}" width="40" height="40"
+                style="margin-left: 15px; border-radius: 40px;">
         {/if}
     </button>
-    
-    <div class="mobbex-plans-modal">
-        <button type="button" id="close-mobbex-plans"></button>
-        <iframe id="mobbex-plans-iframe" src="https://mobbex.com/p/sources/widget/arg/{$tax_id}?total={$price_amount}" title="mobbex-plans-iframe"></iframe>
-    </div>
-    
-        <script>
-        var mobbexPlansOpen  = document.getElementById('open-mobbex-plans');
-        var mobbexPlansClose = document.getElementById('close-mobbex-plans');
-        var mobbexPlansModal = document.querySelector('.mobbex-plans-modal');
-        var iframe = document.getElementById('mobbex-plans-iframe');
-        //retrieve smarty variables
-        var price_one = "{$price_amount}";
-        var tax_id = "{$tax_id}";
 
-        mobbexPlansOpen.addEventListener('click', function() {
-            mobbexPlansModal.classList.toggle('active');
-            // get the quantity selected
-            var quantity = $('#quantity_wanted').eq(0).val();
-            if(quantity > 1){
-                //recalculate the price based on quantity
-                var total_price = price_one * quantity;
-                iframe.src = "https://mobbex.com/p/sources/widget/arg/"+tax_id+"?total="+total_price;
-            }
-            document.querySelector('body').classList.toggle('scroll-lock');
+    <script>
+    
+        // Get modal action buttons
+        var body = document.querySelector('body')
+        var openBtn = document.getElementById('mbbxProductBtn');
+        var closeBtn = document.querySelector('#closembbxProduct');
+        var mobbexPlansModal = document.body.insertBefore(document.querySelector('#mbbxProductModal'), document.body.firstChild);
+        var mbbxModalContainer = document.querySelector('#mbbxProductModal');
+
+        // Add events to toggle modal
+        document.body.addEventListener('click', function(e) {
+            if(e.target === openBtn || e.target === closeBtn || e.target === mbbxModalContainer) {
+                mobbexPlansModal.classList.toggle('active');
+                document.querySelector('body').classList.toggle('scroll-lock');
+            } 
         });
-        
-        mobbexPlansClose.addEventListener('click', function() {
-            mobbexPlansModal.classList.toggle('active');
-            document.querySelector('body').classList.toggle('scroll-lock');
+    
+        // Get sources and payment method selector 
+        var sources = document.querySelectorAll('.mobbexSource');
+        var methodSelect = document.getElementById('mbbx-method-select');
+
+        // Filter payment methods in the modal
+        methodSelect.addEventListener('change', function() {
+            for (source of sources)
+                source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
         });
 
-        </script>
-    
+    </script>
+
 </div>
