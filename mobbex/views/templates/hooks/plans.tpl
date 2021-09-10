@@ -183,7 +183,7 @@
                     {/foreach}
                 </select>
             </div>
-            <div id="mbbxProductModalBodyp">
+            <div id="mbbxProductModalBody">
                 {foreach from=$sources item=source }
                     {if !empty($source['source']['name'])}
                         <div id="{$source['source']['reference']}" class="mobbexSource">

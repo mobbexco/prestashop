@@ -872,10 +872,6 @@ class Mobbex extends PaymentModule
         $sources_advanced = MobbexHelper::filterAdvancedSources($sources_advanced, $active_plans);
         $sources = MobbexHelper::mergeSources($sources, $sources_advanced);
 
-        error_log('Var: ' . json_encode($active_plans, JSON_PRETTY_PRINT) . "/n", 3, 'log.log');
-        error_log('Var: ' . json_encode($sources_advanced, JSON_PRETTY_PRINT) . "/n", 3, 'log.log');
-        error_log('Var: ' . json_encode($sources, JSON_PRETTY_PRINT) . "/n", 3, 'log.log');
-        
         $this->context->smarty->assign(
             [
                 'product_price' => $total,
