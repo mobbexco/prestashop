@@ -503,50 +503,52 @@ class MobbexHelper
     }
 
     /**
-     * Retrive active advanced plans from a product and its categories.
+     * Retrieve active advanced plans from a product and its categories.
      * 
-     * @param int $product_id
+     * @param int $productId
      * 
      * @return array
      */
-    public static function getInactivePlans($product) //nuevo codigo
+    public static function getInactivePlans($productId = null)
     {
-        $categories =  $product->getCategories();
+        // Get id from request if it is not set
+        if (!$productId)
+            $productId = Tools::getValue('id_product');
 
-        $checkedCommonPlans = [];
-        $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'common_plans')) ? : [];
+        $product = new Product($productId);
 
-        foreach ($categories as $cat_id) {
-            $checkedCommonPlans = array_merge($checkedCommonPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'common_plans')) ? : []);
-        }
+        $inactivePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'common_plans')) ?: [];
+
+        foreach ($product->getCategories() as $categoryId)
+            $inactivePlans = array_merge($inactivePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'common_plans')) ?: []);
 
         // Remove duplicated and return
-        return array_unique($checkedCommonPlans);
+        return array_unique($inactivePlans);
     }
 
     /**
-     * Retrive inactive common plans from a product and its categories.
+     * Retrieve active advanced plans from a product and its categories.
      * 
-     * @param int $product_id
+     * @param int $productId
      * 
      * @return array
      */
-    public static function getActivePlans($product)
+    public static function getActivePlans($productId = null)
     {
-        $categories = $product->getCategories();
-        $checkedAdvancedPlans = [];
+        // Get id from request if it is not set
+        if (!$productId)
+            $productId = Tools::getValue('id_product');
+
+        $product = new Product($productId);
 
         // Get plans from product and product categories
-        $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'advanced_plans'));
+        $activePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'advanced_plans')) ?: [];
 
-        foreach ($categories as $cat_id) {
-            if (MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans') !== false) {
-                $checkedAdvancedPlans = array_merge($checkedAdvancedPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans')));
-            }
-        }
+        foreach ($product->getCategories() as $categoryId)
+            $activePlans = array_merge($activePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'advanced_plans')) ?: []);
 
         // Remove duplicated and return
-        return array_unique($checkedAdvancedPlans);
+        return array_unique($activePlans);
     }
 
     /**
