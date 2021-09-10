@@ -183,8 +183,8 @@
                     {/foreach}
                 </select>
             </div>
-            <div id="mbbxProductModalBody">
-                {foreach from=$sources key=$key item=$source }
+            <div id="mbbxProductModalBodyp">
+                {foreach from=$sources item=source }
                     {if !empty($source['source']['name'])}
                         <div id="{$source['source']['reference']}" class="mobbexSource">
                             <p class="mobbexPaymentMethod">
@@ -193,7 +193,7 @@
                             </p>
                             {if !empty($source['installments']['list'])}
                                 <table class="installmentsTable">
-                                    {foreach from=$source['installments']['list'] key=$key item=$installment }
+                                    {foreach from=$source['installments']['list'] item=installment }
                                         <tr>
                                             <td>{$installment['name']}</td>
                                             {if isset($installment['totals']['total'])}
