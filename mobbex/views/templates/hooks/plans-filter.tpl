@@ -22,7 +22,7 @@
                     </div>
                     {foreach from=$fields key=key item=field}
                         <div class="mbbx-plan-advanced">
-                            <input type="checkbox" id="{$field['id']}" name="{$field['id']}" {if $field['value']}checked="checked" value="yes"{/if}>
+                            <input type="checkbox" name="{$field['id']}" value="yes" {if $field['value']}checked="checked"{/if} id="{$field['id']}">
                             <label for="{$field['id']}">{$field['label']}</label>
                         </div>
                     {/foreach}

@@ -863,8 +863,8 @@ class Mobbex extends PaymentModule
         $total = $product->getPrice(); 
 
         //Get product and category plans
-        $active_plans = MobbexHelper::getActivePlans($product);
-        $inactive_plans = MobbexHelper::getInactivePlans($product);
+        $active_plans = MobbexHelper::getActivePlans($product->id);
+        $inactive_plans = MobbexHelper::getInactivePlans($product->id);
 
         //get sources
         $sources = MobbexHelper::getSources($total, $inactive_plans);
