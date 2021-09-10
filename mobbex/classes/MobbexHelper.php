@@ -771,7 +771,7 @@ class MobbexHelper
                 $commonFields[$plan['reference']] = [
                     'id'    => 'common_plan_' . $plan['reference'],
                     'value' => !in_array($plan['reference'], $checkedCommonPlans),
-                    'label' => $plan['description'] ?: $plan['name'],
+                    'label' => $plan['name'] ?: $plan['description'],
                 ];
             }
         }
@@ -789,7 +789,7 @@ class MobbexHelper
                 $advancedFields[$source['source']['reference']][] = [
                     'id'      => 'advanced_plan_' . $plan['uid'],
                     'value'   => in_array($plan['uid'], $checkedAdvancedPlans),
-                    'label'   => $plan['description'] ?: $plan['name'],
+                    'label'   => $plan['name'] ?: $plan['description'],
                 ];
             }
         }
