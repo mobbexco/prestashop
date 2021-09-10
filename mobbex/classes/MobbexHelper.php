@@ -195,6 +195,8 @@ class MobbexHelper
             'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
         );
 
+        error_log('Checkout Data: ' . json_encode($data, JSON_PRETTY_PRINT), 3, 'log.log');
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.mobbex.com/p/checkout",
             CURLOPT_RETURNTRANSFER => true,
@@ -325,66 +327,34 @@ class MobbexHelper
     }
 
     /**
-     * Return the plans that were not selected in the product and category page
+     * Retrieve installments checked on plans filter of each product.
+     * 
+     * @param array $products
+     * 
+     * @return array
      */
     public static function getInstallments($products)
     {
+        $installments = $inactivePlans = $activePlans = [];
 
-        $installments = [];
-        $total_advanced_plans = [];
-
-        $ahora = array(
-            'ahora_3' => 'Ahora 3',
-            'ahora_6' => 'Ahora 6',
-            'ahora_12' => 'Ahora 12',
-            'ahora_18' => 'Ahora 18',
-        );
-
+        // Get plans from order products
         foreach ($products as $product) {
-            $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'common_plans'));
-            $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'advanced_plans'));
-
-            if (!empty($checkedCommonPlans)) {
-                foreach ($checkedCommonPlans as $key => $commonPlan) {
-                    $installments[] = '-' . $commonPlan;
-                    unset($checkedCommonPlans[$key]);
-                }
-            }
-
-            if (!empty($checkedAdvancedPlans)) {
-                $total_advanced_plans = array_merge($total_advanced_plans, $checkedAdvancedPlans);
-            }
+            $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($product['id_product']));
+            $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($product['id_product']));
         }
 
-        // Get all the advanced plans with their number of reps
-        $counted_advanced_plans = array_count_values($total_advanced_plans);
+        // Add inactive (common) plans to installments
+        foreach ($inactivePlans as $plan)
+            $installments[] = '-' . $plan;
 
-        // Advanced plans
-        foreach ($counted_advanced_plans as $plan => $reps) {
-            // Only if the plan is active on all products
-            if ($reps == count($products)) {
-                // Add to installments
+        // Add active (advanced) plans to installments only if the plan is active on all products
+        foreach (array_count_values($activePlans) as $plan => $reps) {
+            if ($reps == count($products))
                 $installments[] = '+uid:' . $plan;
-            }
         }
 
-        // Check "Ahora" custom fields
-        $categoriesId = array();
-        $categoriesId = self::getCategoriesId($products);
-        foreach ($ahora as $key => $value) {
-            //for each key, if it was not added before, then search all categories.
-            if (!in_array('-' . $key, $installments)) {
-                foreach ($categoriesId as $cat_id) {
-                    if (MobbexCustomFields::getCustomField($cat_id, 'category', $key) === 'yes') {
-                        $installments[] = '-' . $key;
-                        unset($ahora[$key]);
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $installments;
+        // Remove duplicated plans and return
+        return array_values(array_unique($installments));
     }
 
     /**
