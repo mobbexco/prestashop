@@ -195,8 +195,6 @@ class MobbexHelper
             'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
         );
 
-        error_log('Checkout Data: ' . json_encode($data, JSON_PRETTY_PRINT), 3, 'log.log');
-
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.mobbex.com/p/checkout",
             CURLOPT_RETURNTRANSFER => true,
