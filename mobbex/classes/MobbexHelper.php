@@ -54,7 +54,8 @@ class MobbexHelper
     const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
     const K_MULTICARD = 'MOBBEX_MULTICARD';
-    
+    const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
+
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';

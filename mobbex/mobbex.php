@@ -90,6 +90,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
         Configuration::updateValue(MobbexHelper::K_EMBED, true);
         Configuration::updateValue(MobbexHelper::K_WALLET, false);
+        Configuration::updateValue(MobbexHelper::K_UNIFIED_METHOD, false);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
@@ -542,6 +543,28 @@ class Mobbex extends PaymentModule
                         'tab' => 'tab_general',
                         'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
                     ),
+                    // Unified method
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Método de pago único'),
+                        'desc' => $this->l('Mostrar métodos de pago de forma unificada en el checkout.'),
+                        'name' => MobbexHelper::K_UNIFIED_METHOD,
+                        'is_bool' => true,
+                        'required' => true,
+                        'tab' => 'tab_general',
+                        'values' => [
+                            [
+                                'id' => 'active_on_unified_method',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_unified_method',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -565,6 +588,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
             MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             MobbexHelper::K_WALLET => Configuration::get(MobbexHelper::K_WALLET, false),
+            MobbexHelper::K_UNIFIED_METHOD => Configuration::get(MobbexHelper::K_UNIFIED_METHOD, false),
             // Theme
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
