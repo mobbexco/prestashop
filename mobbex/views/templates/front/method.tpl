@@ -1,0 +1,1 @@
+<form group="{$method['group']}:{$method['subgroup']}" class="mbbx-method"></form>

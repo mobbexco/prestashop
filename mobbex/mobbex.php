@@ -836,40 +836,63 @@ class Mobbex extends PaymentModule
         if (!$this->active || !$this->checkCurrency($params['cart']) || !MobbexHelper::isPaymentStep())
             return;
 
-        $options      = [];
+        $options = [];
         $checkoutData = MobbexHelper::getPaymentData();
-        $cards        = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
+
+        // Get cards and payment methods
+        $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
+        $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         MobbexHelper::addJavascriptData([
             'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+            'wallet'      => $cards ?: null,
             'checkoutId'  => $checkoutData['id'],
             'checkoutUrl' => $checkoutData['url'],
             'returnUrl'   => $checkoutData['return_url']
         ]);
 
-        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $option->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/payment.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'));
+        // Get payment methods from checkout
+        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD)) {
+            $options[] = $this->createPaymentOption(
+                $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
+                'module:mobbex/views/templates/front/payment.tpl'
+            );
+        } else {
+            foreach ($methods as $method) {
+                $options[] = $this->createPaymentOption(
+                    $method['subgroup_title'],
+                    $method['subgroup_logo'],
+                    'module:mobbex/views/templates/front/method.tpl',
+                    compact('method')
+                );
+            }
+        }
 
-        $options[] = $option;
-
+        // Get wallet cards
         foreach ($cards as $key => $card) {
-            $this->context->smarty->assign([
-                'card' => $card,
-                'key'  => $key
-            ]);
-
-            $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-            $option->setCallToActionText($card['name'])
-                ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/card-form.tpl'))
-                ->setLogo($card['source']['card']['product']['logo']);
-    
-            $options[] = $option;
+            $options[] = $this->createPaymentOption(
+                $card['name'],
+                $card['source']['card']['product']['logo'],
+                'module:mobbex/views/templates/front/card-form.tpl',
+                compact('card', 'key')
+            );
         }
 
         return $options;
+    }
+
+    public function createPaymentOption($title, $logo, $template, $templateVars = null)
+    {
+        if ($templateVars)
+            $this->context->smarty->assign($templateVars);
+
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setCallToActionText($title)
+            ->setForm($this->context->smarty->fetch($template))
+            ->setLogo($logo);
+
+        return $option;
     }
 
     public function hookDisplayProductAdditionalInfo($params)

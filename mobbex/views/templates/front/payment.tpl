@@ -56,7 +56,5 @@
         </div>
     {/foreach}
 {else}
-    <form id="mobbex_checkout" method="post"></form>
-    <div id="mobbexWallet" class="additional-information"></div>
+    <form id="mobbex_checkout" class="mbbx-method"></form>
 {/if}
-<div id="mbbx-container"></div>

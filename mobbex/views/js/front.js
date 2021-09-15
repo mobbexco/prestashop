@@ -159,21 +159,34 @@ function executePayment() {
   return false;
 };
 
+function renderEmbedContainer() {
+  var container = document.createElement('div');
+  container.id  = 'mbbx-container';
+
+  // Insert after body
+  document.body.prepend(container);
+}
+
 window.addEventListener('load', function () {
   if (!window.mbbx)
     return false;
 
   renderLock();
+  renderEmbedContainer();
 
   // If it is prestashop 1.7
   if (window.prestashop) {
-    document.forms['mobbex_checkout'].onsubmit = function() {
-      return executePayment();
-    }
+    document.querySelectorAll('.mbbx-method').forEach(form => {
+        form.onsubmit = function (e) {
+            activeCard(null);
+            mbbx.paymentMethod = e.target.getAttribute('group');
+            return executePayment();
+        }
+    });
 
     document.querySelectorAll('.walletForm').forEach(form => {
       form.onsubmit = function (e) {
-        activeCard(e.target.attributes.card.value);
+        activeCard(e.target.id);
         return executePayment();
       }
     });
