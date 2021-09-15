@@ -223,7 +223,6 @@
         var body = document.querySelector('body')
         var openBtn = document.getElementById('mbbxProductBtn');
         var closeBtn = document.querySelector('#closembbxProduct');
-        // var mobbexPlansModal = document.body.insertBefore(document.querySelector('#mbbxProductModal'), document.body.firstChild);
         var mobbexPlansModal = document.querySelector('#mbbxProductModal');
 
         // Add events to toggle modal
