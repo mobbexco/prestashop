@@ -40,8 +40,6 @@
 
             /* The Modal (background) */
             #mbbxProductModal {
-                display: none;
-                /* Hidden by default */
                 position: fixed;
                 /* Stay in place */
                 left: 0;
@@ -61,7 +59,7 @@
             }
 
             #mbbxProductModal.active {
-                display: grid;
+                display: grid!important;
             }
 
             /* Modal Content/Box */
@@ -168,7 +166,7 @@
         </style>
     {/literal}
 
-    <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}">
+    <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}" style="display: none;">
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
         <div id="mbbxProductModalHeader">
         <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
@@ -219,14 +217,14 @@
         {/if}
     </button>
 
-    <script>
+    <script>    
     
         // Get modal action buttons
         var body = document.querySelector('body')
         var openBtn = document.getElementById('mbbxProductBtn');
         var closeBtn = document.querySelector('#closembbxProduct');
-        var mobbexPlansModal = document.body.insertBefore(document.querySelector('#mbbxProductModal'), document.body.firstChild);
-        var mbbxModalContainer = document.querySelector('#mbbxProductModal');
+        // var mobbexPlansModal = document.body.insertBefore(document.querySelector('#mbbxProductModal'), document.body.firstChild);
+        var mobbexPlansModal = document.querySelector('#mbbxProductModal');
 
         // Add events to toggle modal
         document.body.addEventListener('click', function(e) {
@@ -235,7 +233,7 @@
                 document.querySelector('body').classList.toggle('scroll-lock');
             } 
         });
-    
+
         // Get sources and payment method selector 
         var sources = document.querySelectorAll('.mobbexSource');
         var methodSelect = document.getElementById('mbbx-method-select');
