@@ -1,11 +1,14 @@
 (function (window) {
 /**
  * Get embed checkout options.
+ * 
+ * @returns {object}
  */
 function getOptions() {
   return {
     id: mbbx.checkoutId,
     type: 'checkout',
+    paymentMethod: mbbx.paymentMethod || null,
     onResult: (data) => {
       var status = data.status.code;
 
@@ -150,7 +153,7 @@ function executePayment() {
       var mbbxButton = window.MobbexEmbed.init(getOptions());
       mbbxButton.open();
     } else {
-      window.top.location.href = mbbx.checkoutUrl;
+      window.top.location.href = mbbx.checkoutUrl + mbbx.paymentMethod ? '?' + mbbx.paymentMethod : '' ;
     }
   }
   return false;
@@ -175,14 +178,17 @@ window.addEventListener('load', function () {
       }
     });
   } else {
-    document.querySelector('#mbbx-anchor').onclick = function() {
-      activeCard(null);
-      return executePayment();
-    }
-
     document.querySelectorAll(".walletAnchor").forEach(anchor => {
       anchor.onclick = function(e) {
         return activeCard(e.target.attributes.card.value);
+      }
+    });
+
+    document.querySelectorAll(".mbbx-method").forEach(anchor => {
+      anchor.onclick = function(e) {
+        activeCard(null);
+        mbbx.paymentMethod = e.target.getAttribute('group');
+        return executePayment();
       }
     });
 

@@ -976,10 +976,13 @@ class Mobbex extends PaymentModule
                 'checkoutId'  => $checkoutData['id'],
                 'checkoutUrl' => $checkoutData['url'],
                 'returnUrl'   => $checkoutData['return_url']
-                ]
+            ]
         ]);
 
-        $this->context->smarty->assign(['cards' => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []]);
+        $this->context->smarty->assign([
+            'methods' => isset($checkoutData['paymentMethods']) && !Configuration::get(MobbexHelper::K_UNIFIED_METHOD) ? $checkoutData['paymentMethods'] : [],
+            'cards'   => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []
+        ]);
 
         return $this->display(__FILE__, 'views/templates/front/payment.tpl');
     }
