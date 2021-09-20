@@ -1,17 +1,32 @@
 {if constant('_PS_VERSION_') < '1.7'}
-    <div class="row">
-        <div class="col-xs-12">
-            <p class="payment_module">
-                <a id="mbbx-anchor" href="#" style="background-image: url({$base_dir}modules/mobbex/logo_transparent.png);">
-                    {if $cards}
-                        {l s='Use other Card/Payment Method' mod='mobbex'}
-                    {else}
-                        {l s='Pay with Credit/Debit Cards' mod='mobbex'}
-                    {/if}
-                </a>
-            </p>
+    {if $methods}
+        {foreach from=$methods item=method}
+            <div class="row">
+                <div class="col-xs-12">
+                    <p class="payment_module">
+                        <a class="mbbx-method payment-option" href="#" group="{$method['group']}:{$method['subgroup']}">
+                            <img src="{$method['subgroup_logo']}" style="">
+                            {$method['subgroup_title']}
+                        </a>
+                    </p>
+                </div>
+            </div>
+        {/foreach}
+    {else}
+        <div class="row">
+            <div class="col-xs-12">
+                <p class="payment_module">
+                    <a class="mbbx-method" href="#" style="background: url({$base_dir}modules/mobbex/views/img/logo_transparent.png) 15px 15px no-repeat;">
+                        {if $cards}
+                            {l s='Use other Card/Payment Method' mod='mobbex'}
+                        {else}
+                            {l s='Pay with Credit/Debit Cards' mod='mobbex'}
+                        {/if}
+                    </a>
+                </p>
+            </div>
         </div>
-    </div>
+    {/if}
     {foreach from=$cards item=card key=key}
         <div class="row">
             <div class="col-xs-12 mbbx-card">
@@ -41,7 +56,5 @@
         </div>
     {/foreach}
 {else}
-    <form id="mobbex_checkout" method="post"></form>
-    <div id="mobbexWallet" class="additional-information"></div>
+    <form id="mobbex_checkout" class="mbbx-method"></form>
 {/if}
-<div id="mbbx-container"></div>

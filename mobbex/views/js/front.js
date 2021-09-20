@@ -1,11 +1,14 @@
 (function (window) {
 /**
  * Get embed checkout options.
+ * 
+ * @returns {object}
  */
 function getOptions() {
   return {
     id: mbbx.checkoutId,
     type: 'checkout',
+    paymentMethod: mbbx.paymentMethod || null,
     onResult: (data) => {
       var status = data.status.code;
 
@@ -150,23 +153,36 @@ function executePayment() {
       var mbbxButton = window.MobbexEmbed.init(getOptions());
       mbbxButton.open();
     } else {
-      window.top.location.href = mbbx.checkoutUrl;
+      window.top.location.href = mbbx.checkoutUrl + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
     }
   }
   return false;
 };
+
+function renderEmbedContainer() {
+  var container = document.createElement('div');
+  container.id  = 'mbbx-container';
+
+  // Insert after body
+  document.body.prepend(container);
+}
 
 window.addEventListener('load', function () {
   if (!window.mbbx)
     return false;
 
   renderLock();
+  renderEmbedContainer();
 
   // If it is prestashop 1.7
   if (window.prestashop) {
-    document.forms['mobbex_checkout'].onsubmit = function() {
-      return executePayment();
-    }
+    document.querySelectorAll('.mbbx-method').forEach(form => {
+        form.onsubmit = function (e) {
+            activeCard(null);
+            mbbx.paymentMethod = e.target.getAttribute('group');
+            return executePayment();
+        }
+    });
 
     document.querySelectorAll('.walletForm').forEach(form => {
       form.onsubmit = function (e) {
@@ -175,14 +191,17 @@ window.addEventListener('load', function () {
       }
     });
   } else {
-    document.querySelector('#mbbx-anchor').onclick = function() {
-      activeCard(null);
-      return executePayment();
-    }
-
     document.querySelectorAll(".walletAnchor").forEach(anchor => {
       anchor.onclick = function(e) {
         return activeCard(e.target.attributes.card.value);
+      }
+    });
+
+    document.querySelectorAll(".mbbx-method").forEach(anchor => {
+      anchor.onclick = function(e) {
+        activeCard(null);
+        mbbx.paymentMethod = e.target.getAttribute('group');
+        return executePayment();
       }
     });
 
