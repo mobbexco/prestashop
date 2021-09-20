@@ -153,7 +153,7 @@ function executePayment() {
       var mbbxButton = window.MobbexEmbed.init(getOptions());
       mbbxButton.open();
     } else {
-      window.top.location.href = mbbx.checkoutUrl + mbbx.paymentMethod ? '?' + mbbx.paymentMethod : '' ;
+      window.top.location.href = mbbx.checkoutUrl + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
     }
   }
   return false;
@@ -186,7 +186,7 @@ window.addEventListener('load', function () {
 
     document.querySelectorAll('.walletForm').forEach(form => {
       form.onsubmit = function (e) {
-        activeCard(e.target.id);
+        activeCard(e.target.attributes.card.value);
         return executePayment();
       }
     });

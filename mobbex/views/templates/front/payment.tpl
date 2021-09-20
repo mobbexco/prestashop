@@ -16,7 +16,7 @@
         <div class="row">
             <div class="col-xs-12">
                 <p class="payment_module">
-                    <a class="mbbx-method" href="#" style="background-image: url({$base_dir}modules/mobbex/views/img/logo_transparent.png);">
+                    <a class="mbbx-method" href="#" style="background: url({$base_dir}modules/mobbex/views/img/logo_transparent.png) 15px 15px no-repeat;">
                         {if $cards}
                             {l s='Use other Card/Payment Method' mod='mobbex'}
                         {else}
