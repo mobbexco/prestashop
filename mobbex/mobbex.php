@@ -90,6 +90,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
         Configuration::updateValue(MobbexHelper::K_EMBED, true);
         Configuration::updateValue(MobbexHelper::K_WALLET, false);
+        Configuration::updateValue(MobbexHelper::K_UNIFIED_METHOD, false);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
@@ -542,6 +543,28 @@ class Mobbex extends PaymentModule
                         'tab' => 'tab_general',
                         'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
                     ),
+                    // Unified method
+                    array(
+                        'type' => 'switch',
+                        'label' => $this->l('Método de pago único'),
+                        'desc' => $this->l('Mostrar métodos de pago de forma unificada en el checkout.'),
+                        'name' => MobbexHelper::K_UNIFIED_METHOD,
+                        'is_bool' => true,
+                        'required' => true,
+                        'tab' => 'tab_general',
+                        'values' => [
+                            [
+                                'id' => 'active_on_unified_method',
+                                'value' => true,
+                                'label' => $this->l('Activar'),
+                            ],
+                            [
+                                'id' => 'active_off_unified_method',
+                                'value' => false,
+                                'label' => $this->l('Desactivar'),
+                            ],
+                        ],
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -565,6 +588,7 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
             MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
             MobbexHelper::K_WALLET => Configuration::get(MobbexHelper::K_WALLET, false),
+            MobbexHelper::K_UNIFIED_METHOD => Configuration::get(MobbexHelper::K_UNIFIED_METHOD, false),
             // Theme
             MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
             MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
@@ -812,40 +836,63 @@ class Mobbex extends PaymentModule
         if (!$this->active || !$this->checkCurrency($params['cart']) || !MobbexHelper::isPaymentStep())
             return;
 
-        $options      = [];
+        $options = [];
         $checkoutData = MobbexHelper::getPaymentData();
-        $cards        = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
+
+        // Get cards and payment methods
+        $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
+        $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         MobbexHelper::addJavascriptData([
             'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+            'wallet'      => $cards ?: null,
             'checkoutId'  => $checkoutData['id'],
             'checkoutUrl' => $checkoutData['url'],
             'returnUrl'   => $checkoutData['return_url']
         ]);
 
-        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $option->setCallToActionText($this->l('Pagar utilizando tarjetas, efectivo u otros'))
-            ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/payment.tpl'))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'));
+        // Get payment methods from checkout
+        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD)) {
+            $options[] = $this->createPaymentOption(
+                $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
+                'module:mobbex/views/templates/front/payment.tpl'
+            );
+        } else {
+            foreach ($methods as $method) {
+                $options[] = $this->createPaymentOption(
+                    $method['subgroup_title'],
+                    $method['subgroup_logo'],
+                    'module:mobbex/views/templates/front/method.tpl',
+                    compact('method')
+                );
+            }
+        }
 
-        $options[] = $option;
-
+        // Get wallet cards
         foreach ($cards as $key => $card) {
-            $this->context->smarty->assign([
-                'card' => $card,
-                'key'  => $key
-            ]);
-
-            $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-            $option->setCallToActionText($card['name'])
-                ->setForm($this->context->smarty->fetch('module:mobbex/views/templates/front/card-form.tpl'))
-                ->setLogo($card['source']['card']['product']['logo']);
-    
-            $options[] = $option;
+            $options[] = $this->createPaymentOption(
+                $card['name'],
+                $card['source']['card']['product']['logo'],
+                'module:mobbex/views/templates/front/card-form.tpl',
+                compact('card', 'key')
+            );
         }
 
         return $options;
+    }
+
+    public function createPaymentOption($title, $logo, $template, $templateVars = null)
+    {
+        if ($templateVars)
+            $this->context->smarty->assign($templateVars);
+
+        $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
+        $option->setCallToActionText($title)
+            ->setForm($this->context->smarty->fetch($template))
+            ->setLogo($logo);
+
+        return $option;
     }
 
     public function hookDisplayProductAdditionalInfo($params)
@@ -860,11 +907,11 @@ class Mobbex extends PaymentModule
             $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
         }
 
-        $total = $product->getPrice();
+        $total = $product->getPrice(); 
 
         //Get product and category plans
-        $active_plans = MobbexHelper::getActivePlans($product);
-        $inactive_plans = MobbexHelper::getInactivePlans($product);
+        $active_plans = MobbexHelper::getActivePlans($product->id);
+        $inactive_plans = MobbexHelper::getInactivePlans($product->id);
 
         //get sources
         $sources = MobbexHelper::getSources($total, $inactive_plans);
@@ -952,10 +999,13 @@ class Mobbex extends PaymentModule
                 'checkoutId'  => $checkoutData['id'],
                 'checkoutUrl' => $checkoutData['url'],
                 'returnUrl'   => $checkoutData['return_url']
-                ]
+            ]
         ]);
 
-        $this->context->smarty->assign(['cards' => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []]);
+        $this->context->smarty->assign([
+            'methods' => isset($checkoutData['paymentMethods']) && !Configuration::get(MobbexHelper::K_UNIFIED_METHOD) ? $checkoutData['paymentMethods'] : [],
+            'cards'   => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []
+        ]);
 
         return $this->display(__FILE__, 'views/templates/front/payment.tpl');
     }
