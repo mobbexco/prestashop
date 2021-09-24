@@ -821,7 +821,21 @@ class MobbexHelper
     {
         $controller = Context::getContext()->controller;
 
-        return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
+        if (_PS_VERSION_ < '1.7') {
+            return $controller->step == $controller::STEP_PAYMENT;
+        } else {
+            // Make checkout process as accessible for prestashop backward compatibility
+            $reflection = new ReflectionProperty($controller, 'checkoutProcess');
+            $reflection->setAccessible(true);
+            $checkoutProcess = $reflection->getValue($controller);
+
+            foreach ($checkoutProcess->getSteps() as $step) {
+                if ($step instanceof CheckoutPaymentStep && $step->isCurrent())
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     /**
