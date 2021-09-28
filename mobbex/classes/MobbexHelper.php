@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.4.1
+ * @version 2.4.2
  * @see     PaymentModuleCore
  */
 
@@ -15,7 +15,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.4.1';
+    const MOBBEX_VERSION = '2.4.2';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -794,21 +794,23 @@ class MobbexHelper
     }
 
     /**
-     * Add an script depending of context and prestashop version.
+     * Add an asset file depending of context and prestashop version.
      * 
      * @param string $uri
-     * @param mixed $type
-     * @param Controller $controller
+     * @param string $type
+     * @param bool $remote
+     * @param null|Controller $controller
      */
-    public static function addScript($uri, $remote = false, $controller = null)
+    public static function addAsset($uri, $type = 'js', $remote = true, $controller = null)
     {
         if (!$controller)
             $controller = Context::getContext()->controller;
 
         if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
-            $controller->registerJavascript(sha1($uri), $uri, ['server' => $remote ? 'remote' : 'local']);
+            $params = ['server' => $remote ? 'remote' : 'local'];
+            $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
-            $controller->addJS($uri);
+            $type == 'js' ? $controller->addJS($uri) : $controller->addCSS($uri, 'all', null, false);
         }
     }
 

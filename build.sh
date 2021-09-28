@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VER="2.4.1"
+VER="2.4.2"
 
 # Unified Version
 PRESTAV="1.6-1.7"
