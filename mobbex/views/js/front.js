@@ -1,4 +1,4 @@
-(function (window) {
+(function (window, $) {
 /**
  * Get embed checkout options.
  * 
@@ -168,48 +168,32 @@ function renderEmbedContainer() {
 }
 
 window.addEventListener('load', function () {
-  if (!window.mbbx)
-    return false;
-
   renderLock();
   renderEmbedContainer();
 
+  // Use jquery to listen checkout events before ajax calls end (for onepage plugins support)
+  $(document).on(window.prestashop ? 'submit' : 'click', '.mbbx-method', function (e) {
+    e.preventDefault();
+    activeCard(null);
+    mbbx.paymentMethod = $(this).attr('group');
+    return executePayment();
+  });
+
   // If it is prestashop 1.7
   if (window.prestashop) {
-    document.querySelectorAll('.mbbx-method').forEach(form => {
-        form.onsubmit = function (e) {
-            activeCard(null);
-            mbbx.paymentMethod = e.target.getAttribute('group');
-            return executePayment();
-        }
-    });
-
-    document.querySelectorAll('.walletForm').forEach(form => {
-      form.onsubmit = function (e) {
-        activeCard(e.target.attributes.card.value);
-        return executePayment();
-      }
+    $(document).on('submit', '.walletForm', function (e) {
+      e.preventDefault();
+      activeCard($(this).attr('card'));
+      return executePayment();
     });
   } else {
-    document.querySelectorAll(".walletAnchor").forEach(anchor => {
-      anchor.onclick = function(e) {
-        return activeCard(e.target.attributes.card.value);
-      }
+    $(document).on('click', '.walletAnchor', function () {
+      return activeCard($(this).attr('card'));
     });
 
-    document.querySelectorAll(".mbbx-method").forEach(anchor => {
-      anchor.onclick = function(e) {
-        activeCard(null);
-        mbbx.paymentMethod = e.target.getAttribute('group');
-        return executePayment();
-      }
-    });
-
-    document.querySelectorAll("#mobbexExecute").forEach(button => {
-      button.onclick = function() {
-        return executePayment();
-      }
+    $(document).on('click', '#mobbexExecute', function () {
+      return executePayment();
     });
   }
 });
-}) (window);
+}) (window, jQuery);
