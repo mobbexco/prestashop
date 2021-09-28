@@ -1200,15 +1200,15 @@ class Mobbex extends PaymentModule
 
         // Checkout page
         if ($currentPage == 'order') {
-            $this->context->controller->addCSS("$mediaPath/views/css/front.css");
+            MobbexHelper::addAsset("$mediaPath/views/css/front.css?ver=$this->version", 'css');
 
-            MobbexHelper::addScript("$mediaPath/views/js/front.js", true);
+            MobbexHelper::addAsset("$mediaPath/views/js/front.js?ver=$this->version", 'css');
 
             if (Configuration::get(MobbexHelper::K_WALLET))
-                MobbexHelper::addScript('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js', true);
+                MobbexHelper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if (Configuration::get(MobbexHelper::K_EMBED))
-                MobbexHelper::addScript('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js', true);
+                MobbexHelper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js');
         }
     }
 
