@@ -1199,7 +1199,7 @@ class Mobbex extends PaymentModule
         $mediaPath   = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name);
 
         // Checkout page
-        if ($currentPage == 'order' && MobbexHelper::isPaymentStep()) {
+        if ($currentPage == 'order') {
             $this->context->controller->addCSS("$mediaPath/views/css/front.css");
 
             MobbexHelper::addScript("$mediaPath/views/js/front.js", true);
