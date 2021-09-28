@@ -859,12 +859,14 @@ class Mobbex extends PaymentModule
                 'module:mobbex/views/templates/front/payment.tpl'
             );
         } else {
+            $checkoutUrl = $checkoutData['url'];
+
             foreach ($methods as $method) {
                 $options[] = $this->createPaymentOption(
                     $method['subgroup_title'],
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method')
+                    compact('method','checkoutUrl')
                 );
             }
         }
@@ -1202,7 +1204,7 @@ class Mobbex extends PaymentModule
         if ($currentPage == 'order') {
             MobbexHelper::addAsset("$mediaPath/views/css/front.css?ver=$this->version", 'css');
 
-            MobbexHelper::addAsset("$mediaPath/views/js/front.js?ver=$this->version", 'css');
+            MobbexHelper::addAsset("$mediaPath/views/js/front.js?ver=$this->version");
 
             if (Configuration::get(MobbexHelper::K_WALLET))
                 MobbexHelper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
