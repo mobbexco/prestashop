@@ -914,10 +914,7 @@ class Mobbex extends PaymentModule
         $inactive_plans = MobbexHelper::getInactivePlans($product->id);
 
         //get sources
-        $sources = MobbexHelper::getSources($total, $inactive_plans);
-        $sources_advanced = MobbexHelper::getSourcesAdvanced();
-        $sources_advanced = MobbexHelper::filterAdvancedSources($sources_advanced, $active_plans);
-        $sources = MobbexHelper::mergeSources($sources, $sources_advanced);
+        $sources = MobbexHelper::getSources($total, $inactive_plans, $active_plans);
 
         $this->context->smarty->assign(
             [
