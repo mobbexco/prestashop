@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.4.0
+ * @version 2.4.3
  * @see     PaymentModuleCore
  */
 
@@ -859,12 +859,14 @@ class Mobbex extends PaymentModule
                 'module:mobbex/views/templates/front/payment.tpl'
             );
         } else {
+            $checkoutUrl = $checkoutData['url'];
+
             foreach ($methods as $method) {
                 $options[] = $this->createPaymentOption(
                     $method['subgroup_title'],
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method')
+                    compact('method','checkoutUrl')
                 );
             }
         }
@@ -1196,16 +1198,16 @@ class Mobbex extends PaymentModule
         $mediaPath   = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name);
 
         // Checkout page
-        if ($currentPage == 'order' && MobbexHelper::isPaymentStep()) {
-            $this->context->controller->addCSS("$mediaPath/views/css/front.css");
+        if ($currentPage == 'order') {
+            MobbexHelper::addAsset("$mediaPath/views/css/front.css?ver=$this->version", 'css');
 
-            MobbexHelper::addScript("$mediaPath/views/js/front.js", true);
+            MobbexHelper::addAsset("$mediaPath/views/js/front.js?ver=$this->version");
 
             if (Configuration::get(MobbexHelper::K_WALLET))
-                MobbexHelper::addScript('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js', true);
+                MobbexHelper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if (Configuration::get(MobbexHelper::K_EMBED))
-                MobbexHelper::addScript('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js', true);
+                MobbexHelper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js');
         }
     }
 
