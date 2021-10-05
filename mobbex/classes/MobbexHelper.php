@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.3.1
+ * @version 2.4.3
  * @see     PaymentModuleCore
  */
 
@@ -15,7 +15,7 @@
  */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.3.1';
+    const MOBBEX_VERSION = '2.4.3';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -54,7 +54,8 @@ class MobbexHelper
     const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
     const K_MULTICARD = 'MOBBEX_MULTICARD';
-    
+    const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
+
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
@@ -325,66 +326,34 @@ class MobbexHelper
     }
 
     /**
-     * Return the plans that were not selected in the product and category page
+     * Retrieve installments checked on plans filter of each product.
+     * 
+     * @param array $products
+     * 
+     * @return array
      */
     public static function getInstallments($products)
     {
+        $installments = $inactivePlans = $activePlans = [];
 
-        $installments = [];
-        $total_advanced_plans = [];
-
-        $ahora = array(
-            'ahora_3' => 'Ahora 3',
-            'ahora_6' => 'Ahora 6',
-            'ahora_12' => 'Ahora 12',
-            'ahora_18' => 'Ahora 18',
-        );
-
+        // Get plans from order products
         foreach ($products as $product) {
-            $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'common_plans'));
-            $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'advanced_plans'));
-
-            if (!empty($checkedCommonPlans)) {
-                foreach ($checkedCommonPlans as $key => $commonPlan) {
-                    $installments[] = '-' . $commonPlan;
-                    unset($checkedCommonPlans[$key]);
-                }
-            }
-
-            if (!empty($checkedAdvancedPlans)) {
-                $total_advanced_plans = array_merge($total_advanced_plans, $checkedAdvancedPlans);
-            }
+            $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($product['id_product']));
+            $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($product['id_product']));
         }
 
-        // Get all the advanced plans with their number of reps
-        $counted_advanced_plans = array_count_values($total_advanced_plans);
+        // Add inactive (common) plans to installments
+        foreach ($inactivePlans as $plan)
+            $installments[] = '-' . $plan;
 
-        // Advanced plans
-        foreach ($counted_advanced_plans as $plan => $reps) {
-            // Only if the plan is active on all products
-            if ($reps == count($products)) {
-                // Add to installments
+        // Add active (advanced) plans to installments only if the plan is active on all products
+        foreach (array_count_values($activePlans) as $plan => $reps) {
+            if ($reps == count($products))
                 $installments[] = '+uid:' . $plan;
-            }
         }
 
-        // Check "Ahora" custom fields
-        $categoriesId = array();
-        $categoriesId = self::getCategoriesId($products);
-        foreach ($ahora as $key => $value) {
-            //for each key, if it was not added before, then search all categories.
-            if (!in_array('-' . $key, $installments)) {
-                foreach ($categoriesId as $cat_id) {
-                    if (MobbexCustomFields::getCustomField($cat_id, 'category', $key) === 'yes') {
-                        $installments[] = '-' . $key;
-                        unset($ahora[$key]);
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $installments;
+        // Remove duplicated plans and return
+        return array_values(array_unique($installments));
     }
 
     /**
@@ -503,50 +472,52 @@ class MobbexHelper
     }
 
     /**
-     * Retrive active advanced plans from a product and its categories.
+     * Retrieve active advanced plans from a product and its categories.
      * 
-     * @param int $product_id
+     * @param int $productId
      * 
      * @return array
      */
-    public static function getInactivePlans($product) //nuevo codigo
+    public static function getInactivePlans($productId = null)
     {
-        $categories =  $product->getCategories();
+        // Get id from request if it is not set
+        if (!$productId)
+            $productId = Tools::getValue('id_product');
 
-        $checkedCommonPlans = [];
-        $checkedCommonPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'common_plans')) ? : [];
+        $product = new Product($productId);
 
-        foreach ($categories as $cat_id) {
-            $checkedCommonPlans = array_merge($checkedCommonPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'common_plans')) ? : []);
-        }
+        $inactivePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'common_plans')) ?: [];
+
+        foreach ($product->getCategories() as $categoryId)
+            $inactivePlans = array_merge($inactivePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'common_plans')) ?: []);
 
         // Remove duplicated and return
-        return array_unique($checkedCommonPlans);
+        return array_unique($inactivePlans);
     }
 
     /**
-     * Retrive inactive common plans from a product and its categories.
+     * Retrieve active advanced plans from a product and its categories.
      * 
-     * @param int $product_id
+     * @param int $productId
      * 
      * @return array
      */
-    public static function getActivePlans($product)
+    public static function getActivePlans($productId = null)
     {
-        $categories = $product->getCategories();
-        $checkedAdvancedPlans = [];
+        // Get id from request if it is not set
+        if (!$productId)
+            $productId = Tools::getValue('id_product');
+
+        $product = new Product($productId);
 
         // Get plans from product and product categories
-        $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField((int)Tools::getValue('id_product'), 'product', 'advanced_plans'));
+        $activePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'advanced_plans')) ?: [];
 
-        foreach ($categories as $cat_id) {
-            if (MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans') !== false) {
-                $checkedAdvancedPlans = array_merge($checkedAdvancedPlans, json_decode(MobbexCustomFields::getCustomField($cat_id, 'category', 'advanced_plans')));
-            }
-        }
+        foreach ($product->getCategories() as $categoryId)
+            $activePlans = array_merge($activePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'advanced_plans')) ?: []);
 
         // Remove duplicated and return
-        return array_unique($checkedAdvancedPlans);
+        return array_unique($activePlans);
     }
 
     /**
@@ -823,21 +794,23 @@ class MobbexHelper
     }
 
     /**
-     * Add an script depending of context and prestashop version.
+     * Add an asset file depending of context and prestashop version.
      * 
      * @param string $uri
-     * @param mixed $type
-     * @param Controller $controller
+     * @param string $type
+     * @param bool $remote
+     * @param null|Controller $controller
      */
-    public static function addScript($uri, $remote = false, $controller = null)
+    public static function addAsset($uri, $type = 'js', $remote = true, $controller = null)
     {
         if (!$controller)
             $controller = Context::getContext()->controller;
 
         if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
-            $controller->registerJavascript(sha1($uri), $uri, ['server' => $remote ? 'remote' : 'local']);
+            $params = ['server' => $remote ? 'remote' : 'local'];
+            $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
-            $controller->addJS($uri);
+            $type == 'js' ? $controller->addJS($uri) : $controller->addCSS($uri, 'all', null, false);
         }
     }
 
@@ -850,7 +823,21 @@ class MobbexHelper
     {
         $controller = Context::getContext()->controller;
 
-        return _PS_VERSION_ < '1.7' ? $controller->step == $controller::STEP_PAYMENT : $controller->getCheckoutProcess()->getCurrentStep() instanceof CheckoutPaymentStep;
+        if (_PS_VERSION_ < '1.7') {
+            return $controller->step == $controller::STEP_PAYMENT;
+        } else {
+            // Make checkout process as accessible for prestashop backward compatibility
+            $reflection = new ReflectionProperty($controller, 'checkoutProcess');
+            $reflection->setAccessible(true);
+            $checkoutProcess = $reflection->getValue($controller);
+
+            foreach ($checkoutProcess->getSteps() as $step) {
+                if ($step instanceof CheckoutPaymentStep && $step->isCurrent())
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     /**

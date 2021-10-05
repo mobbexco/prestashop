@@ -1,7 +1,3 @@
-/* This CSS file will be included in the frontoffice */
-div#mobbexWallet div.payment-option div.walletForm div.selector, input {width: 15rem!important;}
-div#mobbexWallet div.payment-option div.walletForm div.selector span {width: 14rem!important}
-
 #mbbx-loader-modal{
   position: fixed!important;
   width: 100%;
@@ -76,4 +72,12 @@ div#mobbexWallet div.payment-option div.walletForm div.selector span {width: 14r
 .walletForm.ps17 select[name="installment"] {
   max-width: 200px;
   display: inline;
+}
+
+.mbbx-method img {
+  position: absolute;
+  width: 64px !important;
+  top: 15px;
+  left: 15px;
+  border-radius: 100%;
 }

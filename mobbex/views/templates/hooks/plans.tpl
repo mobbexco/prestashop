@@ -112,10 +112,6 @@
                 font-weight: bold;
             }
 
-            #mbbxProductModalBody td {
-                width: 65%;
-            }
-
             .mobbexPaymentMethod img {
                 height: 40px;
                 border-radius: 100%;
@@ -136,19 +132,14 @@
                 margin: 0 auto;
             }
 
-            .installmentsTable tr {
-                width: 100%;
-                padding: 10px;
-                padding-left: 20px;
-            }
-
             .installmentsTable td {
                 padding: 10px 0;
-                width: 70%;
+                text-align: start;
             }
 
             .mbbxPlansPrice {
-                text-align: end;
+                width: 30%;
+                text-align: end !important;
             }
 
             /* DARK MODE  */
@@ -182,7 +173,7 @@
                 </select>
             </div>
             <div id="mbbxProductModalBody">
-                {foreach from=$sources key=$key item=$source }
+                {foreach from=$sources item=source }
                     {if !empty($source['source']['name'])}
                         <div id="{$source['source']['reference']}" class="mobbexSource">
                             <p class="mobbexPaymentMethod">
@@ -191,7 +182,7 @@
                             </p>
                             {if !empty($source['installments']['list'])}
                                 <table class="installmentsTable">
-                                    {foreach from=$source['installments']['list'] key=$key item=$installment }
+                                    {foreach from=$source['installments']['list'] item=installment }
                                         <tr>
                                             <td>{$installment['name']}</td>
                                             {if isset($installment['totals']['total'])}
@@ -217,6 +208,7 @@
         {/if}
     </button>
 
+<<<<<<< HEAD
     <script>    
     
         // Get modal action buttons
@@ -243,6 +235,35 @@
                 source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
         });
 
+=======
+    <script>
+        (function (window) {
+            var cont  = document.querySelector('.mobbex-plans');
+            var modal = document.querySelector('#mbbxProductModal');
+
+            // Get modal action buttons
+            var open  = document.querySelector('#mbbxProductBtn');
+            var close = document.querySelector('#closembbxProduct');
+
+            // Add events to toggle modal
+            cont.addEventListener('click', function(e) {
+                if (e.target === open || e.target === close || e.target === modal) {
+                    modal.classList.toggle('active');
+                    document.body.classList.toggle('scroll-lock');
+                } 
+            });
+
+            // Get sources and payment method selector 
+            var sources = document.querySelectorAll('.mobbexSource');
+            var methodSelect = document.querySelector('#mbbx-method-select');
+
+            // Filter payment methods in the modal
+            methodSelect.addEventListener('change', function() {
+                for (source of sources)
+                    source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
+            });
+        }) (window);
+>>>>>>> 3c4ad512213e11eb9a7fe5228ea97421be905bea
     </script>
 
 </div>

@@ -1,11 +1,14 @@
-(function (window) {
+(function (window, $) {
 /**
  * Get embed checkout options.
+ * 
+ * @returns {object}
  */
 function getOptions() {
   return {
     id: mbbx.checkoutId,
     type: 'checkout',
+    paymentMethod: mbbx.paymentMethod || null,
     onResult: (data) => {
       var status = data.status.code;
 
@@ -150,47 +153,47 @@ function executePayment() {
       var mbbxButton = window.MobbexEmbed.init(getOptions());
       mbbxButton.open();
     } else {
-      window.top.location.href = mbbx.checkoutUrl;
+      window.top.location.href = mbbx.checkoutUrl + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
     }
   }
   return false;
 };
 
-window.addEventListener('load', function () {
-  if (!window.mbbx)
-    return false;
+function renderEmbedContainer() {
+  var container = document.createElement('div');
+  container.id  = 'mbbx-container';
 
+  // Insert after body
+  document.body.prepend(container);
+}
+
+window.addEventListener('load', function () {
   renderLock();
+  renderEmbedContainer();
+
+  // Use jquery to listen checkout events before ajax calls end (for onepage plugins support)
+  $(document).on(window.prestashop ? 'submit' : 'click', '.mbbx-method', function (e) {
+    e.preventDefault();
+    activeCard(null);
+    mbbx.paymentMethod = $(this).attr('group');
+    return executePayment();
+  });
 
   // If it is prestashop 1.7
   if (window.prestashop) {
-    document.forms['mobbex_checkout'].onsubmit = function() {
+    $(document).on('submit', '.walletForm', function (e) {
+      e.preventDefault();
+      activeCard($(this).attr('card'));
       return executePayment();
-    }
-
-    document.querySelectorAll('.walletForm').forEach(form => {
-      form.onsubmit = function (e) {
-        activeCard(e.target.attributes.card.value);
-        return executePayment();
-      }
     });
   } else {
-    document.querySelector('#mbbx-anchor').onclick = function() {
-      activeCard(null);
-      return executePayment();
-    }
-
-    document.querySelectorAll(".walletAnchor").forEach(anchor => {
-      anchor.onclick = function(e) {
-        return activeCard(e.target.attributes.card.value);
-      }
+    $(document).on('click', '.walletAnchor', function () {
+      return activeCard($(this).attr('card'));
     });
 
-    document.querySelectorAll("#mobbexExecute").forEach(button => {
-      button.onclick = function() {
-        return executePayment();
-      }
+    $(document).on('click', '#mobbexExecute', function () {
+      return executePayment();
     });
   }
 });
-}) (window);
+}) (window, jQuery);

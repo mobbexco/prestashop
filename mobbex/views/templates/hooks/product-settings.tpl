@@ -7,5 +7,8 @@
         <div class="col-md-12">
             {include file="./plans-filter.tpl"}
         </div>
+        <div class="col-md-12">
+            {include file="./multivendor.tpl"}
+        </div>
     </div>
 </div>
