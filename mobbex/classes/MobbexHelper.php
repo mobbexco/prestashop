@@ -55,7 +55,8 @@ class MobbexHelper
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
-
+    const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
+    
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
@@ -64,6 +65,7 @@ class MobbexHelper
     const K_DEF_PLANS_FONT_SIZE = '16px';
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
     const K_DEF_MULTICARD = false;
+    const K_DEF_MULTIVENDOR = false;
     
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
@@ -170,30 +172,33 @@ class MobbexHelper
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
             $items[] = [
-                "image" => 'https://' . $imagePath,
+                "image"       => 'https://' . $imagePath,
                 "description" => $product['name'],
-                "quantity" => $product['cart_quantity'],
-                "total" => round($product['price_wt'], 2)
+                "quantity"    => $product['cart_quantity'],
+                "total"       => round($product['price_wt'], 2),
+                "entity"      => (Configuration::get(MobbexHelper::K_MULTIVENDOR) != false) ? MobbexCustomFields::getCustomField($product['id_product'], 'entity', 'entity') : '',
             ];
         }
 
         // Create data
         $data = array(
-            'reference' => MobbexHelper::getReference($cart),
-            'currency' => 'ARS',
-            'description' => 'Carrito #' . $cart->id,
-            'test' => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
-            'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            'webhook' => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            'items' => $items,
+            'reference'    => MobbexHelper::getReference($cart),
+            'currency'     => 'ARS',
+            'description'  => 'Carrito #' . $cart->id,
+            'test'         => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
+            'return_url'   => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'items'        => $items,
             'installments' => MobbexHelper::getInstallments($products),
-            'options' => MobbexHelper::getOptions(),
-            'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
-            'customer' => self::getCustomer($cart),
-            'timeout' => 5,
-            'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
-            'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
-            'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
+            'options'      => MobbexHelper::getOptions(),
+            'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
+            'customer'     => self::getCustomer($cart),
+            'timeout'      => 5,
+            'intent'       => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
+            'wallet'       => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
+            'multicard'    => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
+            'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
+            'merchants'    => MobbexHelper::getMerchants($items),
         );
 
         curl_setopt_array($curl, array(
@@ -257,6 +262,27 @@ class MobbexHelper
             'identification' => $address->id_customer ? MobbexHelper::getDni($address->id_customer) : null,
             'uid'            => $address->id_customer,
         ];
+    }
+
+    /**
+     * Return a json decode array with al the merchants from the items list.
+     * 
+     * @param array $items
+     * @return array
+     * 
+     */
+    public static function getMerchants($items) {
+
+        $merchants = [];
+
+        //Get the merchants from items list
+        foreach ($items as $item) {
+            if ($item['entity']) {
+                $merchants[] = ['uid' => $item['entity']];
+            }
+        }
+
+        return json_encode($merchants);
     }
 
     public static function evaluateTransactionData($res)
@@ -891,4 +917,5 @@ class MobbexHelper
 
         return compact('commonFields', 'advancedFields', 'sourceNames');
     }
+
 }

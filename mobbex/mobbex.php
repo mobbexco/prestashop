@@ -518,7 +518,7 @@ class Mobbex extends PaymentModule
                     array(
                         'type' => 'switch',
                         'label' => $this->l('Permite el uso de multiples tarjetas'),
-                        'name' => MobbexHelper::K_MULTICARD, //?
+                        'name' => MobbexHelper::K_MULTICARD,
                         'is_bool' => true,
                         'required' => false,
                         'tab' => 'tab_advanced',
@@ -535,6 +535,36 @@ class Mobbex extends PaymentModule
                             ],
                         ],
                     ),
+
+                    //Multivendor
+                    array(
+                        'type'     => 'select',
+                        'label'    => $this->l('Opcion multivendedor'),
+                        'desc'     => $this->l('Permite el uso de multiples vendedores (hasta 4 entidades diferentes)'),
+                        'name'     => MobbexHelper::K_MULTIVENDOR,
+                        'required' => false,
+                        'tab' => 'tab_advanced',
+                        'options'  => array(
+                            'query' => [
+                                array(
+                                    'id_option' => false,
+                                    'name'      => 'Desactivado'
+                                ),
+                                array(
+                                    'id_option' => 'unified',
+                                    'name'      => 'Unificado'
+                                ),
+                                array(
+                                    'id_option' => 'active',
+                                    'name'      => 'Activado'
+                                ),
+                            ],
+                            'id'   => 'id_option',
+                            'name' => 'name'
+                        )
+                    ),
+
+                    //DNI Field
                     array(
                         'type' => 'text',
                         'label' => $this->l('Usar campo DNI existente'),
@@ -611,6 +641,8 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
             //Multicard field
             MobbexHelper::K_MULTICARD => Configuration::get(MobbexHelper::K_MULTICARD, false),
+            //Multivendor field
+            MobbexHelper::K_MULTIVENDOR => Configuration::get(MobbexHelper::K_MULTIVENDOR, false),
             // IMPORTANT! Do not add Order States here. These values are used to save form fields
         );
     }
@@ -866,7 +898,7 @@ class Mobbex extends PaymentModule
                     $method['subgroup_title'],
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method','checkoutUrl')
+                    compact('method', 'checkoutUrl')
                 );
             }
         }
@@ -909,7 +941,7 @@ class Mobbex extends PaymentModule
             $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
         }
 
-        $total = $product->getPrice(); 
+        $total = $product->getPrice();
 
         //Get product and category plans
         $active_plans = MobbexHelper::getActivePlans($product->id);
@@ -1092,7 +1124,6 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $this->context->smarty->assign([
-            
             'plans'  => MobbexHelper::getPlansFilterFields($params['id_product'] ?: Tools::getValue('id_product')),
             'entity' => MobbexCustomFields::getCustomField($params['id_product'], 'entity', 'entity') ?: ''
         ]);
@@ -1115,18 +1146,18 @@ class Mobbex extends PaymentModule
     public function hookActionProductUpdate($params)
     {
         $commonPlans = $advancedPlans = [];
-        
+        $entity = $_POST['entity'] ?: null;
+
         // Get plans selected
         foreach ($_POST as $key => $value) {
             if (strpos($key, 'common_plan_') !== false && $value === 'no') {
                 // Add UID to common plans
                 $commonPlans[] = explode('common_plan_', $key)[1];
-            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes'){
+            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes') {
                 // Add UID to advanced plans
                 $advancedPlans[] = explode('advanced_plan_', $key)[1];
             }
         }
-
 
         // If is bulk import
         if (strnatcasecmp(Tools::getValue('controller'), 'adminImport') === 0) {
@@ -1135,14 +1166,12 @@ class Mobbex extends PaymentModule
                 MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
             if (!empty($advancedPlans))
                 MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
-            if ($_POST['entity'])
-                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $_POST['entity']);
-                
-            } else {
+            if ($entity)
+                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
+        } else {
             // Save data directly
-            if ($_POST['entity'])
-                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $_POST['entity']);
-
+            if ($entity)
+                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
         }
@@ -1162,13 +1191,14 @@ class Mobbex extends PaymentModule
     public function hookCategoryUpdate($params)
     {
         $commonPlans = $advancedPlans = [];
+        $entity = $_POST['entity'] ?: null;
 
         // Get plans selected
         foreach ($_POST as $key => $value) {
             if (strpos($key, 'common_plan_') !== false && $value === 'no') {
                 // Add UID to common plans
                 $commonPlans[] = explode('common_plan_', $key)[1];
-            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes'){
+            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes') {
                 // Add UID to advanced plans
                 $advancedPlans[] = explode('advanced_plan_', $key)[1];
             }
@@ -1181,8 +1211,12 @@ class Mobbex extends PaymentModule
                 MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'common_plans', json_encode($commonPlans));
             if (!empty($advancedPlans))
                 MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'advanced_plans', json_encode($advancedPlans));
+            if ($entity)
+                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
         } else {
             // Save data directly
+            if ($entity)
+                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
             MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'common_plans', json_encode($commonPlans));
             MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'advanced_plans', json_encode($advancedPlans));
         }

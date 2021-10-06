@@ -1,7 +1,6 @@
 <div class="mbbx-multivendor">
-<h3>Multivendedor</h3>
 <label for="entity">Entidad:</label>
-<input type="text" name="entity" id="entity">
+<input type="text" name="entity" id="entity" value="{$entity}">
 </div>
 
 <style>
@@ -10,6 +9,6 @@
     }
 
     .mbbx-multivendor label {
-        margin-right: 20px;
+        margin-right: 25px;
     }
 </style>

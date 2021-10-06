@@ -6,7 +6,7 @@
         </tr>
         <tr>
             <td class="mbbx-plans">
-                {foreach from=$commonFields key=key item=field}
+                {foreach from=$plans['commonFields'] key=key item=field}
                     <div class="mbbx-plan">
                         <input type="hidden" name="{$field['id']}" value="no">
                         <input type="checkbox" name="{$field['id']}" value="yes" {if $field['value']}checked="checked"{/if} id="{$field['id']}">
@@ -15,10 +15,10 @@
                 {/foreach}
             </td>
             <td class="mbbx-plans">
-                {foreach from=$advancedFields key=sourceRef item=fields}
+                {foreach from=$plans['advancedFields'] key=sourceRef item=fields}
                     <div class="mbbx-plan-source">
                         <img src="https://res.mobbex.com/images/sources/{$sourceRef}.png">
-                        <p>{$sourceNames[$sourceRef]}</p>
+                        <p>{$plans['sourceNames'][$sourceRef]}</p>
                     </div>
                     {foreach from=$fields key=key item=field}
                         <div class="mbbx-plan-advanced">
