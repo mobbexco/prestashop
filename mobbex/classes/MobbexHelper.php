@@ -381,24 +381,19 @@ class MobbexHelper
     }
 
     /**
-     * Get sources with common plans from mobbex.
+     * Get sources with common and advanced plans from mobbex.
      * 
      * @param integer|null $total
      * 
      * @return array
      */
-    public static function getSources($total = null, $inactivePlans = null)
+    public static function getSources($total = null, $inactivePlans = null, $activePlans = null)
     {
         $curl = curl_init();
 
         $data = $total ? '?total=' . $total : null;
 
-        if ($data && $inactivePlans) {
-            $data .= '&';
-            foreach ($inactivePlans as $plan) {
-                $data .= '&installments[]=-' . $plan;
-            }
-        }
+        $data .= self::getInstallmentsQuery($inactivePlans, $activePlans);
 
         curl_setopt_array($curl, array(
             CURLOPT_URL => 'https://api.mobbex.com/p/sources' . $data,
@@ -472,6 +467,35 @@ class MobbexHelper
     }
 
     /**
+     * Returns a query param with the installments of the product.
+     * @param array $inactivePlans
+     * @param array $activePlans
+     */
+    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null ) {
+        
+        $installments = [];
+        
+        //get plans
+        if($inactivePlans) {
+            foreach ($inactivePlans as $plan) {
+                $installments[] = "-$plan";
+            }
+        }
+
+        if($activePlans) {
+            foreach ($activePlans as $plan) {
+                $installments[] = "+uid:$plan";
+            } 
+        }
+
+        //Build query param
+        $query = http_build_query(['installments' => $installments]);
+        $query = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', $query);
+        
+        return $query;
+    }
+
+    /**
      * Retrieve active advanced plans from a product and its categories.
      * 
      * @param int $productId
@@ -519,54 +543,6 @@ class MobbexHelper
         // Remove duplicated and return
         return array_unique($activePlans);
     }
-
-    /**
-     * Filter advanced sources 
-     *
-     * @return array
-     */
-    public static function filterAdvancedSources($sources, $advancedPlans)
-    {
-        foreach ($sources as $firstKey => $source) {
-            foreach ($source['installments'] as $key => $installment) {
-                if (!in_array($installment['uid'], $advancedPlans)) {
-                    unset($sources[$firstKey]['installments'][$key]);
-                }
-            }
-        }
-        return $sources;
-    }
-
-    /**
-     * Merge common sources with sources obtained by advanced rules.
-     * 
-     * @param mixed $sources
-     * @param mixed $advanced_sources
-     * 
-     * @return array
-     */
-    public static function mergeSources($sources, $advanced_sources)
-    {
-        foreach ($advanced_sources as $advanced_source) {
-            $key = array_search($advanced_source['sourceReference'], array_column(array_column($sources, 'source'), 'reference'));
-
-            // If source exists in common sources array
-            if ($key !== false) {
-                // Only add installments
-                $sources[$key]['installments']['list'] = array_merge($sources[$key]['installments']['list'], $advanced_source['installments']);
-            } else {
-                $sources[] = [
-                    'source'       => $advanced_source['source'],
-                    'installments' => [
-                        'list' => $advanced_source['installments']
-                    ]
-                ];
-            }
-        }
-
-        return $sources;
-    }
-
 
     /**
      * Inform to Mobbex a total order refund 
