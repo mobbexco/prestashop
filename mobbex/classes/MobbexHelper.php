@@ -294,6 +294,7 @@ class MobbexHelper
             'source_name' => isset($res['payment']['source']['name']) ?: 'Mobbex',
             'message'     => isset($res['payment']['status']['message']) ?: '',
             'trans_id'    => isset($res['payment']['id']) ?: '',
+            'order_status' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
         );
 
 
