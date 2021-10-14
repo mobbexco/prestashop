@@ -208,34 +208,6 @@
         {/if}
     </button>
 
-<<<<<<< HEAD
-    <script>    
-    
-        // Get modal action buttons
-        var body = document.querySelector('body')
-        var openBtn = document.getElementById('mbbxProductBtn');
-        var closeBtn = document.querySelector('#closembbxProduct');
-        var mobbexPlansModal = document.querySelector('#mbbxProductModal');
-
-        // Add events to toggle modal
-        document.body.addEventListener('click', function(e) {
-            if(e.target === openBtn || e.target === closeBtn || e.target === mbbxModalContainer) {
-                mobbexPlansModal.classList.toggle('active');
-                document.querySelector('body').classList.toggle('scroll-lock');
-            } 
-        });
-
-        // Get sources and payment method selector 
-        var sources = document.querySelectorAll('.mobbexSource');
-        var methodSelect = document.getElementById('mbbx-method-select');
-
-        // Filter payment methods in the modal
-        methodSelect.addEventListener('change', function() {
-            for (source of sources)
-                source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
-        });
-
-=======
     <script>
         (function (window) {
             var cont  = document.querySelector('.mobbex-plans');
@@ -262,8 +234,7 @@
                 for (source of sources)
                     source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
             });
-        }) (window);
->>>>>>> 3c4ad512213e11eb9a7fe5228ea97421be905bea
+        }
     </script>
 
 </div>

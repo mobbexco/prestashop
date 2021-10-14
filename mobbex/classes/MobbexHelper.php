@@ -56,7 +56,7 @@ class MobbexHelper
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
-    
+
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
@@ -66,7 +66,7 @@ class MobbexHelper
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
     const K_DEF_MULTICARD = false;
     const K_DEF_MULTIVENDOR = false;
-    
+
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
@@ -271,7 +271,8 @@ class MobbexHelper
      * @return array
      * 
      */
-    public static function getMerchants($items) {
+    public static function getMerchants($items)
+    {
 
         $merchants = [];
 
@@ -282,53 +283,36 @@ class MobbexHelper
             }
         }
 
-        return json_encode($merchants);
+        return $merchants;
     }
 
-    public static function evaluateTransactionData($res)
+    public static function getTransactionData($res)
     {
-        // Get the Status
-        $status = (int) $res['payment']['status']['code'];
 
-        // Get the Reference ( Transaction ID )
-        $transaction_id = $res['payment']['id'];
-
-        $source_type = $res['payment']['source']['type'];
-        $source_name = $res['payment']['source']['name'];
-
-        $message = $res['payment']['status']['message'];
-
-        $total = (float) $res['payment']['total'];
-
-        // Create Result Array
-        $result = array(
-            'status' => $status,
-            'orderStatus' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
-            'message' => $message,
-            'name' => $source_name,
-            'transaction_id' => $transaction_id,
-            'source_type' => $source_type,
-            'total' => $total,
-            'data' => $res,
+        $data = array(
+            'status'      => (int) $res['payment']['status']['code'],
+            'source_name' => isset($res['payment']['source']['name']) ?: 'Mobbex',
+            'message'     => isset($res['payment']['status']['message']) ?: '',
+            'trans_id'    => isset($res['payment']['id']) ?: '',
         );
 
+
         // Validate mobbex status and create order status
-        $state = self::getState($status);
+        $state = self::getState($data['status']);
 
         if ($state == 'onhold') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else if ($state == 'approved') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
+            $data['order_status'] = (int) Configuration::get('PS_OS_PAYMENT');
         } else if ($state == 'failed') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_ERROR');
+            $data['order_status'] = (int) Configuration::get('PS_OS_ERROR');
         } else if ($state == 'refunded') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_REFUND');
+            $data['order_status'] = (int) Configuration::get('PS_OS_REFUND');
         } else if ($state == 'rejected') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
         }
 
-        self::$transactionData = $result;
-        return $result;
+        return $data;
     }
 
     public static function getDni($customer_id)
@@ -774,20 +758,21 @@ class MobbexHelper
      * @param array $transData
      * @param PaymentModule $module
      */
-    public static function createOrder($cartId, $transData, $module)
+    public static function createOrder($cartId, $data, $module)
     {
+
         try {
             $context = self::restoreContext($cartId);
 
             $module->validateOrder(
                 $cartId,
-                $transData['orderStatus'],
+                $data['order_status'],
                 (float) $context->cart->getOrderTotal(true, Cart::BOTH),
-                $transData['name'],
-                $transData['message'],
+                $data['source_name'],
+                $data['message'],
                 [
-                    '{transaction_id}' => $transData['transaction_id'],
-                    '{message}' => $transData['message'],
+                    '{transaction_id}' => $data['trans_id'],
+                    '{message}' => $data['message'],
                 ],
                 (int) $context->currency->id,
                 false,
@@ -917,5 +902,4 @@ class MobbexHelper
 
         return compact('commonFields', 'advancedFields', 'sourceNames');
     }
-
 }
