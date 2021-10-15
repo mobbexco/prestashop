@@ -1143,7 +1143,7 @@ class Mobbex extends PaymentModule
     public function hookActionProductUpdate($params)
     {
         $commonPlans = $advancedPlans = [];
-        $entity = $_POST['entity'] ?: null;
+        $entity = isset($_POST['entity']) ? $_POST['entity'] : null;
 
         // Get plans selected
         foreach ($_POST as $key => $value) {
