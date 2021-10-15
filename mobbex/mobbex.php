@@ -1209,11 +1209,11 @@ class Mobbex extends PaymentModule
             if (!empty($advancedPlans))
                 MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'advanced_plans', json_encode($advancedPlans));
             if ($entity)
-                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
+                MobbexCustomFields::saveCustomField($params['category']->id, 'entity', 'entity', $entity);
         } else {
             // Save data directly
             if ($entity)
-                MobbexCustomFields::saveCustomField($params['id_product'], 'entity', 'entity', $entity);
+                MobbexCustomFields::saveCustomField($params['category']->id, 'entity', 'entity', $entity);
             MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'common_plans', json_encode($commonPlans));
             MobbexCustomFields::saveCustomField($params['category']->id, 'category', 'advanced_plans', json_encode($advancedPlans));
         }
