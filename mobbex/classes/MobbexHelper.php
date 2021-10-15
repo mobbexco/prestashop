@@ -291,9 +291,9 @@ class MobbexHelper
 
         $data = array(
             'status'      => (int) $res['payment']['status']['code'],
-            'source_name' => isset($res['payment']['source']['name']) ?: 'Mobbex',
-            'message'     => isset($res['payment']['status']['message']) ?: '',
-            'trans_id'    => isset($res['payment']['id']) ?: '',
+            'source_name' => isset($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
+            'message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
+            'trans_id'    => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'order_status' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
         );
 
