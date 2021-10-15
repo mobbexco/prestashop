@@ -1135,8 +1135,10 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
-        $this->context->smarty->assign(MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'));
-
+        $this->context->smarty->assign([
+            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'),
+            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'entity', 'entity') ?: ''
+        ]);
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
     }
 
