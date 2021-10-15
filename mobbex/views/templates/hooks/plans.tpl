@@ -234,7 +234,7 @@
                 for (source of sources)
                     source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
             });
-        }
+        }) (window);
     </script>
 
 </div>
