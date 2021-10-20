@@ -75,19 +75,21 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get data from request
         $cartId      = Tools::getValue('id_cart');
         $res         = [];
-        $multivendor = empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)) ? false : true;
         parse_str(file_get_contents('php://input'), $res);
 
         if (empty($cartId) || empty($res))
             die('WebHook Error: Empty cart_id or Mobbex json data. ' . MobbexHelper::MOBBEX_VERSION);
         
-        if ( $multivendor && $res['data']['payment']['operation']['type'] != "payment.multiple-vendor")
-            return;
-        
+            
         // Get Order and transaction data
         $order = MobbexHelper::getOrderByCartId($cartId, true);
         $data  = MobbexHelper::getTransactionData($res['data']);
-
+        
+        if ( !$data['parent']) {
+            MobbexTransaction::saveTransaction($cartId, $data);
+            return;
+        }
+            
         // If Order exists
         if ($order) {
             // If it was not updated recently
@@ -102,7 +104,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         }
 
         // Save the data and return
-        MobbexTransaction::saveTransaction($cartId, $res['data']);
+        MobbexTransaction::saveTransaction($cartId, $data);
         die('OK: ' . MobbexHelper::MOBBEX_VERSION);
     }
 }

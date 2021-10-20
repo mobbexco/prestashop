@@ -290,11 +290,27 @@ class MobbexHelper
     {
 
         $data = array(
-            'status'      => (int) $res['payment']['status']['code'],
-            'source_name' => isset($res['payment']['source']['name']) ?: 'Mobbex',
-            'message'     => isset($res['payment']['status']['message']) ?: '',
-            'trans_id'    => isset($res['payment']['id']) ?: '',
-            'order_status' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
+            'parent'             => MobbexHelper::isParentWebhook($res['payment']['operation']['type']),
+            'trans_id'           => isset($res['payment']['id']) ? $res['payment']['id'] : '',
+            'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '', 
+            'status'             => (int) $res['payment']['status']['code'],
+            'order_status'       => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
+            'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
+            'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
+            'source_type'        => !empty($res['payment']['source']['type']) ? $res['payment']['source']['type'] : 'Mobbex',
+            'source_reference'   => isset($res['payment']['source']['reference']) ? $res['payment']['source']['reference'] : '',
+            'source_number'      => isset($res['payment']['source']['number']) ? $res['payment']['source']['number'] : '',
+            'source_expiration'  => isset($res['payment']['source']['expiration']) ? json_encode($res['payment']['source']['expiration']) : '',
+            'source_installment' => isset($res['payment']['source']['installment']) ? json_encode($res['payment']['source']['installment']) : '',
+            'cardholder'         => isset($res['payment']['source']['cardholder']) ? json_encode(($res['payment']['source']['cardholder'])) : '',
+            'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
+            'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '', 
+            'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '', 
+            'total'              => isset($res['checkout']['total']) ? $res['checkout']['total'] : '', 
+            'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '', 
+            'data'               => json_encode($res),
+            'created'            => isset($res['payment']['created']) ? $res['payment']['created'] : '',
+            'updated'            => isset($res['payment']['updated']) ? $res['payment']['created'] : '',
         );
 
 
@@ -314,6 +330,15 @@ class MobbexHelper
         }
 
         return $data;
+    }
+
+    public static function isParentWebhook($operationType) 
+    {
+        if($operationType === "payment.v2") {
+            if(!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR))) 
+                return false;
+        }
+        return true;
     }
 
     public static function getDni($customer_id)
