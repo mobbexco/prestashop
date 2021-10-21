@@ -164,7 +164,7 @@
         <span id="closembbxProduct">&times;</span>
                 <select name="mbbx-method-select" id="mbbx-method-select">
                     <option id="0" value="0">Todos</option>
-                    {foreach item=$source  from=$sources}
+                    {foreach from=$sources item=source}
                         {if !empty($source['source']['name'])}
                             <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">
                                 {$source['source']['name']}</option>
@@ -203,39 +203,13 @@
 
     <button type="button" id="mbbxProductBtn">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
-            <img src="{$style_settings['button_image']}" width="40" height="40"
-                style="margin-left: 15px; border-radius: 40px;">
+            <img src="{$style_settings['button_image']}" 
+                 width="40" 
+                 height="40"
+                 style="margin-left: 15px; border-radius: 40px;">
         {/if}
     </button>
 
-<<<<<<< HEAD
-    <script>    
-    
-        // Get modal action buttons
-        var body = document.querySelector('body')
-        var openBtn = document.getElementById('mbbxProductBtn');
-        var closeBtn = document.querySelector('#closembbxProduct');
-        var mobbexPlansModal = document.querySelector('#mbbxProductModal');
-
-        // Add events to toggle modal
-        document.body.addEventListener('click', function(e) {
-            if(e.target === openBtn || e.target === closeBtn || e.target === mbbxModalContainer) {
-                mobbexPlansModal.classList.toggle('active');
-                document.querySelector('body').classList.toggle('scroll-lock');
-            } 
-        });
-
-        // Get sources and payment method selector 
-        var sources = document.querySelectorAll('.mobbexSource');
-        var methodSelect = document.getElementById('mbbx-method-select');
-
-        // Filter payment methods in the modal
-        methodSelect.addEventListener('change', function() {
-            for (source of sources)
-                source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
-        });
-
-=======
     <script>
         (function (window) {
             var cont  = document.querySelector('.mobbex-plans');
@@ -263,7 +237,6 @@
                     source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
             });
         }) (window);
->>>>>>> 3c4ad512213e11eb9a7fe5228ea97421be905bea
     </script>
 
 </div>
