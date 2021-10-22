@@ -86,9 +86,13 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $data  = MobbexHelper::getTransactionData($res['data']);
         
         if ( !$data['parent']) {
+            //Save child webhook data
             MobbexTransaction::saveTransaction($cartId, $data);
             return;
         }
+
+        // Save parent webhook data
+        MobbexTransaction::saveTransaction($cartId, $data);
             
         // If Order exists
         if ($order) {
@@ -103,8 +107,6 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             MobbexHelper::createOrder($cartId, $data, $this->module);
         }
 
-        // Save the data and return
-        MobbexTransaction::saveTransaction($cartId, $data);
         die('OK: ' . MobbexHelper::MOBBEX_VERSION);
     }
 }

@@ -651,9 +651,9 @@ class Mobbex extends PaymentModule
     {
         DB::getInstance()->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT,
-				`parent` BOOLEAN NOT NULL,
+                `id` INT(11) NOT NULL PRIMARY_KEY,
                 `cart_id` INT(11) NOT NULL,
+				`parent` TEXT NOT NULL,
 				`payment_id` TEXT NOT NULL,
 				`description` TEXT NOT NULL,
 				`status_code` TEXT NOT NULL,
@@ -665,12 +665,16 @@ class Mobbex extends PaymentModule
 				`source_number` TEXT NOT NULL,
 				`source_expiration` TEXT NOT NULL,
 				`source_installment` TEXT NOT NULL,
+				`installment_name` TEXT NOT NULL,
+				`source_url` TEXT NOT NULL,
 				`cardholder` TEXT NOT NULL,
+				`entity_name` TEXT NOT NULL,
 				`entity_uid` TEXT NOT NULL,
 				`customer` TEXT NOT NULL,
 				`checkout_uid` TEXT NOT NULL,
-				`total` DECIMAL(18,4) NOT NULL,
+				`total` DECIMAL(18,2) NOT NULL,
 				`currency` TEXT NOT NULL,
+                `risk_analysis` TEXT NOT NULL,
 				`data` TEXT NOT NULL,
 				`created` TEXT NOT NULL,
 				`updated` TEXT NOT NULL,
@@ -707,12 +711,16 @@ class Mobbex extends PaymentModule
 				    ADD `source_number` TEXT NOT NULL,
 				    ADD `source_expiration` TEXT NOT NULL,
 				    ADD `source_installment` TEXT NOT NULL,
+				    ADD `installment_name` TEXT NOT NULL,
+				    ADD `source_url` TEXT NOT NULL,
 				    ADD `cardholder` TEXT NOT NULL,
+				    ADD `entity_name` TEXT NOT NULL,
 				    ADD `entity_uid` TEXT NOT NULL,
 				    ADD `customer` TEXT NOT NULL,
 				    ADD `checkout_uid` TEXT NOT NULL,
-				    ADD `total` DECIMAL(18,4) NOT NULL,
+				    ADD `total` DECIMAL(18,2) NOT NULL,
 				    ADD `currency` TEXT NOT NULL,
+				    ADD `risk_analysis` TEXT NOT NULL,
 				    ADD `created` TEXT NOT NULL,
 				    ADD `updated` TEXT NOT NULL,
                 ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
@@ -885,14 +893,19 @@ class Mobbex extends PaymentModule
         }
 
         if ($order) {
+
             // Get Transaction Data
-            $trx = MobbexTransaction::getTransaction($order->id_cart);
+            $transactions = MobbexTransaction::getTransactions($order->id_cart);
+            $trx = $transactions[0];
+            $sources = MobbexHelper::getWebhookSources($transactions);
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-            $this->smarty->assign('total', $trx['payment']['total']);
+            $this->smarty->assign('total', $trx->total);
             $this->smarty->assign('payment', $order->payment);
-            $this->smarty->assign('mobbex_data', $trx);
+            $this->smarty->assign('status_message', $trx->status_message);
+            $this->smarty->assign('sources', $sources);
+
         }
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
@@ -1141,8 +1154,8 @@ class Mobbex extends PaymentModule
         $idRefunded = (int)Configuration::get('PS_OS_REFUND'); //get id of refunded state
         $order = new Order($params['id_order']);
         if ($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex') {
-            $transactionData = MobbexTransaction::getTransaction($order->id_cart);
-            $response = MobbexHelper::porcessRefund($transactionData['payment']['id']);
+            $transactionData = MobbexTransaction::getTransactions($order->id_cart);
+            $response = MobbexHelper::porcessRefund($transactionData[0]['payment_id']);
             return $response;
         }
         return false; //not a mobbex transaction
