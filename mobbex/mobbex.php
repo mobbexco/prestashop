@@ -694,36 +694,36 @@ class Mobbex extends PaymentModule
         );
     }
 
-    private function _alterTable() {
+    public function _alterTable() {
         DB::getInstance()->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
-                    DROP PRIMARY KEY,
-                    ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY
-                    ADD `parent` BOOLEAN NOT NULL,
-				    ADD `payment_id` TEXT NOT NULL,
-				    ADD `description` TEXT NOT NULL,
-				    ADD `status_code` TEXT NOT NULL,
-				    ADD `status` TEXT NOT NULL,
-				    ADD `status_message` TEXT NOT NULL,
-				    ADD `source_name` TEXT NOT NULL,
-				    ADD `source_type` TEXT NOT NULL,
-				    ADD `source_reference` TEXT NOT NULL,
-				    ADD `source_number` TEXT NOT NULL,
-				    ADD `source_expiration` TEXT NOT NULL,
-				    ADD `source_installment` TEXT NOT NULL,
-				    ADD `installment_name` TEXT NOT NULL,
-				    ADD `source_url` TEXT NOT NULL,
-				    ADD `cardholder` TEXT NOT NULL,
-				    ADD `entity_name` TEXT NOT NULL,
-				    ADD `entity_uid` TEXT NOT NULL,
-				    ADD `customer` TEXT NOT NULL,
-				    ADD `checkout_uid` TEXT NOT NULL,
-				    ADD `total` DECIMAL(18,2) NOT NULL,
-				    ADD `currency` TEXT NOT NULL,
-				    ADD `risk_analysis` TEXT NOT NULL,
-				    ADD `created` TEXT NOT NULL,
-				    ADD `updated` TEXT NOT NULL,
-                ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+                DROP PRIMARY KEY,
+                ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                ADD `parent` BOOLEAN NOT NULL,
+                ADD `payment_id` TEXT NOT NULL,
+                ADD `description` TEXT NOT NULL,
+                ADD `status_code` TEXT NOT NULL,
+                ADD `status` TEXT NOT NULL,
+                ADD `status_message` TEXT NOT NULL,
+                ADD `source_name` TEXT NOT NULL,
+                ADD `source_type` TEXT NOT NULL,
+                ADD `source_reference` TEXT NOT NULL,
+                ADD `source_number` TEXT NOT NULL,
+                ADD `source_expiration` TEXT NOT NULL,
+                ADD `source_installment` TEXT NOT NULL,
+                ADD `installment_name` TEXT NOT NULL,
+                ADD `source_url` TEXT NOT NULL,
+                ADD `cardholder` TEXT NOT NULL,
+                ADD `entity_name` TEXT NOT NULL,
+                ADD `entity_uid` TEXT NOT NULL,
+                ADD `customer` TEXT NOT NULL,
+                ADD `checkout_uid` TEXT NOT NULL,
+                ADD `total` DECIMAL(18,2) NOT NULL,
+                ADD `currency` TEXT NOT NULL,
+                ADD `risk_analysis` TEXT NOT NULL,
+                ADD `created` TEXT NOT NULL,
+                ADD `updated` TEXT NOT NULL,
+            ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
     }
 
