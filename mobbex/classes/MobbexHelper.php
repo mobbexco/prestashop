@@ -520,6 +520,36 @@ class MobbexHelper
     }
 
     /**
+     * Return true if the module need upgrade the database.
+     * 
+     * @return bool
+     */
+    public static function needUpgrade()
+    {
+        return self::MOBBEX_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_. "module WHERE name = 'mobbex'");
+    }
+
+    /**
+     * Get database module upgrade URL.
+     * 
+     * @return string
+     */
+    public static function getUpgradeURL()
+    {
+        if (_PS_VERSION_ > '1.7') {
+            return Link::getUrlSmarty([
+                'entity' => 'sf',
+                'route'  => 'admin_module_updates',
+            ]);
+        } else {
+            return Context::getContext()->link->getAdminLink('AdminModules') . '&' . http_build_query([
+                'checkAndUpdate' => true,
+                'module_name'    => 'mobbex'
+            ]);
+        }
+    }
+
+    /**
      * Retrieve active advanced plans from a product and its categories.
      * 
      * @param int $productId
