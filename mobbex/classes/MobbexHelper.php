@@ -55,6 +55,7 @@ class MobbexHelper
     const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
+    const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
@@ -64,7 +65,8 @@ class MobbexHelper
     const K_DEF_PLANS_FONT_SIZE = '16px';
     const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
     const K_DEF_MULTICARD = false;
-    
+    const K_DEF_MULTIVENDOR = false;
+
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
@@ -170,30 +172,33 @@ class MobbexHelper
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
             $items[] = [
-                "image" => 'https://' . $imagePath,
+                "image"       => 'https://' . $imagePath,
                 "description" => $product['name'],
-                "quantity" => $product['cart_quantity'],
-                "total" => round($product['price_wt'], 2)
+                "quantity"    => $product['cart_quantity'],
+                "total"       => round($product['price_wt'], 2),
+                "entity"      => (Configuration::get(MobbexHelper::K_MULTIVENDOR) != false) ? MobbexCustomFields::getCustomField($product['id_product'], 'entity', 'entity') : '',
             ];
         }
 
         // Create data
         $data = array(
-            'reference' => MobbexHelper::getReference($cart),
-            'currency' => 'ARS',
-            'description' => 'Carrito #' . $cart->id,
-            'test' => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
-            'return_url' => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            'webhook' => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            'items' => $items,
+            'reference'    => MobbexHelper::getReference($cart),
+            'currency'     => 'ARS',
+            'description'  => 'Carrito #' . $cart->id,
+            'test'         => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
+            'return_url'   => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'items'        => $items,
             'installments' => MobbexHelper::getInstallments($products),
-            'options' => MobbexHelper::getOptions(),
-            'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
-            'customer' => self::getCustomer($cart),
-            'timeout' => 5,
-            'intent' => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
-            'wallet' => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
-            'multicard' => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
+            'options'      => MobbexHelper::getOptions(),
+            'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
+            'customer'     => self::getCustomer($cart),
+            'timeout'      => 5,
+            'intent'       => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
+            'wallet'       => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
+            'multicard'    => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
+            'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
+            'merchants'    => MobbexHelper::getMerchants($items),
         );
 
         curl_setopt_array($curl, array(
@@ -259,50 +264,131 @@ class MobbexHelper
         ];
     }
 
-    public static function evaluateTransactionData($res)
+    /**
+     * Return a json decode array with al the merchants from the items list.
+     * 
+     * @param array $items
+     * @return array
+     * 
+     */
+    public static function getMerchants($items)
     {
-        // Get the Status
-        $status = (int) $res['payment']['status']['code'];
 
-        // Get the Reference ( Transaction ID )
-        $transaction_id = $res['payment']['id'];
+        $merchants = [];
 
-        $source_type = $res['payment']['source']['type'];
-        $source_name = $res['payment']['source']['name'];
-
-        $message = $res['payment']['status']['message'];
-
-        $total = (float) $res['payment']['total'];
-
-        // Create Result Array
-        $result = array(
-            'status' => $status,
-            'orderStatus' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
-            'message' => $message,
-            'name' => $source_name,
-            'transaction_id' => $transaction_id,
-            'source_type' => $source_type,
-            'total' => $total,
-            'data' => $res,
-        );
-
-        // Validate mobbex status and create order status
-        $state = self::getState($status);
-
-        if ($state == 'onhold') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
-        } else if ($state == 'approved') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_PAYMENT');
-        } else if ($state == 'failed') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_ERROR');
-        } else if ($state == 'refunded') {
-            $result['orderStatus'] = (int) Configuration::get('PS_OS_REFUND');
-        } else if ($state == 'rejected') {
-            $result['orderStatus'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
+        //Get the merchants from items list
+        foreach ($items as $item) {
+            if ($item['entity']) {
+                $merchants[] = ['uid' => $item['entity']];
+            }
         }
 
-        self::$transactionData = $result;
-        return $result;
+        return $merchants;
+    }
+
+    /**
+     * Receives an array with the weebhook generates the order status and returns an array with organized data
+     * 
+     * @param array $res
+     * @return array $data
+     * 
+     */
+    public static function getTransactionData($res)
+    {
+
+        $data = array(
+            'parent'             => MobbexHelper::isParentWebhook($res['payment']['operation']['type']),
+            'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
+            'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
+            'status'             => (int) $res['payment']['status']['code'],
+            'order_status'       => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
+            'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
+            'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
+            'source_type'        => !empty($res['payment']['source']['type']) ? $res['payment']['source']['type'] : 'Mobbex',
+            'source_reference'   => isset($res['payment']['source']['reference']) ? $res['payment']['source']['reference'] : '',
+            'source_number'      => isset($res['payment']['source']['number']) ? $res['payment']['source']['number'] : '',
+            'source_expiration'  => isset($res['payment']['source']['expiration']) ? json_encode($res['payment']['source']['expiration']) : '',
+            'source_installment' => isset($res['payment']['source']['installment']) ? json_encode($res['payment']['source']['installment']) : '',
+            'installment_name'   => isset($res['payment']['source']['installment']['description']) ? json_encode($res['payment']['source']['installment']['description']) : '',
+            'source_url'         => isset($res['payment']['source']['url']) ? json_encode($res['payment']['source']['url']) : '',
+            'cardholder'         => isset($res['payment']['source']['cardholder']) ? json_encode(($res['payment']['source']['cardholder'])) : '',
+            'entity_name'        => isset($res['entity']['name']) ? $res['entity']['name'] : '',
+            'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
+            'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '',
+            'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '',
+            'total'              => isset($res['checkout']['total']) ? $res['checkout']['total'] : '',
+            'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '',
+            'risk_analysis'      => isset($res['payment']['riskAnalysis']['level']) ? $res['payment']['riskAnalysis']['level'] : '',
+            'data'               => json_encode($res),
+            'created'            => isset($res['payment']['created']) ? $res['payment']['created'] : '',
+            'updated'            => isset($res['payment']['updated']) ? $res['payment']['created'] : '',
+        );
+
+
+        // Validate mobbex status and create order status
+        $state = self::getState($data['status']);
+
+        if ($state == 'onhold') {
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+        } else if ($state == 'approved') {
+            $data['order_status'] = (int) Configuration::get('PS_OS_PAYMENT');
+        } else if ($state == 'failed') {
+            $data['order_status'] = (int) Configuration::get('PS_OS_ERROR');
+        } else if ($state == 'refunded') {
+            $data['order_status'] = (int) Configuration::get('PS_OS_REFUND');
+        } else if ($state == 'rejected') {
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
+        }
+
+        return $data;
+    }
+
+    /**
+     * Receives the webhook "opartion type" and return true if the webhook is parent and false if not
+     * 
+     * @param string $operationType
+     * @return bool true|false
+     * 
+     */
+    public static function isParentWebhook($operationType)
+    {
+        if ($operationType === "payment.v2") {
+            if (!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)))
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Return the list of sources from the weebhook an filter them
+     * 
+     * @param array $transactions
+     * @return array $sources
+     * 
+     */
+    public static function getWebhookSources($transactions) {
+
+        $sources = [];
+
+        foreach ($transactions as $transaction) {
+            
+            if($transaction->source_name != 'mobbex') {
+                $sources[] = [
+                    'source_type'      => $transaction->source_type,
+                    'source_name'      => $transaction->source_name,
+                    'source_number'    => $transaction->source_number,
+                    'installment_name' => $transaction->installment_name,
+                    'source_url'       => $transaction->source_url,
+                ];
+            }
+        }
+
+        foreach ($sources as $key => $value) {
+            if( $key > 0 && $value['source_number'] == $sources[0]['source_number'])
+                unset($array[$key]);
+        }
+
+        return $sources;
     }
 
     public static function getDni($customer_id)
@@ -471,27 +557,28 @@ class MobbexHelper
      * @param array $inactivePlans
      * @param array $activePlans
      */
-    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null ) {
-        
+    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null)
+    {
+
         $installments = [];
-        
+
         //get plans
-        if($inactivePlans) {
+        if ($inactivePlans) {
             foreach ($inactivePlans as $plan) {
                 $installments[] = "-$plan";
             }
         }
 
-        if($activePlans) {
+        if ($activePlans) {
             foreach ($activePlans as $plan) {
                 $installments[] = "+uid:$plan";
-            } 
+            }
         }
 
         //Build query param
         $query = http_build_query(['installments' => $installments]);
         $query = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', $query);
-        
+
         return $query;
     }
 
@@ -614,34 +701,39 @@ class MobbexHelper
      */
     public static function getInvoiceData($id_cart)
     {
-        $transactionData = MobbexTransaction::getTransaction($id_cart);
+
+        $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
+
+        // Get Transaction Data
+        $transactions = MobbexTransaction::getTransactions($order->id_cart);
 
         // Check if data exists
         if (empty($transactionData) || !is_array($transactionData)) {
             return false;
         }
 
-        $cardNumber   = !empty($transactionData['payment']['source']['number']) ? $transactionData['payment']['source']['number'] : false;
-        $habienteName = !empty($transactionData['entity']['name']) ? $transactionData['entity']['name'] : false;
-        $idHabiente   = !empty($transactionData['customer']['identification']) ? $transactionData['customer']['identification'] : false;
+        foreach ($transactions as $trx) {
 
-        $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
-        // Card number
-        if ($cardNumber) {
-            $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>' . $cardNumber . '</td></tr>
-            <tr><td></td><td></td></tr>';
-        }
+            $trxData = json_decode($trx->data);
 
-        // Customer name
-        if ($habienteName) {
-            $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>' . $habienteName . '</td></tr>
-            <tr><td></td><td></td></tr>';
-        }
+            $cardNumber   = !empty($trx->source_number) ? $trx->source_number : false;
+            $habienteName = !empty($trx->entity_name) ? $trx->entity_name : false;
+            $idHabiente   = !empty($trxData['customer']['identification']) ? $trxData['customer']['identification'] : false;
 
-        // Customer ID
-        if (!empty($idHabiente)) {
-            $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>' . $idHabiente . '</td></tr>
-            <tr><td></td><td></td></tr>';
+            // Card number
+            if ($cardNumber) {
+                $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>' . $cardNumber . '</td></tr><tr><td></td><td></td></tr>';
+            }
+
+            // Customer name
+            if ($habienteName) {
+                $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>' . $habienteName . '</td></tr><tr><td></td><td></td></tr>';
+            }
+
+            // Customer ID
+            if (!empty($idHabiente)) {
+                $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>' . $idHabiente . '</td></tr><tr><td></td><td></td></tr>';
+            }
         }
 
         $tab .= '</table>';
@@ -754,20 +846,21 @@ class MobbexHelper
      * @param array $transData
      * @param PaymentModule $module
      */
-    public static function createOrder($cartId, $transData, $module)
+    public static function createOrder($cartId, $data, $module)
     {
+
         try {
             $context = self::restoreContext($cartId);
 
             $module->validateOrder(
                 $cartId,
-                $transData['orderStatus'],
+                $data['order_status'],
                 (float) $context->cart->getOrderTotal(true, Cart::BOTH),
-                $transData['name'],
-                $transData['message'],
+                $data['source_name'],
+                $data['message'],
                 [
-                    '{transaction_id}' => $transData['transaction_id'],
-                    '{message}' => $transData['message'],
+                    '{transaction_id}' => $data['trans_id'],
+                    '{message}' => $data['message'],
                 ],
                 (int) $context->currency->id,
                 false,

@@ -73,32 +73,40 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function webhook()
     {
         // Get data from request
-        $cartId = Tools::getValue('id_cart');
-        $res    = [];
+        $cartId      = Tools::getValue('id_cart');
+        $res         = [];
         parse_str(file_get_contents('php://input'), $res);
 
         if (empty($cartId) || empty($res))
             die('WebHook Error: Empty cart_id or Mobbex json data. ' . MobbexHelper::MOBBEX_VERSION);
-
+        
+            
         // Get Order and transaction data
-        $order     = MobbexHelper::getOrderByCartId($cartId, true);
-        $transData = MobbexHelper::evaluateTransactionData($res['data']);
+        $order = MobbexHelper::getOrderByCartId($cartId, true);
+        $data  = MobbexHelper::getTransactionData($res['data']);
+        
+        if ( !$data['parent']) {
+            //Save child webhook data
+            MobbexTransaction::saveTransaction($cartId, $data);
+            return;
+        }
 
+        // Save parent webhook data
+        MobbexTransaction::saveTransaction($cartId, $data);
+            
         // If Order exists
         if ($order) {
             // If it was not updated recently
-            if ($order->getCurrentState() != $transData['orderStatus']) {
+            if ($order->getCurrentState() != $data['order_status']) {
                 // Update order status
-                $order->setCurrentState($transData['orderStatus']);
+                $order->setCurrentState($data['order_status']);
                 $order->save();
             }
         } else {
             // Create and validate Order
-            MobbexHelper::createOrder($cartId, $transData, $this->module);
+            MobbexHelper::createOrder($cartId, $data, $this->module);
         }
 
-        // Save the data and return
-        MobbexTransaction::saveTransaction($cartId, $transData['data']);
         die('OK: ' . MobbexHelper::MOBBEX_VERSION);
     }
 }
