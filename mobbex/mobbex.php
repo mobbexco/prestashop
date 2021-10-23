@@ -1323,6 +1323,14 @@ class Mobbex extends PaymentModule
         }
     }
 
+    /**
+     * Support displayHeader hook aliases.
+     */
+    public function hookHeader()
+    {
+        return $this->hookDisplayHeader();
+    }
+
     public function hookActionEmailSendBefore($params)
     {
         if ($params['template'] == 'order_conf' && !empty(MobbexHelper::$transactionData['status'])) {
