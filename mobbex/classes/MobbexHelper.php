@@ -176,7 +176,7 @@ class MobbexHelper
                 "description" => $product['name'],
                 "quantity"    => $product['cart_quantity'],
                 "total"       => round($product['price_wt'], 2),
-                "entity"      => (Configuration::get(MobbexHelper::K_MULTIVENDOR) != false) ? MobbexCustomFields::getCustomField($product['id_product'], 'entity', 'entity') : '',
+                "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
             ];
         }
 
@@ -878,5 +878,28 @@ class MobbexHelper
         }
 
         return compact('commonFields', 'advancedFields', 'sourceNames');
+    }
+
+    /**
+     * Retrieve entity configured by product or parent categories.
+     * 
+     * @param Product $product
+     * 
+     * @return array
+     */
+    public static function getEntityFromProduct($product)
+    {
+        $productEntity = MobbexCustomFields::getCustomField($product->id, 'product', 'entity');
+
+        if ($productEntity)
+            return $productEntity;
+
+        // Try to get from their categories
+        foreach ($product->getCategories() as $categoryId) {
+            $entity = MobbexCustomFields::getCustomField($categoryId, 'category', 'entity');
+
+            if ($entity)
+                return $entity;
+        }
     }
 }
