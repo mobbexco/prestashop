@@ -286,16 +286,42 @@ class MobbexHelper
         return $merchants;
     }
 
+    /**
+     * Receives an array with the weebhook generates the order status and returns an array with organized data
+     * 
+     * @param array $res
+     * @return array $data
+     * 
+     */
     public static function getTransactionData($res)
     {
-
-        $data = array(
-            'status'      => (int) $res['payment']['status']['code'],
-            'source_name' => isset($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
-            'message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
-            'trans_id'    => isset($res['payment']['id']) ? $res['payment']['id'] : '',
-            'order_status' => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
-        );
+        $data = [
+            'parent'             => MobbexHelper::isParentWebhook($res['payment']['operation']['type']),
+            'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
+            'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
+            'status'             => (int) $res['payment']['status']['code'],
+            'order_status'       => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
+            'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
+            'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
+            'source_type'        => !empty($res['payment']['source']['type']) ? $res['payment']['source']['type'] : 'Mobbex',
+            'source_reference'   => isset($res['payment']['source']['reference']) ? $res['payment']['source']['reference'] : '',
+            'source_number'      => isset($res['payment']['source']['number']) ? $res['payment']['source']['number'] : '',
+            'source_expiration'  => isset($res['payment']['source']['expiration']) ? json_encode($res['payment']['source']['expiration']) : '',
+            'source_installment' => isset($res['payment']['source']['installment']) ? json_encode($res['payment']['source']['installment']) : '',
+            'installment_name'   => isset($res['payment']['source']['installment']['description']) ? json_encode($res['payment']['source']['installment']['description']) : '',
+            'source_url'         => isset($res['payment']['source']['url']) ? json_encode($res['payment']['source']['url']) : '',
+            'cardholder'         => isset($res['payment']['source']['cardholder']) ? json_encode(($res['payment']['source']['cardholder'])) : '',
+            'entity_name'        => isset($res['entity']['name']) ? $res['entity']['name'] : '',
+            'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
+            'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '',
+            'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '',
+            'total'              => isset($res['checkout']['total']) ? $res['checkout']['total'] : '',
+            'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '',
+            'risk_analysis'      => isset($res['payment']['riskAnalysis']['level']) ? $res['payment']['riskAnalysis']['level'] : '',
+            'data'               => json_encode($res),
+            'created'            => isset($res['payment']['created']) ? $res['payment']['created'] : '',
+            'updated'            => isset($res['payment']['updated']) ? $res['payment']['created'] : '',
+        ];
 
 
         // Validate mobbex status and create order status
@@ -314,6 +340,54 @@ class MobbexHelper
         }
 
         return $data;
+    }
+
+    /**
+     * Receives the webhook "opartion type" and return true if the webhook is parent and false if not
+     * 
+     * @param string $operationType
+     * @return bool true|false
+     * 
+     */
+    public static function isParentWebhook($operationType)
+    {
+        if ($operationType === "payment.v2") {
+            if (!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)))
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Return the list of sources from the weebhook an filter them
+     * 
+     * @param array $transactions
+     * @return array $sources
+     * 
+     */
+    public static function getWebhookSources($transactions) {
+
+        $sources = [];
+
+        foreach ($transactions as $transaction) {
+            
+            if($transaction->source_name != 'mobbex') {
+                $sources[] = [
+                    'source_type'      => $transaction->source_type,
+                    'source_name'      => $transaction->source_name,
+                    'source_number'    => $transaction->source_number,
+                    'installment_name' => $transaction->installment_name,
+                    'source_url'       => $transaction->source_url,
+                ];
+            }
+        }
+
+        foreach ($sources as $key => $value) {
+            if( $key > 0 && $value['source_number'] == $sources[0]['source_number'])
+                unset($array[$key]);
+        }
+
+        return $sources;
     }
 
     public static function getDni($customer_id)
@@ -482,27 +556,28 @@ class MobbexHelper
      * @param array $inactivePlans
      * @param array $activePlans
      */
-    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null ) {
-        
+    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null)
+    {
+
         $installments = [];
-        
+
         //get plans
-        if($inactivePlans) {
+        if ($inactivePlans) {
             foreach ($inactivePlans as $plan) {
                 $installments[] = "-$plan";
             }
         }
 
-        if($activePlans) {
+        if ($activePlans) {
             foreach ($activePlans as $plan) {
                 $installments[] = "+uid:$plan";
-            } 
+            }
         }
 
         //Build query param
         $query = http_build_query(['installments' => $installments]);
         $query = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', $query);
-        
+
         return $query;
     }
 
@@ -528,6 +603,36 @@ class MobbexHelper
 
         // Remove duplicated and return
         return array_unique($inactivePlans);
+    }
+
+    /**
+     * Return true if the module need upgrade the database.
+     * 
+     * @return bool
+     */
+    public static function needUpgrade()
+    {
+        return self::MOBBEX_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_. "module WHERE name = 'mobbex'");
+    }
+
+    /**
+     * Get database module upgrade URL.
+     * 
+     * @return string
+     */
+    public static function getUpgradeURL()
+    {
+        if (_PS_VERSION_ > '1.7') {
+            return Link::getUrlSmarty([
+                'entity' => 'sf',
+                'route'  => 'admin_module_updates',
+            ]);
+        } else {
+            return Context::getContext()->link->getAdminLink('AdminModules') . '&' . http_build_query([
+                'checkAndUpdate' => true,
+                'module_name'    => 'mobbex'
+            ]);
+        }
     }
 
     /**
@@ -595,34 +700,39 @@ class MobbexHelper
      */
     public static function getInvoiceData($id_cart)
     {
-        $transactionData = MobbexTransaction::getTransaction($id_cart);
+
+        $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
+
+        // Get Transaction Data
+        $transactions = MobbexTransaction::getTransactions($order->id_cart);
 
         // Check if data exists
         if (empty($transactionData) || !is_array($transactionData)) {
             return false;
         }
 
-        $cardNumber   = !empty($transactionData['payment']['source']['number']) ? $transactionData['payment']['source']['number'] : false;
-        $habienteName = !empty($transactionData['entity']['name']) ? $transactionData['entity']['name'] : false;
-        $idHabiente   = !empty($transactionData['customer']['identification']) ? $transactionData['customer']['identification'] : false;
+        foreach ($transactions as $trx) {
 
-        $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
-        // Card number
-        if ($cardNumber) {
-            $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>' . $cardNumber . '</td></tr>
-            <tr><td></td><td></td></tr>';
-        }
+            $trxData = json_decode($trx->data);
 
-        // Customer name
-        if ($habienteName) {
-            $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>' . $habienteName . '</td></tr>
-            <tr><td></td><td></td></tr>';
-        }
+            $cardNumber   = !empty($trx->source_number) ? $trx->source_number : false;
+            $habienteName = !empty($trx->entity_name) ? $trx->entity_name : false;
+            $idHabiente   = !empty($trxData['customer']['identification']) ? $trxData['customer']['identification'] : false;
 
-        // Customer ID
-        if (!empty($idHabiente)) {
-            $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>' . $idHabiente . '</td></tr>
-            <tr><td></td><td></td></tr>';
+            // Card number
+            if ($cardNumber) {
+                $tab .= '<tr><td><b>Número de Tarjeta: </b></td><td>' . $cardNumber . '</td></tr><tr><td></td><td></td></tr>';
+            }
+
+            // Customer name
+            if ($habienteName) {
+                $tab .= '<tr><td><b>Nombre de Tarjeta-Habiente: </b></td><td>' . $habienteName . '</td></tr><tr><td></td><td></td></tr>';
+            }
+
+            // Customer ID
+            if (!empty($idHabiente)) {
+                $tab .= '<tr><td><b>ID Tarjeta-habiente: </b></td><td>' . $idHabiente . '</td></tr><tr><td></td><td></td></tr>';
+            }
         }
 
         $tab .= '</table>';

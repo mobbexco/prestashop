@@ -164,7 +164,7 @@
         <span id="closembbxProduct">&times;</span>
                 <select name="mbbx-method-select" id="mbbx-method-select">
                     <option id="0" value="0">Todos</option>
-                    {foreach item=$source  from=$sources}
+                    {foreach from=$sources item=source}
                         {if !empty($source['source']['name'])}
                             <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">
                                 {$source['source']['name']}</option>
@@ -203,8 +203,10 @@
 
     <button type="button" id="mbbxProductBtn">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
-            <img src="{$style_settings['button_image']}" width="40" height="40"
-                style="margin-left: 15px; border-radius: 40px;">
+            <img src="{$style_settings['button_image']}" 
+                 width="40" 
+                 height="40"
+                 style="margin-left: 15px; border-radius: 40px;">
         {/if}
     </button>
 

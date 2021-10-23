@@ -190,8 +190,10 @@ class Mobbex extends PaymentModule
             $this->postProcess();
         }
 
-        if (!empty($_GET['run_update']))
+        if (!empty($_GET['run_update'])) {
             $this->runUpdate();
+            Tools::redirectAdmin(MobbexHelper::getUpgradeURL());
+        }
 
         $this->context->smarty->assign(array('module_dir' => $this->_path));
 
@@ -237,370 +239,348 @@ class Mobbex extends PaymentModule
      */
     protected function getConfigForm()
     {
-
-        return array(
-            'form' => array(
-                'tabs' => array(
+        $form = [
+            'form' => [
+                'tabs' => [
                     'tab_general' => $this->l('General'),
                     'tab_appearence' => $this->l('Appearance'),
                     'tab_advanced' => $this->l('Advanced Configuration'),
-                ),
-                'legend' => array(
+                ],
+                'legend' => [
                     'title' => $this->l('Settings'),
                     'icon' => 'icon-cogs',
-                ),
-                'input' => array(
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('API Key'),
-                        'name' => MobbexHelper::K_API_KEY,
-                        'required' => true,
-                        'tab' => 'tab_general'
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Access Token'),
-                        'name' => MobbexHelper::K_ACCESS_TOKEN,
-                        'required' => true,
-                        'tab' => 'tab_general'
-                    ),
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Test Mode'),
-                        'name' => MobbexHelper::K_TEST_MODE,
-                        'is_bool' => true,
-                        'required' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on_mdv',
-                                'value' => true,
-                                'label' => $this->l('Test Mode'),
-                            ],
-                            [
-                                'id' => 'active_off_mdv',
-                                'value' => false,
-                                'label' => $this->l('Live Mode'),
-                            ],
-                        ],
-                        'tab' => 'tab_general'
-                    ),
-                    array(
-                        'type' => 'radio',
-                        'label' => $this->l('Theme Mode'),
-                        'name' => MobbexHelper::K_THEME,
-                        'is_bool' => false,
-                        'required' => false,
-                        'tab' => 'tab_appearence',
-                        'values' => [
-                            [
-                                'id' => 'm_theme_light',
-                                'value' => MobbexHelper::K_THEME_LIGHT,
-                                'label' => $this->l('Light Mode'),
-                            ],
-                            [
-                                'id' => 'm_theme_dark',
-                                'value' => MobbexHelper::K_THEME_DARK,
-                                'label' => $this->l('Dark Mode'),
-                            ],
-                        ],
-                    ),
-                    array(
-                        'type' => 'color',
-                        'label' => $this->l('Background Color'),
-                        'name' => MobbexHelper::K_THEME_BACKGROUND,
-                        'data-hex' => false,
-                        'class' => 'mColorPicker',
-                        'desc' => $this->l('Checkout Background Color'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'color',
-                        'label' => $this->l('Primary Color'),
-                        'name' => MobbexHelper::K_THEME_PRIMARY,
-                        'data-hex' => false,
-                        'class' => 'mColorPicker',
-                        'desc' => $this->l('Checkout Primary Color'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Utilizar logo configurado en la tienda (prestashop)'),
-                        'desc' => "Al desactivarse se utilizará el logo configurado en la cuenta de Mobbex.",
-                        'name' => MobbexHelper::K_THEME_SHOP_LOGO,
-                        'is_bool' => true,
-                        'required' => true,
-                        'tab' => 'tab_appearence',
-                        'values' => [
-                            [
-                                'id' => 'active_on_shop_logo',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_shop_logo',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Logo Personalizado ( URL )'),
-                        'name' => MobbexHelper::K_THEME_LOGO,
-                        'required' => false,
-                        'desc' => "Opcional. Debe utilizar la URL completa y debe ser HTTPS. Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex. Dimensiones: 250x250 píxeles. El Logo debe ser cuadrado para optimización.",
-                        'tab' => 'tab_appearence',
-                    ),
-                    // Embed SDK
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Experiencia de Pago en el Sitio'),
-                        'name' => MobbexHelper::K_EMBED,
-                        'is_bool' => true,
-                        'required' => true,
-                        'tab' => 'tab_general',
-                        'values' => [
-                            [
-                                'id' => 'active_on_embed',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_embed',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-                    // Wallet
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Mobbex Wallet para usuarios logeados'),
-                        'name' => MobbexHelper::K_WALLET,
-                        'is_bool' => true,
-                        'required' => true,
-                        'tab' => 'tab_general',
-                        'values' => [
-                            [
-                                'id' => 'active_on_wallet',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_wallet',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-                    // Reseller ID
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('ID o Clave de Revendedor'),
-                        'name' => MobbexHelper::K_RESELLER_ID,
-                        'required' => false,
-                        'tab' => 'tab_advanced',
-                        'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
-                    ),
-                    // Plans
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Widget de planes'),
-                        'name' => MobbexHelper::K_PLANS,
-                        'is_bool' => true,
-                        'required' => true,
-                        'values' => [
-                            [
-                                'id' => 'active_on_plans',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_plans',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                        'tab' => 'tab_general',
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Imagen del botón de financiación ( URL )'),
-                        'name' => MobbexHelper::K_PLANS_IMAGE_URL,
-                        'required' => false,
-                        'desc' => $this->l('Opcional. Debe utilizar la URL completa y debe ser HTTPS.'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Plans Button Text'),
-                        'name' => MobbexHelper::K_PLANS_TEXT,
-                        'required' => false,
-                        'desc' => $this->l('Optional. Text displayed on finnancing button'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'color',
-                        'label' => $this->l('Text Color'),
-                        'name' => MobbexHelper::K_PLANS_TEXT_COLOR,
-                        'data-hex' => false,
-                        'class' => 'mColorPicker',
-                        'desc' => $this->l('Plans Button Text Color'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'color',
-                        'label' => $this->l('Background Color'),
-                        'name' => MobbexHelper::K_PLANS_BACKGROUND,
-                        'data-hex' => false,
-                        'class' => 'mColorPicker',
-                        'desc' => $this->l('Plans Button Background Color'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Padding'),
-                        'name' => MobbexHelper::K_PLANS_PADDING,
-                        'required' => false,
-                        'desc' => $this->l('Plans Button Padding'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Font-Size'),
-                        'name' => MobbexHelper::K_PLANS_FONT_SIZE,
-                        'required' => false,
-                        'desc' => $this->l('Plans Button Font-Size (Ej: 5px)'),
-                        'tab' => 'tab_appearence',
-                    ),
-                    array(
-                        'type' => 'radio',
-                        'label' => $this->l('Plans Module Theme Mode'),
-                        'name' => MobbexHelper::K_PLANS_THEME,
-                        'is_bool' => false,
-                        'required' => false,
-                        'tab' => 'tab_appearence',
-                        'values' => [
-                            [
-                                'id' => 'm_plans_theme_light',
-                                'value' => MobbexHelper::K_THEME_LIGHT,
-                                'label' => $this->l('Light Mode'),
-                            ],
-                            [
-                                'id' => 'm_plans_theme_dark',
-                                'value' => MobbexHelper::K_THEME_DARK,
-                                'label' => $this->l('Dark Mode'),
-                            ],
-                        ],
-                    ),
-                    // DNI
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Agregar campo DNI'),
-                        'name' => MobbexHelper::K_OWN_DNI,
-                        'is_bool' => true,
-                        'required' => true,
-                        'tab' => 'tab_general',
-                        'values' => [
-                            [
-                                'id' => 'active_on_own_dni',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_own_dni',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-                    //Multicard
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Permite el uso de multiples tarjetas'),
-                        'name' => MobbexHelper::K_MULTICARD,
-                        'is_bool' => true,
-                        'required' => false,
-                        'tab' => 'tab_advanced',
-                        'values' => [
-                            [
-                                'id' => 'active_on_multicard',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_multicard',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-
-                    //Multivendor
-                    array(
-                        'type'     => 'select',
-                        'label'    => $this->l('Opcion multivendedor'),
-                        'desc'     => $this->l('Permite el uso de multiples vendedores (hasta 4 entidades diferentes)'),
-                        'name'     => MobbexHelper::K_MULTIVENDOR,
-                        'required' => false,
-                        'tab' => 'tab_advanced',
-                        'options'  => array(
-                            'query' => [
-                                array(
-                                    'id_option' => false,
-                                    'name'      => 'Desactivado'
-                                ),
-                                array(
-                                    'id_option' => 'unified',
-                                    'name'      => 'Unificado'
-                                ),
-                                array(
-                                    'id_option' => 'active',
-                                    'name'      => 'Activado'
-                                ),
-                            ],
-                            'id'   => 'id_option',
-                            'name' => 'name'
-                        )
-                    ),
-
-                    //DNI Field
-                    array(
-                        'type' => 'text',
-                        'label' => $this->l('Usar campo DNI existente'),
-                        'name' => MobbexHelper::K_CUSTOM_DNI,
-                        'required' => false,
-                        'tab' => 'tab_general',
-                        'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
-                    ),
-                    // Unified method
-                    array(
-                        'type' => 'switch',
-                        'label' => $this->l('Método de pago único'),
-                        'desc' => $this->l('Mostrar métodos de pago de forma unificada en el checkout.'),
-                        'name' => MobbexHelper::K_UNIFIED_METHOD,
-                        'is_bool' => true,
-                        'required' => true,
-                        'tab' => 'tab_general',
-                        'values' => [
-                            [
-                                'id' => 'active_on_unified_method',
-                                'value' => true,
-                                'label' => $this->l('Activar'),
-                            ],
-                            [
-                                'id' => 'active_off_unified_method',
-                                'value' => false,
-                                'label' => $this->l('Desactivar'),
-                            ],
-                        ],
-                    ),
-                ),
-                'submit' => array(
+                ],
+                'submit' => [
                     'title' => $this->l('Save'),
-                ),
-            ),
-        );
+                ]
+            ],
+        ];
+
+        if (MobbexHelper::needUpgrade())
+            $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
+
+        if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+            $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
+
+        $form['form']['input'] = [
+            [
+                'type' => 'text',
+                'label' => $this->l('API Key'),
+                'name' => MobbexHelper::K_API_KEY,
+                'required' => true,
+                'tab' => 'tab_general'
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Access Token'),
+                'name' => MobbexHelper::K_ACCESS_TOKEN,
+                'required' => true,
+                'tab' => 'tab_general'
+            ],
+            [
+                'type' => 'switch',
+                'label' => $this->l('Test Mode'),
+                'name' => MobbexHelper::K_TEST_MODE,
+                'is_bool' => true,
+                'required' => true,
+                'values' => [
+                    [
+                        'id' => 'active_on_mdv',
+                        'value' => true,
+                        'label' => $this->l('Test Mode'),
+                    ],
+                    [
+                        'id' => 'active_off_mdv',
+                        'value' => false,
+                        'label' => $this->l('Live Mode'),
+                    ],
+                ],
+                'tab' => 'tab_general'
+            ],
+            [
+                'type' => 'radio',
+                'label' => $this->l('Theme Mode'),
+                'name' => MobbexHelper::K_THEME,
+                'is_bool' => false,
+                'required' => false,
+                'tab' => 'tab_appearence',
+                'values' => [
+                    [
+                        'id' => 'm_theme_light',
+                        'value' => MobbexHelper::K_THEME_LIGHT,
+                        'label' => $this->l('Light Mode'),
+                    ],
+                    [
+                        'id' => 'm_theme_dark',
+                        'value' => MobbexHelper::K_THEME_DARK,
+                        'label' => $this->l('Dark Mode'),
+                    ],
+                ],
+            ],
+            [
+                'type' => 'color',
+                'label' => $this->l('Background Color'),
+                'name' => MobbexHelper::K_THEME_BACKGROUND,
+                'data-hex' => false,
+                'class' => 'mColorPicker',
+                'desc' => $this->l('Checkout Background Color'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'color',
+                'label' => $this->l('Primary Color'),
+                'name' => MobbexHelper::K_THEME_PRIMARY,
+                'data-hex' => false,
+                'class' => 'mColorPicker',
+                'desc' => $this->l('Checkout Primary Color'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'switch',
+                'label' => $this->l('Utilizar logo configurado en la tienda (prestashop)'),
+                'desc' => "Al desactivarse se utilizará el logo configurado en la cuenta de Mobbex.",
+                'name' => MobbexHelper::K_THEME_SHOP_LOGO,
+                'is_bool' => true,
+                'required' => true,
+                'tab' => 'tab_appearence',
+                'values' => [
+                    [
+                        'id' => 'active_on_shop_logo',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_shop_logo',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Logo Personalizado ( URL )'),
+                'name' => MobbexHelper::K_THEME_LOGO,
+                'required' => false,
+                'desc' => "Opcional. Debe utilizar la URL completa y debe ser HTTPS. Sólo configure su logo si es necesario que no se utilice el logo de su cuenta en Mobbex. Dimensiones: 250x250 píxeles. El Logo debe ser cuadrado para optimización.",
+                'tab' => 'tab_appearence',
+            ],
+            // Embed SDK
+            [
+                'type' => 'switch',
+                'label' => $this->l('Experiencia de Pago en el Sitio'),
+                'name' => MobbexHelper::K_EMBED,
+                'is_bool' => true,
+                'required' => true,
+                'tab' => 'tab_general',
+                'values' => [
+                    [
+                        'id' => 'active_on_embed',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_embed',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            // Wallet
+            [
+                'type' => 'switch',
+                'label' => $this->l('Mobbex Wallet para usuarios logeados'),
+                'name' => MobbexHelper::K_WALLET,
+                'is_bool' => true,
+                'required' => true,
+                'tab' => 'tab_general',
+                'values' => [
+                    [
+                        'id' => 'active_on_wallet',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_wallet',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            // Reseller ID
+            [
+                'type' => 'text',
+                'label' => $this->l('ID o Clave de Revendedor'),
+                'name' => MobbexHelper::K_RESELLER_ID,
+                'required' => false,
+                'tab' => 'tab_advanced',
+                'desc' => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
+            ],
+            // Plans
+            [
+                'type' => 'switch',
+                'label' => $this->l('Widget de planes'),
+                'name' => MobbexHelper::K_PLANS,
+                'is_bool' => true,
+                'required' => true,
+                'values' => [
+                    [
+                        'id' => 'active_on_plans',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_plans',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+                'tab' => 'tab_general',
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Imagen del botón de financiación ( URL )'),
+                'name' => MobbexHelper::K_PLANS_IMAGE_URL,
+                'required' => false,
+                'desc' => $this->l('Opcional. Debe utilizar la URL completa y debe ser HTTPS.'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Plans Button Text'),
+                'name' => MobbexHelper::K_PLANS_TEXT,
+                'required' => false,
+                'desc' => $this->l('Optional. Text displayed on finnancing button'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'color',
+                'label' => $this->l('Text Color'),
+                'name' => MobbexHelper::K_PLANS_TEXT_COLOR,
+                'data-hex' => false,
+                'class' => 'mColorPicker',
+                'desc' => $this->l('Plans Button Text Color'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'color',
+                'label' => $this->l('Background Color'),
+                'name' => MobbexHelper::K_PLANS_BACKGROUND,
+                'data-hex' => false,
+                'class' => 'mColorPicker',
+                'desc' => $this->l('Plans Button Background Color'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Padding'),
+                'name' => MobbexHelper::K_PLANS_PADDING,
+                'required' => false,
+                'desc' => $this->l('Plans Button Padding'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Font-Size'),
+                'name' => MobbexHelper::K_PLANS_FONT_SIZE,
+                'required' => false,
+                'desc' => $this->l('Plans Button Font-Size (Ej: 5px)'),
+                'tab' => 'tab_appearence',
+            ],
+            [
+                'type' => 'radio',
+                'label' => $this->l('Plans Module Theme Mode'),
+                'name' => MobbexHelper::K_PLANS_THEME,
+                'is_bool' => false,
+                'required' => false,
+                'tab' => 'tab_appearence',
+                'values' => [
+                    [
+                        'id' => 'm_plans_theme_light',
+                        'value' => MobbexHelper::K_THEME_LIGHT,
+                        'label' => $this->l('Light Mode'),
+                    ],
+                    [
+                        'id' => 'm_plans_theme_dark',
+                        'value' => MobbexHelper::K_THEME_DARK,
+                        'label' => $this->l('Dark Mode'),
+                    ],
+                ],
+            ],
+            // DNI
+            [
+                'type' => 'switch',
+                'label' => $this->l('Agregar campo DNI'),
+                'name' => MobbexHelper::K_OWN_DNI,
+                'is_bool' => true,
+                'required' => true,
+                'tab' => 'tab_general',
+                'values' => [
+                    [
+                        'id' => 'active_on_own_dni',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_own_dni',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            //Multicard
+            [
+                'type' => 'switch',
+                'label' => $this->l('Permite el uso de multiples tarjetas'),
+                'name' => MobbexHelper::K_MULTICARD, //?
+                'is_bool' => true,
+                'required' => false,
+                'tab' => 'tab_advanced',
+                'values' => [
+                    [
+                        'id' => 'active_on_multicard',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_multicard',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Usar campo DNI existente'),
+                'name' => MobbexHelper::K_CUSTOM_DNI,
+                'required' => false,
+                'tab' => 'tab_general',
+                'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
+            ],
+            // Unified method
+            [
+                'type' => 'switch',
+                'label' => $this->l('Método de pago único'),
+                'desc' => $this->l('Mostrar métodos de pago de forma unificada en el checkout.'),
+                'name' => MobbexHelper::K_UNIFIED_METHOD,
+                'is_bool' => true,
+                'required' => true,
+                'tab' => 'tab_general',
+                'values' => [
+                    [
+                        'id' => 'active_on_unified_method',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_unified_method',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+        ];
+
+        return $form;
     }
 
     /**
@@ -651,9 +631,34 @@ class Mobbex extends PaymentModule
     {
         DB::getInstance()->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
+                `id` INT(11) NOT NULL PRIMARY_KEY,
                 `cart_id` INT(11) NOT NULL,
+				`parent` TEXT NOT NULL,
+				`payment_id` TEXT NOT NULL,
+				`description` TEXT NOT NULL,
+				`status_code` TEXT NOT NULL,
+				`status` TEXT NOT NULL,
+				`status_message` TEXT NOT NULL,
+				`source_name` TEXT NOT NULL,
+				`source_type` TEXT NOT NULL,
+				`source_reference` TEXT NOT NULL,
+				`source_number` TEXT NOT NULL,
+				`source_expiration` TEXT NOT NULL,
+				`source_installment` TEXT NOT NULL,
+				`installment_name` TEXT NOT NULL,
+				`source_url` TEXT NOT NULL,
+				`cardholder` TEXT NOT NULL,
+				`entity_name` TEXT NOT NULL,
+				`entity_uid` TEXT NOT NULL,
+				`customer` TEXT NOT NULL,
+				`checkout_uid` TEXT NOT NULL,
+				`total` DECIMAL(18,2) NOT NULL,
+				`currency` TEXT NOT NULL,
+                `risk_analysis` TEXT NOT NULL,
 				`data` TEXT NOT NULL,
-				PRIMARY KEY (`cart_id`)
+				`created` TEXT NOT NULL,
+				`updated` TEXT NOT NULL,
+				PRIMARY KEY (`id`)
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
 
@@ -666,6 +671,39 @@ class Mobbex extends PaymentModule
 				`data` TEXT NOT NULL,
 				PRIMARY KEY (`id`)
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+        );
+    }
+
+    public function _alterTable() {
+        DB::getInstance()->execute(
+            "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
+                DROP PRIMARY KEY,
+                ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                ADD `parent` BOOLEAN NOT NULL,
+                ADD `payment_id` TEXT NOT NULL,
+                ADD `description` TEXT NOT NULL,
+                ADD `status_code` TEXT NOT NULL,
+                ADD `status` TEXT NOT NULL,
+                ADD `status_message` TEXT NOT NULL,
+                ADD `source_name` TEXT NOT NULL,
+                ADD `source_type` TEXT NOT NULL,
+                ADD `source_reference` TEXT NOT NULL,
+                ADD `source_number` TEXT NOT NULL,
+                ADD `source_expiration` TEXT NOT NULL,
+                ADD `source_installment` TEXT NOT NULL,
+                ADD `installment_name` TEXT NOT NULL,
+                ADD `source_url` TEXT NOT NULL,
+                ADD `cardholder` TEXT NOT NULL,
+                ADD `entity_name` TEXT NOT NULL,
+                ADD `entity_uid` TEXT NOT NULL,
+                ADD `customer` TEXT NOT NULL,
+                ADD `checkout_uid` TEXT NOT NULL,
+                ADD `total` DECIMAL(18,2) NOT NULL,
+                ADD `currency` TEXT NOT NULL,
+                ADD `risk_analysis` TEXT NOT NULL,
+                ADD `created` TEXT NOT NULL,
+                ADD `updated` TEXT NOT NULL,
+            ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
     }
 
@@ -835,14 +873,19 @@ class Mobbex extends PaymentModule
         }
 
         if ($order) {
+
             // Get Transaction Data
-            $trx = MobbexTransaction::getTransaction($order->id_cart);
+            $transactions = MobbexTransaction::getTransactions($order->id_cart);
+            $trx = $transactions[0];
+            $sources = MobbexHelper::getWebhookSources($transactions);
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull($this->context->language->id)['name']);
-            $this->smarty->assign('total', $trx['payment']['total']);
+            $this->smarty->assign('total', $trx->total);
             $this->smarty->assign('payment', $order->payment);
-            $this->smarty->assign('mobbex_data', $trx);
+            $this->smarty->assign('status_message', $trx->status_message);
+            $this->smarty->assign('sources', $sources);
+
         }
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
@@ -1091,8 +1134,8 @@ class Mobbex extends PaymentModule
         $idRefunded = (int)Configuration::get('PS_OS_REFUND'); //get id of refunded state
         $order = new Order($params['id_order']);
         if ($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex') {
-            $transactionData = MobbexTransaction::getTransaction($order->id_cart);
-            $response = MobbexHelper::porcessRefund($transactionData['payment']['id']);
+            $transactionData = MobbexTransaction::getTransactions($order->id_cart);
+            $response = MobbexHelper::porcessRefund($transactionData[0]['payment_id']);
             return $response;
         }
         return false; //not a mobbex transaction

@@ -32,7 +32,7 @@
      */
     function showUpgradeDatabaseButton() {
         // Get prestashop original update button
-        var btn   = document.querySelector('desc-module-update');
+        var btn   = document.querySelector('.desc-module-update');
         var label = btn.querySelector('div');
 
         // Show new upgrade label
