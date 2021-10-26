@@ -353,41 +353,93 @@ class MobbexHelper
     {
         if ($operationType === "payment.v2") {
             if (!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)))
-            return false;
+                return false;
         }
         return true;
     }
-    
+
     /**
-     * Return the list of sources from the weebhook an filter them
+     * Return the list of sources from the weebhook and filter them
      * 
      * @param array $transactions
      * @return array $sources
      * 
      */
-    public static function getWebhookSources($transactions) {
+    public static function getWebhookSources($transactions)
+    {
 
         $sources = [];
 
-        foreach ($transactions as $transaction) {
-            
-            if($transaction->source_name != 'mobbex') {
-                $sources[] = [
-                    'source_type'      => $transaction->source_type,
-                    'source_name'      => $transaction->source_name,
-                    'source_number'    => $transaction->source_number,
-                    'installment_name' => $transaction->installment_name,
-                    'source_url'       => $transaction->source_url,
-                ];
+        foreach ($transactions as $key => $transaction) {
+            if($transaction->parent == "1" && count($transactions) > 1) {
+                unset($transactions[$key]);
+            } else {
+                if ($transaction->source_name != 'mobbex') {
+
+                    $sources[] = [
+                        'source_type'      => $transaction->source_type,
+                        'source_name'      => $transaction->source_name,
+                        'source_number'    => $transaction->source_number,
+                        'installment_name' => $transaction->installment_name,
+                        'source_url'       => $transaction->source_url,
+                    ];
+                }
             }
         }
 
         foreach ($sources as $key => $value) {
-            if( $key > 0 && $value['source_number'] == $sources[0]['source_number'])
-                unset($array[$key]);
+            if ($key > 0 && $value['source_number'] == $sources[0]['source_number'])
+                unset($sources[$key]);
+        }
+       
+        return $sources;
+    }
+
+    /**
+     * Return the list of entities from the weebhook and filter them.
+     * 
+     * @param array $transactions
+     * @return array $entities
+     * 
+     */
+    public static function getWebhookEntities($transactions)
+    {
+        $entities = [];
+
+        foreach ($transactions as $key => $transaction) {
+           
+            if($transaction->parent == "1" && count($transactions) > 1) {
+                unset($transactions[$key]);
+            } else {
+                $entities[] = [
+                    'entity_uid'  => $transaction->entity_uid,
+                    'entity_name' => $transaction->entity_name,
+                    'total'       => $transaction->total,
+                    'coupon'      => MobbexHelper::generateCoupon($transaction)
+                ];
+            }
+            
         }
 
-        return $sources;
+        foreach ($entities as $key => $value) {
+            if ($key > 0 && $value['entity_uid'] == $entities[0]['entity_uid'])
+                unset($entities[$key]);
+        }
+
+        return $entities;
+    }
+
+    /**
+     * Return the coupon of the transaction.
+     * 
+     * @param array $transactions
+     * @return string $coupon
+     * 
+     */
+    public static function generateCoupon($transaction)
+    {
+        $coupon = "https://mobbex.com/console/" . $transaction->entity_uid . "/operations/?oid=" . $transaction->payment_id;
+        return $coupon;
     }
 
     public static function getDni($customer_id)
@@ -612,7 +664,7 @@ class MobbexHelper
      */
     public static function needUpgrade()
     {
-        return self::MOBBEX_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_. "module WHERE name = 'mobbex'");
+        return self::MOBBEX_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
     }
 
     /**
@@ -704,7 +756,7 @@ class MobbexHelper
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
 
         // Get Transaction Data
-        $transactions = MobbexTransaction::getTransactions($order->id_cart);
+        $transactions = MobbexTransaction::getTransactions($id_cart);
 
         // Check if data exists
         if (empty($transactionData) || !is_array($transactionData)) {
@@ -858,7 +910,7 @@ class MobbexHelper
                 $data['source_name'],
                 $data['message'],
                 [
-                    '{transaction_id}' => $data['trans_id'],
+                    '{transaction_id}' => $data['payment_id'],
                     '{message}' => $data['message'],
                 ],
                 (int) $context->currency->id,
