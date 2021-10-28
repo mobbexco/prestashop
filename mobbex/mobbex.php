@@ -1006,7 +1006,7 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
-                'product_price' => $total,
+                'product_price' => number_format($total, 2),
                 'sources' => $sources,
                 'style_settings' =>
                 [

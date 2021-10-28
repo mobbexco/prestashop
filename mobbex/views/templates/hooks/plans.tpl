@@ -104,7 +104,13 @@
                 background-color: #a8bbbf;
             }
 
-            .mobbexPaymentMethod {
+            .mobbexSource {
+                display: flex;
+                justify-content: space-between;
+                flex-flow: wrap;
+            }
+
+            .mobbexPaymentMethod, .mobbexSourceTotal {
                 display: flex;
                 align-items: center;
                 padding: 1em 0;
@@ -151,6 +157,12 @@
                 color: grey;
             }
 
+            .mobbexSourceTotal {
+                padding-right: 5% !important;
+                color: black;
+                font-weight: 400;
+            }
+
             /* DARK MODE  */
             .dark #mbbxProductModalContent,
             .dark #mbbxProductModalContent table td {
@@ -159,7 +171,8 @@
             }
 
             .dark #mbbxProductModalContent #mobbex_select_title,
-            .dark #mbbxProductModalContent .mobbexPaymentMethod {
+            .dark #mbbxProductModalContent .mobbexPaymentMethod,
+            .dark #mbbxProductModalContent .mobbexSourceTotal {
                 color: rgb(226, 226, 226);
             }
 
@@ -188,7 +201,7 @@
                             <p class="mobbexPaymentMethod">
                                 <img src="{if $source['installments']['enabled']}https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg{else}{$source['view']['subgroup_logo']}{/if}">{$source['source']['name']}
                             </p>
-                            {if !empty($source['installments']['list'])}
+                            {if $source['installments']['enabled']}
                                 <table class="installmentsTable">
                                     {foreach from=$source['installments']['list'] item=installment }
                                         <tr>
@@ -201,13 +214,17 @@
                                                 {/if}
                                             </td>
                                             {if isset($installment['totals']['total'])}
-                                                <td class="mbbxPlansPrice">${$installment['totals']['total']}</td>
+                                                <td class="mbbxPlansPrice">${number_format($installment['totals']['total'], 2)}</td>
                                             {else}
                                                 <td></td>
                                             {/if}
                                         </tr>
                                     {/foreach}
                                 </table>
+                            {else}
+                                <p class="mobbexSourceTotal">
+                                    ${$product_price}
+                                </p>
                             {/if}
                         </div>
                     {/if}
