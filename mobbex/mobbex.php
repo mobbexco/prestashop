@@ -629,40 +629,49 @@ class Mobbex extends PaymentModule
 
     public function _createTable()
     {
-        DB::getInstance()->execute(
-            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                `id` INT(11) NOT NULL PRIMARY_KEY,
-                `cart_id` INT(11) NOT NULL,
-				`parent` TEXT NOT NULL,
-				`payment_id` TEXT NOT NULL,
-				`description` TEXT NOT NULL,
-				`status_code` TEXT NOT NULL,
-				`status` TEXT NOT NULL,
-				`status_message` TEXT NOT NULL,
-				`source_name` TEXT NOT NULL,
-				`source_type` TEXT NOT NULL,
-				`source_reference` TEXT NOT NULL,
-				`source_number` TEXT NOT NULL,
-				`source_expiration` TEXT NOT NULL,
-				`source_installment` TEXT NOT NULL,
-				`installment_name` TEXT NOT NULL,
-				`source_url` TEXT NOT NULL,
-				`cardholder` TEXT NOT NULL,
-				`entity_name` TEXT NOT NULL,
-				`entity_uid` TEXT NOT NULL,
-				`customer` TEXT NOT NULL,
-				`checkout_uid` TEXT NOT NULL,
-				`total` DECIMAL(18,2) NOT NULL,
-				`currency` TEXT NOT NULL,
-                `risk_analysis` TEXT NOT NULL,
-				`data` TEXT NOT NULL,
-				`created` TEXT NOT NULL,
-				`updated` TEXT NOT NULL,
-				PRIMARY KEY (`id`)
-            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-        );
+        $db = DB::getInstance();
 
-        DB::getInstance()->execute(
+        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
+
+        // If mobbex transaction table exists
+        if ($db->numRows()) {
+            $this->_alterTable();
+        } else {
+            $db->execute(
+                "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
+                    `id` INT(11) NOT NULL PRIMARY_KEY,
+                    `cart_id` INT(11) NOT NULL,
+                    `parent` TEXT NOT NULL,
+                    `payment_id` TEXT NOT NULL,
+                    `description` TEXT NOT NULL,
+                    `status_code` TEXT NOT NULL,
+                    `status` TEXT NOT NULL,
+                    `status_message` TEXT NOT NULL,
+                    `source_name` TEXT NOT NULL,
+                    `source_type` TEXT NOT NULL,
+                    `source_reference` TEXT NOT NULL,
+                    `source_number` TEXT NOT NULL,
+                    `source_expiration` TEXT NOT NULL,
+                    `source_installment` TEXT NOT NULL,
+                    `installment_name` TEXT NOT NULL,
+                    `source_url` TEXT NOT NULL,
+                    `cardholder` TEXT NOT NULL,
+                    `entity_name` TEXT NOT NULL,
+                    `entity_uid` TEXT NOT NULL,
+                    `customer` TEXT NOT NULL,
+                    `checkout_uid` TEXT NOT NULL,
+                    `total` DECIMAL(18,2) NOT NULL,
+                    `currency` TEXT NOT NULL,
+                    `risk_analysis` TEXT NOT NULL,
+                    `data` TEXT NOT NULL,
+                    `created` TEXT NOT NULL,
+                    `updated` TEXT NOT NULL,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+            );
+        }
+
+        $db->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields` (
                 `id` INT(11) NOT NULL AUTO_INCREMENT,
                 `row_id` INT(11) NOT NULL,
@@ -674,7 +683,8 @@ class Mobbex extends PaymentModule
         );
     }
 
-    public function _alterTable() {
+    public function _alterTable()
+    {
         DB::getInstance()->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
                 DROP PRIMARY KEY,
