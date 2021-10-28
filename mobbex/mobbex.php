@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.5.0
+ * @version 2.6.0
  * @see     PaymentModuleCore
  */
 
@@ -107,53 +107,7 @@ class Mobbex extends PaymentModule
 
         $this->_createTable();
 
-        if (MobbexHelper::getPsVersion() === MobbexHelper::PS_16) {
-            if (
-                !parent::install()
-                || !$this->registerHook('payment')
-                || !$this->registerHook('paymentReturn')
-                || !$this->registerHook('displayProductButtons')
-                || !$this->registerHook('displayCustomerAccountForm')
-                || !$this->registerHook('actionCustomerAccountAdd')
-                || !$this->registerHook('displayAdminProductsExtra')
-                || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('displayBackOfficeCategory')
-                || !$this->registerHook('categoryAddition')
-                || !$this->registerHook('categoryUpdate')
-                || !$this->registerHook('displayPDFInvoice')
-                || !$this->registerHook('displayBackOfficeHeader')
-                || !$this->registerHook('displayHeader')
-                || !$this->registerHook('displayAdminOrderRight')
-                || !$this->registerHook('actionOrderReturn')
-            ) {
-                return false;
-            }
-        } else {
-            if (
-                !parent::install()
-                || !$this->registerHook('paymentOptions')
-                || !$this->registerHook('paymentReturn')
-                || !$this->registerHook('displayProductAdditionalInfo')
-                || !$this->registerHook('additionalCustomerFormFields')
-                || !$this->registerHook('actionObjectCustomerUpdateAfter')
-                || !$this->registerHook('actionObjectCustomerAddAfter')
-                || !$this->registerHook('displayAdminProductsExtra')
-                || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('displayBackOfficeCategory')
-                || !$this->registerHook('categoryAddition')
-                || !$this->registerHook('categoryUpdate')
-                || !$this->registerHook('displayPDFInvoice')
-                || !$this->registerHook('displayBackOfficeHeader')
-                || !$this->registerHook('actionEmailSendBefore')
-                || !$this->registerHook('displayHeader')
-                || !$this->registerHook('displayAdminOrderSide')
-                || !$this->registerHook('actionOrderReturn')
-            ) {
-                return false;
-            }
-        }
-
-        return true;
+        return parent::install() && $this->registerHooks();
     }
 
     /**
@@ -178,6 +132,54 @@ class Mobbex extends PaymentModule
         }
 
         return parent::uninstall();
+    }
+
+    /**
+     * Register module hooks dependig on prestashop version.
+     * 
+     * @return bool Result of the registration
+     */
+    public function registerHooks()
+    {
+        $hooks = [
+            'displayAdminProductsExtra',
+            'actionProductUpdate',
+            'displayBackOfficeCategory',
+            'categoryAddition',
+            'categoryUpdate',
+            'displayPDFInvoice',
+            'displayBackOfficeHeader',
+            'displayHeader',
+            'paymentReturn',
+            'actionOrderReturn'
+        ];
+
+        $ps16Hooks = [
+            'payment',
+            'displayProductButtons',
+            'displayCustomerAccountForm',
+            'actionCustomerAccountAdd',
+            'displayAdminOrderRight',
+        ];
+
+        $ps17Hooks = [
+            'paymentOptions',
+            'displayProductAdditionalInfo',
+            'additionalCustomerFormFields',
+            'actionObjectCustomerUpdateAfter',
+            'actionObjectCustomerAddAfter',
+            'displayAdminOrderSide'
+        ];
+
+        // Merge current version hooks with common hooks
+        $hooks = array_merge($hooks, _PS_VERSION_ > '1.7' ? $ps17Hooks : $ps16Hooks);
+
+        foreach ($hooks as $hookName) {
+            if (!$this->registerHook($hookName))
+                return false;
+        }
+
+        return true;
     }
 
     /**

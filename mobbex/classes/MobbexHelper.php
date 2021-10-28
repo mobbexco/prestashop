@@ -1,21 +1,8 @@
 <?php
 
-/**
- * Mobbex.php
- *
- * Main file of the module
- *
- * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.5.0
- * @see     PaymentModuleCore
- */
-
-/**
- * Payment Provider Class
- */
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.5.0';
+    const MOBBEX_VERSION = '2.6.0';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -320,7 +307,7 @@ class MobbexHelper
             'source_number'      => isset($res['payment']['source']['number']) ? $res['payment']['source']['number'] : '',
             'source_expiration'  => isset($res['payment']['source']['expiration']) ? json_encode($res['payment']['source']['expiration']) : '',
             'source_installment' => isset($res['payment']['source']['installment']) ? json_encode($res['payment']['source']['installment']) : '',
-            'installment_name'   => isset($res['payment']['source']['installment']['description']) ? json_encode($res['payment']['source']['installment']['description']) : '',
+            'installment_name'   => isset($res['payment']['source']['installment']['description']) ? $res['payment']['source']['installment']['description'] : '',
             'source_url'         => isset($res['payment']['source']['url']) ? json_encode($res['payment']['source']['url']) : '',
             'cardholder'         => isset($res['payment']['source']['cardholder']) ? json_encode(($res['payment']['source']['cardholder'])) : '',
             'entity_name'        => isset($res['entity']['name']) ? $res['entity']['name'] : '',
