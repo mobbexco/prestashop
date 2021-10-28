@@ -117,7 +117,6 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('actionCustomerAccountAdd')
                 || !$this->registerHook('displayAdminProductsExtra')
                 || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('actionOrderStatusPostUpdate')
                 || !$this->registerHook('displayBackOfficeCategory')
                 || !$this->registerHook('categoryAddition')
                 || !$this->registerHook('categoryUpdate')
@@ -125,6 +124,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('displayHeader')
                 || !$this->registerHook('displayAdminOrderRight')
+                || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
             }
@@ -139,7 +139,6 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('actionObjectCustomerAddAfter')
                 || !$this->registerHook('displayAdminProductsExtra')
                 || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('actionOrderStatusPostUpdate')
                 || !$this->registerHook('displayBackOfficeCategory')
                 || !$this->registerHook('categoryAddition')
                 || !$this->registerHook('categoryUpdate')
@@ -148,6 +147,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('actionEmailSendBefore')
                 || !$this->registerHook('displayHeader')
                 || !$this->registerHook('displayAdminOrderSide')
+                || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
             }
@@ -631,40 +631,49 @@ class Mobbex extends PaymentModule
 
     public function _createTable()
     {
-        DB::getInstance()->execute(
-            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                `id` INT(11) NOT NULL PRIMARY_KEY,
-                `cart_id` INT(11) NOT NULL,
-				`parent` TEXT NOT NULL,
-				`payment_id` TEXT NOT NULL,
-				`description` TEXT NOT NULL,
-				`status_code` TEXT NOT NULL,
-				`status` TEXT NOT NULL,
-				`status_message` TEXT NOT NULL,
-				`source_name` TEXT NOT NULL,
-				`source_type` TEXT NOT NULL,
-				`source_reference` TEXT NOT NULL,
-				`source_number` TEXT NOT NULL,
-				`source_expiration` TEXT NOT NULL,
-				`source_installment` TEXT NOT NULL,
-				`installment_name` TEXT NOT NULL,
-				`source_url` TEXT NOT NULL,
-				`cardholder` TEXT NOT NULL,
-				`entity_name` TEXT NOT NULL,
-				`entity_uid` TEXT NOT NULL,
-				`customer` TEXT NOT NULL,
-				`checkout_uid` TEXT NOT NULL,
-				`total` DECIMAL(18,2) NOT NULL,
-				`currency` TEXT NOT NULL,
-                `risk_analysis` TEXT NOT NULL,
-				`data` TEXT NOT NULL,
-				`created` TEXT NOT NULL,
-				`updated` TEXT NOT NULL,
-				PRIMARY KEY (`id`)
-            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-        );
+        $db = DB::getInstance();
 
-        DB::getInstance()->execute(
+        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
+
+        // If mobbex transaction table exists
+        if ($db->numRows()) {
+            $this->_alterTable();
+        } else {
+            $db->execute(
+                "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
+                    `id` INT(11) NOT NULL PRIMARY_KEY,
+                    `cart_id` INT(11) NOT NULL,
+                    `parent` TEXT NOT NULL,
+                    `payment_id` TEXT NOT NULL,
+                    `description` TEXT NOT NULL,
+                    `status_code` TEXT NOT NULL,
+                    `status` TEXT NOT NULL,
+                    `status_message` TEXT NOT NULL,
+                    `source_name` TEXT NOT NULL,
+                    `source_type` TEXT NOT NULL,
+                    `source_reference` TEXT NOT NULL,
+                    `source_number` TEXT NOT NULL,
+                    `source_expiration` TEXT NOT NULL,
+                    `source_installment` TEXT NOT NULL,
+                    `installment_name` TEXT NOT NULL,
+                    `source_url` TEXT NOT NULL,
+                    `cardholder` TEXT NOT NULL,
+                    `entity_name` TEXT NOT NULL,
+                    `entity_uid` TEXT NOT NULL,
+                    `customer` TEXT NOT NULL,
+                    `checkout_uid` TEXT NOT NULL,
+                    `total` DECIMAL(18,2) NOT NULL,
+                    `currency` TEXT NOT NULL,
+                    `risk_analysis` TEXT NOT NULL,
+                    `data` TEXT NOT NULL,
+                    `created` TEXT NOT NULL,
+                    `updated` TEXT NOT NULL,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+            );
+        }
+
+        $db->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields` (
                 `id` INT(11) NOT NULL AUTO_INCREMENT,
                 `row_id` INT(11) NOT NULL,
@@ -1122,25 +1131,24 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, $template);
     }
 
-    /**
-     * Is trigger when the state of an order is change, and works only if it is a mobbex transaction
-     * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
-     * to call the API
-     * 
-     * Support for 1.6 - 1.7
-     *
-     * @return string
-     */
-    public function hookActionOrderStatusPostUpdate($params)
+    public function hookActionOrderReturn($params)
     {
-        $idRefunded = (int)Configuration::get('PS_OS_REFUND'); //get id of refunded state
-        $order = new Order($params['id_order']);
-        if ($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex') {
-            $transactionData = MobbexTransaction::getTransactions($order->id_cart);
-            $response = MobbexHelper::porcessRefund($transactionData[0]['payment_id']);
-            return $response;
+        $order = new Order($params['orderReturn']->orderId);
+
+        if ($order->module != 'mobbex')
+            return true;
+
+        // Process refund
+        $trans  = MobbexTransaction::getParentTransaction($order->id_cart);
+        $result = MobbexHelper::processRefund($order->getTotalPaid(), $trans['payment_id']);
+
+        // Update order status
+        if ($result) {
+            $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+            $order->save();
         }
-        return false; //not a mobbex transaction
+
+        return $result;
     }
 
     /**

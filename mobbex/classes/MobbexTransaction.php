@@ -144,4 +144,16 @@ class MobbexTransaction extends ObjectModel
             return [];
         }
     }
+
+    /**
+     * Get the parent transaction from a cart id.
+     * 
+     * @param int|string $cartId
+     * 
+     * @return MobbexTransaction
+     */
+    public static function getParentTransaction($cartId)
+    {
+        return new MobbexTransaction(Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1')); 
+    }
 }

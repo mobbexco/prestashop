@@ -128,7 +128,7 @@
 
             .installmentsTable {
                 margin-bottom: 20px;
-                width: 80%;
+                width: 90%;
                 margin: 0 auto;
             }
 
@@ -140,6 +140,15 @@
             .mbbxPlansPrice {
                 width: 30%;
                 text-align: end !important;
+            }
+
+            .installmentName {
+                display: flex;
+                flex-flow: column;
+            }
+
+            .installmentName small {
+                color: grey;
             }
 
             /* DARK MODE  */
@@ -177,14 +186,20 @@
                     {if !empty($source['source']['name'])}
                         <div id="{$source['source']['reference']}" class="mobbexSource">
                             <p class="mobbexPaymentMethod">
-                                <img
-                                    src="https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg">{$source['source']['name']}
+                                <img src="https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg">{$source['source']['name']}
                             </p>
                             {if !empty($source['installments']['list'])}
                                 <table class="installmentsTable">
                                     {foreach from=$source['installments']['list'] item=installment }
                                         <tr>
-                                            <td>{$installment['name']}</td>
+                                            <td class="installmentName">
+                                                {$installment['name']}
+                                                {if $installment['totals']['installment']['count'] != 1}
+                                                    <small>
+                                                        {$installment['totals']['installment']['count']} cuotas de ${$installment['totals']['installment']['amount']}
+                                                    </small>
+                                                {/if}
+                                            </td>
                                             {if isset($installment['totals']['total'])}
                                                 <td class="mbbxPlansPrice">${$installment['totals']['total']}</td>
                                             {else}
@@ -221,7 +236,7 @@
 
             // Add events to toggle modal
             cont.addEventListener('click', function(e) {
-                if (e.target === open || e.target === close || e.target === modal) {
+                if (e.target === open || e.target.closest('#mbbxProductBtn') || e.target === close || e.target === modal) {
                     modal.classList.toggle('active');
                     document.body.classList.toggle('scroll-lock');
                 } 
