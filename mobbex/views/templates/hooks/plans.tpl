@@ -186,7 +186,7 @@
                     {if !empty($source['source']['name'])}
                         <div id="{$source['source']['reference']}" class="mobbexSource">
                             <p class="mobbexPaymentMethod">
-                                <img src="https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg">{$source['source']['name']}
+                                <img src="{if $source['installments']['enabled']}https://res.mobbex.com/images/sources/{$source['source']['reference']}.jpg{else}{$source['view']['subgroup_logo']}{/if}">{$source['source']['name']}
                             </p>
                             {if !empty($source['installments']['list'])}
                                 <table class="installmentsTable">
