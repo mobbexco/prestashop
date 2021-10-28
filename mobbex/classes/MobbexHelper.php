@@ -180,6 +180,19 @@ class MobbexHelper
             ];
         }
 
+        $shippingTotal = $cart->getTotalShippingCost();
+
+        if ($shippingTotal) {
+            $carrier = new Carrier($cart->id_carrier);
+
+            $items[] = [
+                'total'       => $shippingTotal,
+                'description' => $carrier->name . ' (envío)',
+                'image'       => file_exists(_PS_SHIP_IMG_DIR_ . $cart->id_carrier . '.jpg') ? Tools::getShopDomainSsl(true, true) . _THEME_SHIP_DIR_ . $cart->id_carrier . '.jpg' : null,
+                'quantity'    => 1,
+            ];
+        }
+
         // Create data
         $data = array(
             'reference'    => MobbexHelper::getReference($cart),
@@ -278,9 +291,8 @@ class MobbexHelper
 
         //Get the merchants from items list
         foreach ($items as $item) {
-            if ($item['entity']) {
+            if (!empty($item['entity']))
                 $merchants[] = ['uid' => $item['entity']];
-            }
         }
 
         return $merchants;
