@@ -79,21 +79,14 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         if (empty($cartId) || empty($res))
             die('WebHook Error: Empty cart_id or Mobbex json data. ' . MobbexHelper::MOBBEX_VERSION);
-        
-            
+
         // Get Order and transaction data
         $order = MobbexHelper::getOrderByCartId($cartId, true);
         $data  = MobbexHelper::getTransactionData($res['data']);
-        
-        if ( !$data['parent']) {
-            //Save child webhook data
-            MobbexTransaction::saveTransaction($cartId, $data);
-            return;
-        }
 
-        // Save parent webhook data
+        // Save webhook data
         MobbexTransaction::saveTransaction($cartId, $data);
-            
+
         // If Order exists
         if ($order) {
             // If it was not updated recently
@@ -102,7 +95,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $order->setCurrentState($data['order_status']);
                 $order->save();
             }
-        } else {
+        } else if ($data['parent']) {
             // Create and validate Order
             MobbexHelper::createOrder($cartId, $data, $this->module);
         }

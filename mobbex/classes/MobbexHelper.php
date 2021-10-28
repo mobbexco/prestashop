@@ -315,14 +315,13 @@ class MobbexHelper
             'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
             'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '',
             'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '',
-            'total'              => isset($res['checkout']['total']) ? $res['checkout']['total'] : '',
+            'total'              => isset($res['payment']['total']) ? $res['payment']['total'] : '',
             'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '',
             'risk_analysis'      => isset($res['payment']['riskAnalysis']['level']) ? $res['payment']['riskAnalysis']['level'] : '',
             'data'               => json_encode($res),
             'created'            => isset($res['payment']['created']) ? $res['payment']['created'] : '',
             'updated'            => isset($res['payment']['updated']) ? $res['payment']['created'] : '',
         ];
-
 
         // Validate mobbex status and create order status
         $state = self::getState($data['status']);
@@ -353,8 +352,9 @@ class MobbexHelper
     {
         if ($operationType === "payment.v2") {
             if (!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)))
-            return false;
+                return false;
         }
+
         return true;
     }
     
@@ -661,35 +661,41 @@ class MobbexHelper
     }
 
     /**
-     * Inform to Mobbex a total order refund 
+     * Refund a Mobbex transaction.
+     * 
+     * @param int|string $total
+     * @param string $paymentId
      *
-     * @return array
+     * @return bool
+     * 
+     * @throws PrestaShopException
      */
-    public static function porcessRefund($id_transaction)
+    public static function processRefund($total, $paymentId)
     {
         $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.mobbex.com/p/operations/" . $id_transaction . "/refund",
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL            => 'https://api.mobbex.com/p/operations/' . $paymentId . '/refund',
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => self::getHeaders(),
-        ));
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode(compact('total')),
+            CURLOPT_HTTPHEADER     => self::getHeaders(),
+        ]);
 
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $error    = curl_error($curl);
+
         curl_close($curl);
 
-        if ($err) {
-            return d("CURL Error #:" . $err);
-        } else {
-            $res = json_decode($response, true);
+        if ($error)
+            throw new PrestaShopException("Mobbex Transaction Refund Curl Error: $error. Transaction #$paymentId");
 
-            return $res['result'];
-        }
+        $res = json_decode($response, true);
+        return !empty($res['result']) ? $res['result'] : false;
     }
 
     /**
@@ -843,11 +849,10 @@ class MobbexHelper
      * 
      * @param string|int $cartId
      * @param array $transData
-     * @param PaymentModule $module
+     * @param PaymentModuleCore $module
      */
     public static function createOrder($cartId, $data, $module)
     {
-
         try {
             $context = self::restoreContext($cartId);
 
@@ -856,11 +861,8 @@ class MobbexHelper
                 $data['order_status'],
                 (float) $context->cart->getOrderTotal(true, Cart::BOTH),
                 $data['source_name'],
-                $data['message'],
-                [
-                    '{transaction_id}' => $data['trans_id'],
-                    '{message}' => $data['message'],
-                ],
+                null,
+                [],
                 (int) $context->currency->id,
                 false,
                 $context->customer->secure_key
