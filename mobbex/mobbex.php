@@ -1338,9 +1338,9 @@ class Mobbex extends PaymentModule
 
         // Checkout page
         if ($currentPage == 'order') {
-            MobbexHelper::addAsset("$mediaPath/views/css/front.css?ver=$this->version", 'css');
+            MobbexHelper::addAsset("$mediaPath/views/css/front.css", 'css');
 
-            MobbexHelper::addAsset("$mediaPath/views/js/front.js?ver=$this->version");
+            MobbexHelper::addAsset("$mediaPath/views/js/front.js");
 
             if (Configuration::get(MobbexHelper::K_WALLET))
                 MobbexHelper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
@@ -1362,11 +1362,11 @@ class Mobbex extends PaymentModule
 
         // Module Manager page
         if ($currentPage == 'AdminModulesManage')
-            $this->context->controller->addJS("$mediaPath/views/js/uninstall-options.js");
+            MobbexHelper::addAsset("$mediaPath/views/js/uninstall-options.js");
 
         // Configuration page
         if ($currentPage == 'AdminModules' && Tools::getValue('configure') == 'mobbex') {
-            $this->context->controller->addJS("$mediaPath/views/js/mobbex-config.js");
+            MobbexHelper::addAsset("$mediaPath/views/js/mobbex-config.js");
 
             // If plugin has updates, add update data to javascript
             if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))

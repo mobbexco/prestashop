@@ -963,12 +963,16 @@ class MobbexHelper
      * @param string $uri
      * @param string $type
      * @param bool $remote
+     * @param bool $addVersion
      * @param null|Controller $controller
      */
-    public static function addAsset($uri, $type = 'js', $remote = true, $controller = null)
+    public static function addAsset($uri, $type = 'js', $remote = true, $addVersion = true, $controller = null)
     {
         if (!$controller)
             $controller = Context::getContext()->controller;
+
+        if ($addVersion)
+            $uri .= '?ver=' . self::MOBBEX_VERSION;
 
         if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
