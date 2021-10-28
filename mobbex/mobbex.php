@@ -117,13 +117,13 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('actionCustomerAccountAdd')
                 || !$this->registerHook('displayAdminProductsExtra')
                 || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('actionOrderStatusPostUpdate')
                 || !$this->registerHook('displayBackOfficeCategory')
                 || !$this->registerHook('categoryAddition')
                 || !$this->registerHook('categoryUpdate')
                 || !$this->registerHook('displayPDFInvoice')
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('displayHeader')
+                || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
             }
@@ -138,7 +138,6 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('actionObjectCustomerAddAfter')
                 || !$this->registerHook('displayAdminProductsExtra')
                 || !$this->registerHook('actionProductUpdate')
-                || !$this->registerHook('actionOrderStatusPostUpdate')
                 || !$this->registerHook('displayBackOfficeCategory')
                 || !$this->registerHook('categoryAddition')
                 || !$this->registerHook('categoryUpdate')
@@ -146,6 +145,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('actionEmailSendBefore')
                 || !$this->registerHook('displayHeader')
+                || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
             }
@@ -1130,25 +1130,24 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, $template);
     }
 
-    /**
-     * Is trigger when the state of an order is change, and works only if it is a mobbex transaction
-     * it first get the transaction_id from mobbex_transaction table, later the id is going to be use
-     * to call the API
-     * 
-     * Support for 1.6 - 1.7
-     *
-     * @return string
-     */
-    public function hookActionOrderStatusPostUpdate($params)
+    public function hookActionOrderReturn($params)
     {
-        $idRefunded = (int)Configuration::get('PS_OS_REFUND'); //get id of refunded state
-        $order = new Order($params['id_order']);
-        if ($params['newOrderStatus']->id == $idRefunded && $order->module == 'mobbex') {
-            $transactionData = MobbexTransaction::getTransactions($order->id_cart);
-            $response = MobbexHelper::porcessRefund($transactionData[0]['payment_id']);
-            return $response;
+        $order = new Order($params['orderReturn']->orderId);
+
+        if ($order->module != 'mobbex')
+            return true;
+
+        // Process refund
+        $trans  = MobbexTransaction::getParentTransaction($order->id_cart);
+        $result = MobbexHelper::processRefund($order->getTotalPaid(), $trans['payment_id']);
+
+        // Update order status
+        if ($result) {
+            $order->setCurrentState((int) Configuration::get('PS_OS_REFUND'));
+            $order->save();
         }
-        return false; //not a mobbex transaction
+
+        return $result;
     }
 
     /**
