@@ -99,7 +99,7 @@
                 background-color: #fff;
                 border-radius: 5px;
                 box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.06);
-                max-width: 350px;
+                max-width: 100%;
             }
             #mobbex-order-widget img {
                 width: 50px;

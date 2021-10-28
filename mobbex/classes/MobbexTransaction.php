@@ -1,16 +1,7 @@
 <?php
-/**
- * MobbexTransaction.php
- *
- * Transaction model
- *
- * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.5.0
- * @see     PaymentModuleCore
- */
+
 class MobbexTransaction extends ObjectModel
 {
-    
     public $id;
     public $cart_id;
 	public $parent;

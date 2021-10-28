@@ -1,13 +1,5 @@
 <?php
-/**
- * MobbexCustomFields.php
- *
- * Custom fields model
- *
- * @author  Mobbex Co <admin@mobbex.com>
- * @version 1.4.6
- * @see     PaymentModuleCore
- */
+
 class MobbexCustomFields extends ObjectModel
 {
     public $row_id;
