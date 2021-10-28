@@ -118,7 +118,7 @@ class MobbexTransaction extends ObjectModel
      * @param int $order_id
      * @param bool $parent 
      * 
-     * @return array 
+     * @return array|object
      */
     public static function getTransactions($cart_id, $parent = false)
     {

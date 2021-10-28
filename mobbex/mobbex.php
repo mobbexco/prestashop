@@ -123,6 +123,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('displayPDFInvoice')
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('displayHeader')
+                || !$this->registerHook('displayAdminOrderRight')
                 || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
@@ -145,6 +146,7 @@ class Mobbex extends PaymentModule
                 || !$this->registerHook('displayBackOfficeHeader')
                 || !$this->registerHook('actionEmailSendBefore')
                 || !$this->registerHook('displayHeader')
+                || !$this->registerHook('displayAdminOrderSide')
                 || !$this->registerHook('actionOrderReturn')
             ) {
                 return false;
@@ -895,7 +897,6 @@ class Mobbex extends PaymentModule
             $this->smarty->assign('payment', $order->payment);
             $this->smarty->assign('status_message', $trx->status_message);
             $this->smarty->assign('sources', $sources);
-
         }
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
@@ -1192,6 +1193,47 @@ class Mobbex extends PaymentModule
             'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'category', 'entity') ?: ''
         ]);
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
+    }
+
+    /**
+     * Show the mobbex order widget in the order panel backoffice.
+     * 
+     * @param array $params
+     */
+    public function hookDisplayAdminOrderSide($params)
+    {
+
+        $order = new Order($params['id_order']);
+        $trx = MobbexTransaction::getTransactions($order->id_cart, true);
+
+        if (!$trx) {
+            return;
+        }
+
+        $this->context->smarty->assign(
+            [
+                'data' => [
+                    'payment_id'    => $trx->payment_id,
+                    'risk_analysis' => $trx->risk_analysis,
+                    'currency'      => $trx->currency,
+                    'total'         => $trx->total,
+                ],
+                'sources'  => MobbexHelper::getWebhookSources(MobbexTransaction::getTransactions($order->id_cart)),
+                'entities' => MobbexHelper::getWebhookEntities(MobbexTransaction::getTransactions($order->id_cart))
+            ]
+        );
+
+        return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
+    }
+
+    /**
+     * Show the mobbex order widget in the order panel backoffice in PS_1.6.
+     * 
+     * @param array $params
+     */
+    public function hookDisplayAdminOrderLeft($params)
+    {
+        return $this->hookDisplayAdminOrderSide($params);
     }
 
     public function hookActionProductUpdate($params)
