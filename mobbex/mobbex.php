@@ -151,7 +151,8 @@ class Mobbex extends PaymentModule
             'displayBackOfficeHeader',
             'displayHeader',
             'paymentReturn',
-            'actionOrderReturn'
+            'actionOrderReturn',
+            'displayAdminOrder'
         ];
 
         $ps16Hooks = [
@@ -159,7 +160,6 @@ class Mobbex extends PaymentModule
             'displayProductButtons',
             'displayCustomerAccountForm',
             'actionCustomerAccountAdd',
-            'displayAdminOrderRight',
         ];
 
         $ps17Hooks = [
@@ -168,7 +168,6 @@ class Mobbex extends PaymentModule
             'additionalCustomerFormFields',
             'actionObjectCustomerUpdateAfter',
             'actionObjectCustomerAddAfter',
-            'displayAdminOrderSide'
         ];
 
         // Merge current version hooks with common hooks
@@ -1202,7 +1201,7 @@ class Mobbex extends PaymentModule
      * 
      * @param array $params
      */
-    public function hookDisplayAdminOrderSide($params)
+    public function hookDisplayAdminOrder($params)
     {
 
         $order = new Order($params['id_order']);
@@ -1226,16 +1225,6 @@ class Mobbex extends PaymentModule
         );
 
         return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
-    }
-
-    /**
-     * Show the mobbex order widget in the order panel backoffice in PS_1.6.
-     * 
-     * @param array $params
-     */
-    public function hookDisplayAdminOrderLeft($params)
-    {
-        return $this->hookDisplayAdminOrderSide($params);
     }
 
     public function hookActionProductUpdate($params)
