@@ -27,7 +27,7 @@
             </tr>
             <tr class="mobbex-color-column">
                 <td>Total:</td>
-                <td>{$data['total']}</td>
+                <td><strong>${$data['total']}</strong></td>
             </tr>
 
             <tr>
@@ -48,9 +48,13 @@
                         <td>Numero:</td>
                         <td>{$source['source_number']}</td>
                     </tr>
-                    <tr class="mobbex-end-table">
+                    <tr>
                         <td>Plan:</td>
                         <td>{$source['installment_name']}</td>
+                    </tr>
+                    <tr class="mobbex-color-column mobbex-end-table">
+                        <td>Monto:</td>
+                        <td><strong>${$source['total']}</strong></td>
                     </tr>
 
                 {/if}
@@ -99,7 +103,7 @@
                 background-color: #fff;
                 border-radius: 5px;
                 box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.06);
-                max-width: 100%;
+                max-width: 33.33333%;
             }
             #mobbex-order-widget img {
                 width: 50px;

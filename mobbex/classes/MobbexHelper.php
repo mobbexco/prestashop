@@ -381,6 +381,7 @@ class MobbexHelper
                         'source_number'    => $transaction->source_number,
                         'installment_name' => $transaction->installment_name,
                         'source_url'       => $transaction->source_url,
+                        'total'            => $transaction->total,
                     ];
                 }
             }
