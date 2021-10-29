@@ -38,7 +38,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification'];
+        $this->controllers = ['notification', 'redirect'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -946,9 +946,9 @@ class Mobbex extends PaymentModule
                 'module:mobbex/views/templates/front/payment.tpl'
             );
         } else {
-            $checkoutUrl = $checkoutData['url'];
-
             foreach ($methods as $method) {
+                $checkoutUrl = MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url'] . "?paymentMethod={$method['group']}:{$method['subgroup']}"));
+
                 $options[] = $this->createPaymentOption(
                     $method['subgroup_title'],
                     $method['subgroup_logo'],

@@ -68,9 +68,9 @@ class MobbexHelper
         return Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
     }
 
-    public static function getModuleUrl($controller, $action, $path)
+    public static function getModuleUrl($controller, $action = '', $path = '')
     {
-        return MobbexHelper::getUrl('index.php?controller=' . $controller . '&module=mobbex&fc=module&action=' . $action . $path);
+        return MobbexHelper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
     }
 
     public static function getPlatform()
@@ -219,7 +219,7 @@ class MobbexHelper
         curl_close($curl);
 
         if ($err) {
-            d("cURL Error #:" . $err);
+            PrestaShopLogger::addLog('Mobbex Create Checkout Error: ' . $err, 3, null, 'Mobbex', null, true, null);
         } else {
             $res = json_decode($response, true);
 
