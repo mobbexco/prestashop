@@ -56,5 +56,5 @@
         </div>
     {/foreach}
 {else}
-    <form id="mobbex_checkout" class="mbbx-method"></form>
+    <form id="mobbex_checkout" class="mbbx-method" action="{$checkoutUrl}" method="post"></form>
 {/if}

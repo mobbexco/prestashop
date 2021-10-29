@@ -943,7 +943,8 @@ class Mobbex extends PaymentModule
             $options[] = $this->createPaymentOption(
                 $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
-                'module:mobbex/views/templates/front/payment.tpl'
+                'module:mobbex/views/templates/front/payment.tpl',
+                ['checkoutUrl' => MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url']))]
             );
         } else {
             foreach ($methods as $method) {
