@@ -889,7 +889,7 @@ class Mobbex extends PaymentModule
 
             // Get Transaction Data
             $transactions = MobbexTransaction::getTransactions($order->id_cart);
-            $trx = $transactions[0];
+            $trx = MobbexTransaction::getParentTransaction($order->id_cart);
             $sources = MobbexHelper::getWebhookSources($transactions);
 
             // Assign the Data into Smarty
