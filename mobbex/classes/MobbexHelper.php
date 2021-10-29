@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.6.0';
+    const MOBBEX_VERSION = '2.6.1';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -381,6 +381,7 @@ class MobbexHelper
                         'source_number'    => $transaction->source_number,
                         'installment_name' => $transaction->installment_name,
                         'source_url'       => $transaction->source_url,
+                        'total'            => $transaction->total,
                     ];
                 }
             }
