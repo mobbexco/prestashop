@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.6.2';
+    const MOBBEX_VERSION = '2.6.3';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -252,15 +252,19 @@ class MobbexHelper
      */
     public static function getCustomer($cart)
     {
-        // Get address info from cart
-        $address = new Address($cart->id_address_delivery);
+        // Get address and customer data from context
+        $address  = new Address($cart->id_address_delivery);
+        $customer = Context::getContext()->customer;
+
+        $firstName = empty($address->firstname) || $address->firstname == '.' ? $customer->firstname : $address->firstname;
+        $lastName  = empty($address->lastname) || $address->lastname == '.' ? $customer->lastname : $address->lastname;
 
         return [
-            'name'           => $address->firstname . ' ' . $address->lastname,
-            'email'          => Context::getContext()->customer->email,
+            'name'           => "$firstName $lastName",
+            'email'          => $customer->email,
             'phone'          => $address->phone_mobile ?: $address->phone,
-            'identification' => $address->id_customer ? MobbexHelper::getDni($address->id_customer) : null,
-            'uid'            => $address->id_customer,
+            'identification' => $customer->id ? MobbexHelper::getDni($customer->id) : null,
+            'uid'            => $customer->id,
         ];
     }
 
