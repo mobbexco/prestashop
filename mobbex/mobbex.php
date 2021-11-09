@@ -562,12 +562,12 @@ class Mobbex extends PaymentModule
             // Unified method
             [
                 'type' => 'switch',
-                'label' => $this->l('Método de pago único'),
-                'desc' => $this->l('Mostrar métodos de pago de forma unificada en el checkout.'),
+                'label' => $this->l('Modo unificado'),
+                'desc' => $this->l('Deshabilita la subdivisión de los métodos de pago en la página de finalización de la compra. Las opciones se verán dentro del checkout.'),
                 'name' => MobbexHelper::K_UNIFIED_METHOD,
                 'is_bool' => true,
                 'required' => true,
-                'tab' => 'tab_general',
+                'tab' => 'tab_advanced',
                 'values' => [
                     [
                         'id' => 'active_on_unified_method',
