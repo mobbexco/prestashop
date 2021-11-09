@@ -61,8 +61,6 @@ class MobbexHelper
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
 
-    static $transactionData = [];
-
     public static function getUrl($path)
     {
         return Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
@@ -354,7 +352,7 @@ class MobbexHelper
     public static function isParentWebhook($operationType)
     {
         if ($operationType === "payment.v2") {
-            if (!empty(Configuration::get(MobbexHelper::K_MULTICARD)) || !empty(Configuration::get(MobbexHelper::K_MULTIVENDOR)))
+            if (Configuration::get(MobbexHelper::K_MULTICARD) || Configuration::get(MobbexHelper::K_MULTIVENDOR))
                 return false;
         }
 

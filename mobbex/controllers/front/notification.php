@@ -87,17 +87,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Save webhook data
         MobbexTransaction::saveTransaction($cartId, $data);
 
-        // If Order exists
-        if ($order) {
-            // If it was not updated recently
-            if ($order->getCurrentState() != $data['order_status']) {
-                // Update order status
-                $order->setCurrentState($data['order_status']);
-                $order->save();
+        // Only parent webhook can modify the order
+        if ($data['parent']) {
+            // If Order exists
+            if ($order) {
+                // If it was not updated recently
+                if ($order->getCurrentState() != $data['order_status']) {
+                    // Update order status
+                    $order->setCurrentState($data['order_status']);
+                    $order->save();
+                }
+            } else {
+                // Create and validate Order
+                MobbexHelper::createOrder($cartId, $data, $this->module);
             }
-        } else if ($data['parent']) {
-            // Create and validate Order
-            MobbexHelper::createOrder($cartId, $data, $this->module);
         }
 
         die('OK: ' . MobbexHelper::MOBBEX_VERSION);
