@@ -199,6 +199,13 @@ class MobbexHelper
             'merchants'    => MobbexHelper::getMerchants($items),
         );
 
+        try {
+            $data = Hook::exec('actionMobbexCheckoutRequest', compact('data'), null, false, true, false, null, true) ?: $data;
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog('Mobbex Create Checkout Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
+            return;
+        }
+
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.mobbex.com/p/checkout",
             CURLOPT_RETURNTRANSFER => true,

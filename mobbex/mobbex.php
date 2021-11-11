@@ -66,6 +66,8 @@ class Mobbex extends PaymentModule
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
         $this->updater = new MobbexUpdater();
+
+        $this->addExtensionHooks();
     }
 
     /**
@@ -179,6 +181,29 @@ class Mobbex extends PaymentModule
         }
 
         return true;
+    }
+
+    /**
+     * Create own hooks to extend features in external modules.
+     */
+    public function addExtensionHooks()
+    {
+        $hooks = [
+            'actionMobbexCheckoutRequest' => [
+                'title'       => 'Modify checkout request data',
+                'description' => 'Modify checkout request data'
+            ],
+        ];
+
+        foreach ($hooks as $name => $data) {
+            if (!Hook::getIdByName($name)) {
+                $hook              = new Hook();
+                $hook->name        = $name;
+                $hook->title       = $data['title'];
+                $hook->description = $data['description'];
+                $hook->add();
+            }
+        }
     }
 
     /**
