@@ -14,10 +14,10 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require dirname(__FILE__) . '/classes/Updater.php';
-require dirname(__FILE__) . '/classes/MobbexHelper.php';
-require dirname(__FILE__) . '/classes/MobbexTransaction.php';
-require dirname(__FILE__) . '/classes/MobbexCustomFields.php';
+require_once dirname(__FILE__) . '/classes/Updater.php';
+require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
+require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
+require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
 
 /**
  * Main class of the module
