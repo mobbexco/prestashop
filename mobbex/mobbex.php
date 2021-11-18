@@ -193,6 +193,14 @@ class Mobbex extends PaymentModule
                 'title'       => 'Create checkout request',
                 'description' => 'Modify checkout request posted data'
             ],
+            'actionMobbexProcessPayment' => [
+                'title'       => 'Process payment data',
+                'description' => 'Add custom payment data response before display payment options'
+            ],
+            'displayMobbexConfiguration' => [
+                'title'       => 'Modify mobbex configuration form',
+                'description' => 'Modify main mobbex configuration form data'
+            ],
             'displayMobbexProductSettings' => [
                 'title'       => 'Product admin additionals fields',
                 'description' => 'Display additional fields in mobbex configuration tab of product'
@@ -269,11 +277,13 @@ class Mobbex extends PaymentModule
     /**
      * Define the input of the configuration form
      *
+     * @param bool $extensionOptions Include options added by extensions.
+     * 
      * @see $this->renderForm
      *
      * @return array
      */
-    protected function getConfigForm()
+    protected function getConfigForm($extensionOptions = false)
     {
         $form = [
             'form' => [
@@ -616,7 +626,7 @@ class Mobbex extends PaymentModule
             ],
         ];
 
-        return $form;
+        return $extensionOptions ? MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
 
     /**

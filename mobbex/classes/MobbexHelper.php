@@ -243,7 +243,7 @@ class MobbexHelper
         $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
 
-        return MobbexHelper::createCheckout(null, $cart, $customer);
+        return self::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: MobbexHelper::createCheckout(null, $cart, $customer);
     }
 
     /**
