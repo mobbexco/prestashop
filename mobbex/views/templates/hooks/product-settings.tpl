@@ -14,5 +14,6 @@
         <div class="col-md-12">
             {include file="./multivendor.tpl"}
         </div>
+        {hook h="displayMobbexProductSettings" id="$id"}
     </div>
 </div>

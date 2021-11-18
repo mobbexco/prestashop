@@ -190,9 +190,17 @@ class Mobbex extends PaymentModule
     {
         $hooks = [
             'actionMobbexCheckoutRequest' => [
-                'title'       => 'Modify checkout request data',
-                'description' => 'Modify checkout request data'
+                'title'       => 'Create checkout request',
+                'description' => 'Modify checkout request posted data'
             ],
+            'displayMobbexProductSettings' => [
+                'title'       => 'Product admin additionals fields',
+                'description' => 'Display additional fields in mobbex configuration tab of product'
+            ],
+            'displayMobbexCategorySettings' => [
+                'title'       => 'Category admin additionals fields',
+                'description' => 'Display additional fields in mobbex configuration tab of category'
+            ]
         ];
 
         foreach ($hooks as $name => $data) {
@@ -1201,6 +1209,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $this->context->smarty->assign([
+            'id'     => $params['id_product'] ?: Tools::getValue('id_product'),
             'plans'  => MobbexHelper::getPlansFilterFields($params['id_product'] ?: Tools::getValue('id_product')),
             'entity' => MobbexCustomFields::getCustomField($params['id_product'], 'product', 'entity') ?: ''
         ]);
@@ -1216,9 +1225,11 @@ class Mobbex extends PaymentModule
     public function hookDisplayBackOfficeCategory($params)
     {
         $this->context->smarty->assign([
+            'id'     => Tools::getValue('id_category'),
             'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'),
             'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'category', 'entity') ?: ''
         ]);
+
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
     }
 

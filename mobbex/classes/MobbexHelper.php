@@ -1087,16 +1087,22 @@ class MobbexHelper
      * 
      * @return mixed Last execution response or value filtered. Null on exceptions.
      */
-    public static function executeHook($name, $filter, ...$args)
+    public static function executeHook($name, $filter = false, ...$args)
     {
         try {
             // Get modules registerd and first arg to return as default
             $modules = Hook::getHookModuleExecList($name) ?: [];
-            $value   = reset($args);
+            $value   = $filter ? reset($args) : false;
 
             foreach ($modules as $moduleData) {
                 $module = Module::getInstanceByName($moduleData['module']);
-                $value  = call_user_func_array([$module, 'hook' . ucfirst($name)], $args);
+                $method = [$module, 'hook' . ucfirst($name)];
+
+                // Only execute if is callable
+                if (!is_callable($method))
+                    continue;
+
+                $value = call_user_func_array($method, $args);
 
                 if ($filter)
                     $args[0] = $value;
