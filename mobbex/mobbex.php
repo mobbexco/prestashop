@@ -14,6 +14,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
 require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
