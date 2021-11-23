@@ -1,6 +1,8 @@
 <?php
 
-class MobbexUpdater
+namespace Mobbex;
+
+class Updater
 {
     /** @var ZipArchive */
     public $zip;

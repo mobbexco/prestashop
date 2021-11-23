@@ -26,7 +26,7 @@ require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
  */
 class Mobbex extends PaymentModule
 {
-    /** @var MobbexUpdater */
+    /** @var \Mobbex\Updater */
     public $updater;
     /**
      * Constructor
@@ -67,7 +67,7 @@ class Mobbex extends PaymentModule
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
-        $this->updater = new MobbexUpdater();
+        $this->updater = new \Mobbex\Updater();
 
         $this->addExtensionHooks();
     }

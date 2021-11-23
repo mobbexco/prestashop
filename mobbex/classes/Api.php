@@ -1,6 +1,8 @@
 <?php
 
-class MobbexApi
+namespace Mobbex;
+
+class Api
 {
     public $ready = false;
 
@@ -35,7 +37,7 @@ class MobbexApi
      * 
      * @return mixed
      * 
-     * @throws MobbexException
+     * @throws \Mobbex\Exception
      */
     public function request($data)
     {
@@ -66,13 +68,13 @@ class MobbexApi
 
         // Throw curl errors
         if ($error)
-            throw new \MobbexException('Curl error in Mobbex request #:' . $error, curl_errno($curl), $data);
+            throw new \Mobbex\Exception('Curl error in Mobbex request #:' . $error, curl_errno($curl), $data);
 
         $result = json_decode($response, true);
 
         // Throw request errors
         if (!$result['result'])
-            throw new \MobbexException('Mobbex request error #' . $result['code'] . ': ' . $result['error'], 0, $data);
+            throw new \Mobbex\Exception('Mobbex request error #' . $result['code'] . ': ' . $result['error'], 0, $data);
 
         return isset($result['data']) ? $result['data'] : null;
     }

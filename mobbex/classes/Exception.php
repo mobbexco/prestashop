@@ -1,9 +1,11 @@
 <?php
 
+namespace Mobbex;
+
 /**
  * Class to add additional information to exceptions.
  */
-class MobbexException extends \Exception
+class Exception extends \Exception
 {
     public $data = '';
 
