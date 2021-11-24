@@ -31,9 +31,9 @@ class Updater
     /**
      * Update the module to latest version.
      * 
-     * @param Module $module
+     * @param \Module $module
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public function updateVersion($module, $cleanUpdate = false)
     {
@@ -43,7 +43,7 @@ class Updater
         $assetPath = $this->downloadAsset($release);
 
         if ($this->zip->open($assetPath) !== true)
-            throw new PrestaShopException('Error extracting Mobbex release');
+            throw new \PrestaShopException('Error extracting Mobbex release');
 
         // if it is a clean update, remove the module directory first
         if ($cleanUpdate)
@@ -88,7 +88,7 @@ class Updater
      * 
      * @return string|false
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public function getLatestRelease()
     {
@@ -113,7 +113,7 @@ class Updater
         curl_close($curl);
 
         if ($error)
-            throw new PrestaShopException('Error getting latest release data #' . $error);
+            throw new \PrestaShopException('Error getting latest release data #' . $error);
 
         return $this->latestRelease = json_decode($response, true);
     }
@@ -125,7 +125,7 @@ class Updater
      * 
      * @return string|false
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public function downloadAsset($release)
     {
@@ -141,7 +141,7 @@ class Updater
         $result    = file_put_contents($assetPath, $assetContent);
 
         if (!$result || !is_file($assetPath))
-            throw new PrestaShopException('Error downloading Mobbex release');
+            throw new \PrestaShopException('Error downloading Mobbex release');
 
         return $assetPath;
     }

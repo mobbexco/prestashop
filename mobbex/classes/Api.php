@@ -25,8 +25,8 @@ class Api
      */
     public function __construct($api_key = null, $access_token = null)
     {
-        $this->api_key      = $api_key      ?: Configuration::get(MobbexHelper::K_API_KEY);
-        $this->access_token = $access_token ?: Configuration::get(MobbexHelper::K_ACCESS_TOKEN);
+        $this->api_key      = $api_key      ?: \Configuration::get(\MobbexHelper::K_API_KEY);
+        $this->access_token = $access_token ?: \Configuration::get(\MobbexHelper::K_ACCESS_TOKEN);
         $this->ready        = !empty($api_key) && !empty($access_token);
     }
 
