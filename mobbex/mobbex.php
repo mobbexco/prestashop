@@ -1209,9 +1209,9 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $this->context->smarty->assign([
-            'id'     => $params['id_product'] ?: Tools::getValue('id_product'),
-            'plans'  => MobbexHelper::getPlansFilterFields($params['id_product'] ?: Tools::getValue('id_product')),
-            'entity' => MobbexCustomFields::getCustomField($params['id_product'], 'product', 'entity') ?: ''
+            'id'     => Tools::getValue('id_product'),
+            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_product')),
+            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_product'), 'product', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/product-settings.tpl');
