@@ -211,6 +211,10 @@ class Mobbex extends PaymentModule
             'displayMobbexCategorySettings' => [
                 'title'       => 'Category admin additionals fields',
                 'description' => 'Display additional fields in mobbex configuration tab of category'
+            ],
+            'displayMobbexOrderWidget' => [
+                'title'       => 'Mobbex order widget aditional info',
+                'description' => 'Display additional info in Mobbex order widget'
             ]
         ];
 

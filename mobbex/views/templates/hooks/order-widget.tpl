@@ -92,6 +92,8 @@
 
             {/foreach}
 
+            {hook h="displayMobbexOrderWidget" id="$id"}
+
         </table>
 
     </div>
