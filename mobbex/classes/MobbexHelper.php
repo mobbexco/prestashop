@@ -198,8 +198,8 @@ class MobbexHelper
             'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
             'merchants'    => MobbexHelper::getMerchants($items),
         );
-
-        $data = self::executeHook('actionMobbexCheckoutRequest', true, $data);
+        
+        $data = self::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
 
         if (!$data)
             return;
