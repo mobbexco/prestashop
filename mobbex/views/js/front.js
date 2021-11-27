@@ -6,8 +6,9 @@
  */
 function getOptions() {
   return {
-    id: mbbx.checkoutId,
-    type: 'checkout',
+    id: mbbx.id,
+    sid: mbbx.sid || null,
+    type: mbbx.sid ? 'subscriber_source' : 'checkout',
     paymentMethod: mbbx.paymentMethod || null,
     onResult: (data) => {
       var status = data.status.code;
@@ -153,7 +154,7 @@ function executePayment() {
       var mbbxButton = window.MobbexEmbed.init(getOptions());
       mbbxButton.open();
     } else {
-      window.top.location.href = mbbx.checkoutUrl + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
+      window.top.location.href = mbbx.url + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
     }
   }
   return false;

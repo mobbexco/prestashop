@@ -964,11 +964,12 @@ class Mobbex extends PaymentModule
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         MobbexHelper::addJavascriptData([
-            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'wallet'      => $cards ?: null,
-            'checkoutId'  => $checkoutData['id'],
-            'checkoutUrl' => $checkoutData['url'],
-            'returnUrl'   => $checkoutData['return_url']
+            'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'wallet'    => $cards ?: null,
+            'id'        => $checkoutData['id'],
+            'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
+            'url'       => $checkoutData['url'],
+            'returnUrl' => $checkoutData['return_url']
         ]);
 
         // Get payment methods from checkout
