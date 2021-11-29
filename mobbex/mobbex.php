@@ -1119,11 +1119,12 @@ class Mobbex extends PaymentModule
 
         Media::addJsDef([
             'mbbx' => [
-                'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-                'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
-                'checkoutId'  => $checkoutData['id'],
-                'checkoutUrl' => $checkoutData['url'],
-                'returnUrl'   => $checkoutData['return_url']
+                'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'wallet'    => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+                'id'        => $checkoutData['id'],
+                'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
+                'url'       => $checkoutData['url'],
+                'returnUrl' => $checkoutData['return_url']
             ]
         ]);
 
