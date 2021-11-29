@@ -218,7 +218,7 @@ class MobbexHelper
 
         $response = curl_exec($curl);
         $err = curl_error($curl);
-
+        error_log('Log Message: ' . "\n" . json_encode($response, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         curl_close($curl);
 
         if ($err) {

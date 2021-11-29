@@ -87,6 +87,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Save webhook data
         MobbexTransaction::saveTransaction($cartId, $data);
 
+        //Aditional webhook process
+        MobbexHelper::executeHook('actionMobbexWebhook', true, $res['data'], $cartId);
+
         // Only parent webhook can modify the order
         if ($data['parent']) {
             // If Order exists
