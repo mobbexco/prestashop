@@ -5,9 +5,8 @@
  * @returns {object}
  */
 function getOptions() {
-  return {
+  let options = {
     id: mbbx.id,
-    sid: mbbx.sid || null,
     type: mbbx.sid ? 'subscriber_source' : 'checkout',
     paymentMethod: mbbx.paymentMethod || null,
     onResult: (data) => {
@@ -25,7 +24,12 @@ function getOptions() {
         window.top.location.reload();
       }
     }
-  }
+  };
+
+  if (mbbx.sid)
+    options.sid = mbbx.sid;
+
+  return options;
 }
 
 /**
