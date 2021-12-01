@@ -581,6 +581,27 @@ class Mobbex extends PaymentModule
                     ],
                 ],
             ],
+            // Debug mode
+            [
+                'type' => 'switch',
+                'label' => $this->l('Modo Debug'),
+                'name' => MobbexHelper::K_DEBUG,
+                'is_bool' => true,
+                'required' => false,
+                'tab' => 'tab_advanced',
+                'values' => [
+                    [
+                        'id' => 'active_on_debug',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_debug',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
         ];
 
         return $form;
@@ -626,6 +647,8 @@ class Mobbex extends PaymentModule
             MobbexHelper::K_MULTICARD => Configuration::get(MobbexHelper::K_MULTICARD, false),
             //Multivendor field
             MobbexHelper::K_MULTIVENDOR => Configuration::get(MobbexHelper::K_MULTIVENDOR, false),
+            // Debug mode
+            MobbexHelper::K_DEBUG => Configuration::get(MobbexHelper::K_DEBUG, false),
             // IMPORTANT! Do not add Order States here. These values are used to save form fields
         );
     }
