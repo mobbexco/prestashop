@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.6.4';
+    const MOBBEX_VERSION = '2.6.5';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -896,43 +896,17 @@ class MobbexHelper
     public static function createOrder($cartId, $data, $module)
     {
         try {
-            $context = self::restoreContext($cartId);
+            $cart = new Cart($cartId);
 
             $module->validateOrder(
                 $cartId,
                 $data['order_status'],
-                (float) $context->cart->getOrderTotal(true, Cart::BOTH),
-                $data['source_name'],
-                null,
-                [],
-                (int) $context->currency->id,
-                false,
-                $context->customer->secure_key
+                (float) $cart->getOrderTotal(true, Cart::BOTH),
+                $data['source_name']
             );
         } catch (\Exception $e) {
-            PrestaShopLogger::addLog('Error in Mobbex order creation: ' . $e->getMessage(), 3, null, 'Mobbex', $cartId, true, null);
+            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'data'), true, true);
         }
-    }
-
-    /**
-     * Restore the context to process the order validation properly.
-     * 
-     * @param int|string $cartId 
-     * 
-     * @return Context $context 
-     */
-    protected static function restoreContext($cartId)
-    {
-        $context           = Context::getContext();
-        $context->cart     = new Cart((int) $cartId);
-        $context->customer = new Customer((int) Tools::getValue('customer_id'));
-        $context->currency = new Currency((int) $context->cart->id_currency);
-        $context->language = new Language((int) $context->customer->id_lang);
-
-        if (!Validate::isLoadedObject($context->cart))
-            PrestaShopLogger::addLog('Error getting context on Webhook: ', 3, null, 'Mobbex', $cartId, true, null);
-
-        return $context;
     }
 
     /**

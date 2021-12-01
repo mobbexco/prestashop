@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.6.4
+ * @version 2.6.5
  * @see     PaymentModuleCore
  */
 
@@ -551,6 +551,33 @@ class Mobbex extends PaymentModule
                     ],
                 ],
             ],
+            //Multivendor
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Multivendedor'),
+                'desc'     => $this->l('Permite el uso de múltiples vendedores (hasta 4 entidades diferentes)'),
+                'name'     => MobbexHelper::K_MULTIVENDOR,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'options'  => [
+                    'query' => [
+                        [
+                            'id_option' => false,
+                            'name'      => 'Desactivado'
+                        ],
+                        [
+                            'id_option' => 'unified',
+                            'name'      => 'Unificado'
+                        ],
+                        [
+                            'id_option' => 'active',
+                            'name'      => 'Activado'
+                        ],
+                    ],
+                    'id'   => 'id_option',
+                    'name' => 'name'
+                ]
+            ],
             [
                 'type' => 'text',
                 'label' => $this->l('Usar campo DNI existente'),
@@ -566,7 +593,7 @@ class Mobbex extends PaymentModule
                 'desc' => $this->l('Deshabilita la subdivisión de los métodos de pago en la página de finalización de la compra. Las opciones se verán dentro del checkout.'),
                 'name' => MobbexHelper::K_UNIFIED_METHOD,
                 'is_bool' => true,
-                'required' => true,
+                'required' => false,
                 'tab' => 'tab_advanced',
                 'values' => [
                     [
