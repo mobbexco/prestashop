@@ -566,7 +566,7 @@ class Mobbex extends PaymentModule
                 'desc' => $this->l('Deshabilita la subdivisión de los métodos de pago en la página de finalización de la compra. Las opciones se verán dentro del checkout.'),
                 'name' => MobbexHelper::K_UNIFIED_METHOD,
                 'is_bool' => true,
-                'required' => true,
+                'required' => false,
                 'tab' => 'tab_advanced',
                 'values' => [
                     [
