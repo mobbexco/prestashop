@@ -75,7 +75,14 @@ class MobbexHelper
         if (!Configuration::get(MobbexHelper::K_DEBUG) && !$force)
             return;
 
-        PrestaShopLogger::addLog("Mobbex: $message " . (is_string($data) ? $data : json_encode($data)), $force || $die ? 3 : 1, null, 'Mobbex', null, true);
+        PrestaShopLogger::addLog(
+            "Mobbex: $message " . (is_string($data) ? $data : json_encode($data)),
+            $force || $die ? 3 : 1,
+            null,
+            'Mobbex',
+            str_replace('.', '', self::MOBBEX_VERSION),
+            true
+        );
 
         if ($die)
             die($message);
@@ -231,13 +238,15 @@ class MobbexHelper
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
+        MobbexHelper::log('Creating Checkout', $data);
+
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $err      = curl_error($curl);
 
         curl_close($curl);
 
         if ($err) {
-            PrestaShopLogger::addLog('Mobbex Create Checkout Error: ' . $err, 3, null, 'Mobbex', null, true, null);
+            MobbexHelper::log('Checkout Creation Error', $err, true);
         } else {
             $res = json_decode($response, true);
 
