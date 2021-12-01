@@ -1008,43 +1008,26 @@ class Mobbex extends PaymentModule
         return $option;
     }
 
-    public function hookDisplayProductAdditionalInfo($params)
+    public function hookDisplayProductAdditionalInfo()
     {
         $product = new Product(Tools::getValue('id_product'));
-        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !($product->show_price)) {
+
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
-        }
 
-        $image_url = 'https://res.mobbex.com/images/sources/mobbex.png';
-        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
-            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
-        }
-
-        $total = $product->getPrice();
-
-        //Get product and category plans
-        $active_plans = MobbexHelper::getActivePlans($product->id);
-        $inactive_plans = MobbexHelper::getInactivePlans($product->id);
-
-        //get sources
-        $sources = MobbexHelper::getSources($total, $inactive_plans, $active_plans);
-
-        $this->context->smarty->assign(
-            [
-                'product_price' => number_format($total, 2),
-                'sources' => $sources,
-                'style_settings' =>
-                [
-                    'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
-                    'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
-                    'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-                    'button_image' => $image_url,
-                    'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
-                    'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
-                ],
-            ]
-        );
+        $this->context->smarty->assign([
+            'product_price'  => number_format($product->getPrice(), 2),
+            'sources'        => MobbexHelper::getSources($product->getPrice(), MobbexHelper::getInstallments([$product])),
+            'style_settings' => [
+                'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
+                'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
+                'background'       => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+                'button_image'     => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL) ?: 'https://res.mobbex.com/images/sources/mobbex.png',
+                'button_padding'   => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
+                'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
+                'plans_theme'      => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
+            ],
+        ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
     }

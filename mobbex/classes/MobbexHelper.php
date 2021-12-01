@@ -506,8 +506,10 @@ class MobbexHelper
 
         // Get plans from order products
         foreach ($products as $product) {
-            $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($product['id_product']));
-            $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($product['id_product']));
+            $id = $product instanceOf Product ? $product->id : $product['id_product'];
+
+            $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($id));
+            $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($id));
         }
 
         // Add inactive (common) plans to installments
@@ -525,72 +527,47 @@ class MobbexHelper
     }
 
     /**
-     * Return an array with categories ids
-     * 
-     * @param $listProducts : array
-     * 
-     * @return array
-     */
-    private function getCategoriesId($listProducts)
-    {
-
-        $categories_id = array();
-
-        foreach ($listProducts as $product) {
-            $categories = array();
-            $categories = Product::getProductCategoriesFull($product['id_product']);
-            foreach ($categories as $category) {
-                if (!in_array($category['id_category'], $categories_id)) {
-                    array_push($categories_id, $category['id_category']);
-                }
-            }
-        }
-        return $categories_id;
-    }
-
-    /**
      * Get sources with common and advanced plans from mobbex.
      * 
-     * @param integer|null $total
+     * @param int|null $total
+     * @param array $installments
      * 
      * @return array
      */
-    public static function getSources($total = null, $inactivePlans = null, $activePlans = null)
+    public static function getSources($total = null, $installments = [])
     {
+        $entityData = self::getEntityData();
+
+        if (!$entityData)
+            return [];
+
         $curl = curl_init();
 
-        $data = $total ? '?total=' . $total : null;
-
-        $data .= self::getInstallmentsQuery($inactivePlans, $activePlans);
-
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => 'https://api.mobbex.com/p/sources' . $data,
+        curl_setopt_array($curl, [
+            CURLOPT_URL            => "https://api.mobbex.com/p/sources/list/$entityData[countryReference]/$entityData[tax_id]" . ($total ? "?total=$total" : ''),
+            CURLOPT_HTTPHEADER     => self::getHeaders(),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => self::getHeaders(),
-        ));
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => json_encode(compact('installments')),
+        ]);
 
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $error    = curl_error($curl);
 
         curl_close($curl);
 
-        if ($err) {
-            d("cURL Error #:" . $err);
-        } else {
-            $response = json_decode($response, true);
-            $data = $response['data'];
+        if ($error)
+            self::log('Sources Obtaining cURL Error' . $error, compact('total', 'installments'), true);
 
-            if ($data) {
-                return $data;
-            }
-        }
+        $result = json_decode($response, true);
 
-        return [];
+        if (empty($result['result']))
+            self::log('Sources Obtaining Error', compact('total', 'installments', 'response'), true);
+
+        return isset($result['data']) ? $result['data'] : [];
     }
 
     /**
@@ -632,36 +609,6 @@ class MobbexHelper
         }
 
         return [];
-    }
-
-    /**
-     * Returns a query param with the installments of the product.
-     * @param array $inactivePlans
-     * @param array $activePlans
-     */
-    public static function getInstallmentsQuery($inactivePlans = null, $activePlans = null)
-    {
-
-        $installments = [];
-
-        //get plans
-        if ($inactivePlans) {
-            foreach ($inactivePlans as $plan) {
-                $installments[] = "-$plan";
-            }
-        }
-
-        if ($activePlans) {
-            foreach ($activePlans as $plan) {
-                $installments[] = "+uid:$plan";
-            }
-        }
-
-        //Build query param
-        $query = http_build_query(['installments' => $installments]);
-        $query = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', $query);
-
-        return $query;
     }
 
     /**
@@ -851,12 +798,18 @@ class MobbexHelper
     }
 
     /**
-     * Get Tax Id from Mobbex using API.
+     * Get entity data from Mobbex API or db if possible.
      * 
-     * @return string $tax_id 
+     * @return string[] 
      */
-    public static function getTaxId()
+    public static function getEntityData()
     {
+        // First, try to get from db
+        $entityData = Configuration::get('MOBBEX_ENTITY_DATA');
+
+        if ($entityData)
+            return json_decode($entityData, true);
+
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.mobbex.com/p/entity/validate",
@@ -870,16 +823,22 @@ class MobbexHelper
         ));
 
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $error    = curl_error($curl);
+
         curl_close($curl);
 
-        if ($err) {
-            return d("CURL Error #:" . $err);
-        } else {
-            $res = json_decode($response, true);
+        if ($error)
+            return self::log('Entity Data Obtaining cURL Error' . $error, $response, true);
 
-            return $res['data']['tax_id'];
-        }
+        $res = json_decode($response, true);
+
+        if (empty($res['data']))
+            return self::log('Entity Data Obtaining Error', $response, true);
+
+        // Save data
+        Configuration::updateValue('MOBBEX_ENTITY_DATA', json_encode($res['data']));
+
+        return $res['data'];
     }
 
     /**
