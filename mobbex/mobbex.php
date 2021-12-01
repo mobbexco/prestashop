@@ -551,6 +551,33 @@ class Mobbex extends PaymentModule
                     ],
                 ],
             ],
+            //Multivendor
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Multivendedor'),
+                'desc'     => $this->l('Permite el uso de múltiples vendedores (hasta 4 entidades diferentes)'),
+                'name'     => MobbexHelper::K_MULTIVENDOR,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'options'  => [
+                    'query' => [
+                        [
+                            'id_option' => false,
+                            'name'      => 'Desactivado'
+                        ],
+                        [
+                            'id_option' => 'unified',
+                            'name'      => 'Unificado'
+                        ],
+                        [
+                            'id_option' => 'active',
+                            'name'      => 'Activado'
+                        ],
+                    ],
+                    'id'   => 'id_option',
+                    'name' => 'name'
+                ]
+            ],
             [
                 'type' => 'text',
                 'label' => $this->l('Usar campo DNI existente'),
