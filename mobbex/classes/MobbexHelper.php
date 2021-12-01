@@ -43,6 +43,7 @@ class MobbexHelper
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
+    const K_DEBUG = 'MOBBEX_DEBUG';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
@@ -60,6 +61,32 @@ class MobbexHelper
     const K_OS_PENDING = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
+
+    /**
+     * Add log to PrestaShop log table.
+     * 
+     * @param string $message
+     * @param mixed $data
+     * @param bool $force Add regardless of debug mode.
+     * @param bool $die Die execution after log.
+     */
+    public static function log($message = 'debug', $data = null, $force = false, $die = false)
+    {
+        if (!Configuration::get(MobbexHelper::K_DEBUG) && !$force)
+            return;
+
+        PrestaShopLogger::addLog(
+            "Mobbex: $message " . (is_string($data) ? $data : json_encode($data)),
+            $force || $die ? 3 : 1,
+            null,
+            'Mobbex',
+            str_replace('.', '', self::MOBBEX_VERSION),
+            true
+        );
+
+        if ($die)
+            die($message);
+    }
 
     public static function getUrl($path)
     {
@@ -211,13 +238,15 @@ class MobbexHelper
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
+        MobbexHelper::log('Creating Checkout', $data);
+
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $err      = curl_error($curl);
 
         curl_close($curl);
 
         if ($err) {
-            PrestaShopLogger::addLog('Mobbex Create Checkout Error: ' . $err, 3, null, 'Mobbex', null, true, null);
+            MobbexHelper::log('Checkout Creation Error', $err, true);
         } else {
             $res = json_decode($response, true);
 
