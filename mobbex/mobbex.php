@@ -1214,8 +1214,8 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminProductsExtra($params)
     {
-        $id = _PS_VERSION_ >= MobbexHelper::PS_17 ? $params['id_product'] : Tools::getValue('id_product'); 
-
+        $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+        
         $this->context->smarty->assign([
             'id'     => $id,
             'plans'  => MobbexHelper::getPlansFilterFields($id),
@@ -1232,10 +1232,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
+        $id = !empty($params['id_category']) ? $params['id_category'] : Tools::getValue('id_category');
+
         $this->context->smarty->assign([
-            'id'     => Tools::getValue('id_category'),
-            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'),
-            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'category', 'entity') ?: ''
+            'id'     => $id,
+            'plans'  => MobbexHelper::getPlansFilterFields($id, 'category'),
+            'entity' => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
