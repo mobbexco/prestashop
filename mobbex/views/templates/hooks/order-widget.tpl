@@ -139,7 +139,7 @@
             }
             #mobbex-widget-table .mobbex-end-table {
                 border-bottom: 1px solid #6f00ff;
-                margin: 20px;
+                margin-bottom: 20px;
             }
         </style>
     {/literal}

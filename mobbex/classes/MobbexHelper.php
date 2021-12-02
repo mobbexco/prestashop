@@ -201,6 +201,8 @@ class MobbexHelper
         
         $data = self::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
 
+        error_log('data helper: ' . "\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
+
         if (!$data)
             return;
 
