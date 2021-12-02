@@ -1214,10 +1214,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminProductsExtra($params)
     {
+        $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+
         $this->context->smarty->assign([
-            'id'     => Tools::getValue('id_product'),
-            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_product')),
-            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_product'), 'product', 'entity') ?: ''
+            'id'     => $id,
+            'plans'  => MobbexHelper::getPlansFilterFields($id),
+            'entity' => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/product-settings.tpl');
@@ -1230,10 +1232,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
+        $id = !empty($params['id_category']) ? $params['id_category'] : Tools::getValue('id_category');
+
         $this->context->smarty->assign([
-            'id'     => Tools::getValue('id_category'),
-            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'),
-            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'category', 'entity') ?: ''
+            'id'     => $id,
+            'plans'  => MobbexHelper::getPlansFilterFields($id, 'category'),
+            'entity' => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
