@@ -10,7 +10,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     {
         // We don't do anything if the module has been disabled by the merchant
         if ($this->module->active == false)
-            die;
+            MobbexHelper::log('Notification On Module Inactive', $_REQUEST, true, true);
 
         // Get current action
         $action = Tools::getValue('action');
@@ -33,11 +33,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $transaction_id = Tools::getValue('transactionId');
         $status         = Tools::getValue('status');
 
-        // Restore context
-        $context           = Context::getContext();
-        $context->cart     = new Cart($cart_id);
-        $context->customer = new Customer($customer_id);
-
+        $customer = new Customer($customer_id);
         $order_id = MobbexHelper::getOrderByCartId($cart_id);
 
         // If order was not created
@@ -45,9 +41,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $seconds = 10;
 
             // Wait for webhook
-            while ($seconds > 0 && !MobbexHelper::getOrderByCartId($cart_id)) {
+            while ($seconds > 0 && !$order_id) {
                 sleep(1);
                 $seconds--;
+                $order_id = MobbexHelper::getOrderByCartId($cart_id);
             }
         }
 
@@ -59,7 +56,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'id_order'      => $order_id,
                 'id_module'     => $this->module->id,
                 'transactionId' => $transaction_id,
-                'key'           => $context->customer->secure_key,
+                'key'           => $customer->secure_key,
             ]));
         } else {
             // Go back to checkout
@@ -72,17 +69,15 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
      */
     public function webhook()
     {
-        // Get data from request
-        $cartId      = Tools::getValue('id_cart');
-        $res         = [];
-        parse_str(file_get_contents('php://input'), $res);
+        // Get cart id
+        $cartId = Tools::getValue('id_cart');
 
-        if (empty($cartId) || empty($res))
-            die('WebHook Error: Empty cart_id or Mobbex json data. ' . MobbexHelper::MOBBEX_VERSION);
+        if (!$cartId || empty($_POST['data']))
+            MobbexHelper::log('Invalid Webhook Data', $_REQUEST, true, true);
 
         // Get Order and transaction data
         $order = MobbexHelper::getOrderByCartId($cartId, true);
-        $data  = MobbexHelper::getTransactionData($res['data']);
+        $data  = MobbexHelper::getTransactionData($_POST['data']);
 
         // Save webhook data
         MobbexTransaction::saveTransaction($cartId, $data);

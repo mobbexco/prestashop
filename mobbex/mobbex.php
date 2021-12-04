@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.6.4
+ * @version 2.6.5
  * @see     PaymentModuleCore
  */
 
@@ -613,6 +613,33 @@ class Mobbex extends PaymentModule
                     ],
                 ],
             ],
+            //Multivendor
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Multivendedor'),
+                'desc'     => $this->l('Permite el uso de múltiples vendedores (hasta 4 entidades diferentes)'),
+                'name'     => MobbexHelper::K_MULTIVENDOR,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'options'  => [
+                    'query' => [
+                        [
+                            'id_option' => false,
+                            'name'      => 'Desactivado'
+                        ],
+                        [
+                            'id_option' => 'unified',
+                            'name'      => 'Unificado'
+                        ],
+                        [
+                            'id_option' => 'active',
+                            'name'      => 'Activado'
+                        ],
+                    ],
+                    'id'   => 'id_option',
+                    'name' => 'name'
+                ]
+            ],
             [
                 'type' => 'text',
                 'label' => $this->l('Usar campo DNI existente'),
@@ -628,7 +655,7 @@ class Mobbex extends PaymentModule
                 'desc' => $this->l('Deshabilita la subdivisión de los métodos de pago en la página de finalización de la compra. Las opciones se verán dentro del checkout.'),
                 'name' => MobbexHelper::K_UNIFIED_METHOD,
                 'is_bool' => true,
-                'required' => true,
+                'required' => false,
                 'tab' => 'tab_advanced',
                 'values' => [
                     [
@@ -638,6 +665,27 @@ class Mobbex extends PaymentModule
                     ],
                     [
                         'id' => 'active_off_unified_method',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            // Debug mode
+            [
+                'type' => 'switch',
+                'label' => $this->l('Modo Debug'),
+                'name' => MobbexHelper::K_DEBUG,
+                'is_bool' => true,
+                'required' => false,
+                'tab' => 'tab_advanced',
+                'values' => [
+                    [
+                        'id' => 'active_on_debug',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_debug',
                         'value' => false,
                         'label' => $this->l('Desactivar'),
                     ],
@@ -679,7 +727,7 @@ class Mobbex extends PaymentModule
         } else {
             $db->execute(
                 "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                    `id` INT(11) NOT NULL PRIMARY_KEY,
+                    `id` INT(11) NOT NULL PRIMARY KEY,
                     `cart_id` INT(11) NOT NULL,
                     `parent` TEXT NOT NULL,
                     `payment_id` TEXT NOT NULL,
@@ -1023,43 +1071,26 @@ class Mobbex extends PaymentModule
         return $option;
     }
 
-    public function hookDisplayProductAdditionalInfo($params)
+    public function hookDisplayProductAdditionalInfo()
     {
         $product = new Product(Tools::getValue('id_product'));
-        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !($product->show_price)) {
+
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
-        }
 
-        $image_url = 'https://res.mobbex.com/images/sources/mobbex.png';
-        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
-            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
-        }
-
-        $total = $product->getPrice();
-
-        //Get product and category plans
-        $active_plans = MobbexHelper::getActivePlans($product->id);
-        $inactive_plans = MobbexHelper::getInactivePlans($product->id);
-
-        //get sources
-        $sources = MobbexHelper::getSources($total, $inactive_plans, $active_plans);
-
-        $this->context->smarty->assign(
-            [
-                'product_price' => number_format($total, 2),
-                'sources' => $sources,
-                'style_settings' =>
-                [
-                    'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
-                    'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
-                    'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-                    'button_image' => $image_url,
-                    'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
-                    'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
-                ],
-            ]
-        );
+        $this->context->smarty->assign([
+            'product_price'  => number_format($product->getPrice(), 2),
+            'sources'        => MobbexHelper::getSources($product->getPrice(), MobbexHelper::getInstallments([$product])),
+            'style_settings' => [
+                'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
+                'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
+                'background'       => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+                'button_image'     => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL) ?: 'https://res.mobbex.com/images/sources/mobbex.png',
+                'button_padding'   => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
+                'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
+                'plans_theme'      => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
+            ],
+        ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
     }
