@@ -1,23 +1,39 @@
 <?php
 
-class MobbexUpdater
+namespace Mobbex;
+
+class Updater
 {
     /** @var ZipArchive */
     public $zip;
 
-    public $githubApi = 'https://api.github.com/';
+    /** Github API URL */
+    public $githubApi = 'https://api.github.com';
+
+    /** Repository URI */
+    public $repo;
 
     public $latestRelease;
 
-    public function __construct()
+    /**
+     * Constructor.
+     * 
+     * Set repository URI and initialize ZIP manager.
+     * 
+     * @param string $repo Repository URI to get updates.
+     */
+    public function __construct($repo = 'mobbexco/prestashop')
     {
-        $this->zip = new \ZipArchive();
+        $this->zip  = new \ZipArchive();
+        $this->repo = $repo;
     }
 
     /**
      * Update the module to latest version.
      * 
-     * @param Module $module
+     * @param \Module $module
+     * 
+     * @throws \PrestaShopException
      */
     public function updateVersion($module, $cleanUpdate = false)
     {
@@ -27,7 +43,7 @@ class MobbexUpdater
         $assetPath = $this->downloadAsset($release);
 
         if ($this->zip->open($assetPath) !== true)
-            throw new PrestaShopException('Error extracting Mobbex release');
+            throw new \PrestaShopException('Error extracting Mobbex release');
 
         // if it is a clean update, remove the module directory first
         if ($cleanUpdate)
@@ -58,12 +74,10 @@ class MobbexUpdater
      * Remove a directory recursively.
      * 
      * @param string $directory
-     * 
-     * @return void
      */
     public function removeDirectory($directory)
     {
-        $files = glob("{$directory}/*");
+        $files = glob("$directory/*");
 
         foreach ($files as $file)
             is_file($file) && !is_link($file) ? unlink($file) : $this->removeDirectory($file);
@@ -74,7 +88,7 @@ class MobbexUpdater
      * 
      * @return string|false
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public function getLatestRelease()
     {
@@ -84,7 +98,7 @@ class MobbexUpdater
         $curl = curl_init();
 
         curl_setopt_array($curl, [
-            CURLOPT_URL            => "{$this->githubApi}repos/mobbexco/prestashop/releases/latest",
+            CURLOPT_URL            => "$this->githubApi/repos/$this->repo/releases/latest",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_MAXREDIRS      => 10,
             CURLOPT_TIMEOUT        => 30,
@@ -99,7 +113,7 @@ class MobbexUpdater
         curl_close($curl);
 
         if ($error)
-            throw new PrestaShopException('Error getting latest release data #' . $error);
+            throw new \PrestaShopException('Error getting latest release data #' . $error);
 
         return $this->latestRelease = json_decode($response, true);
     }
@@ -111,7 +125,7 @@ class MobbexUpdater
      * 
      * @return string|false
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public function downloadAsset($release)
     {
@@ -127,7 +141,7 @@ class MobbexUpdater
         $result    = file_put_contents($assetPath, $assetContent);
 
         if (!$result || !is_file($assetPath))
-            throw new PrestaShopException('Error downloading Mobbex release');
+            throw new \PrestaShopException('Error downloading Mobbex release');
 
         return $assetPath;
     }

@@ -14,17 +14,19 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require dirname(__FILE__) . '/classes/Updater.php';
-require dirname(__FILE__) . '/classes/MobbexHelper.php';
-require dirname(__FILE__) . '/classes/MobbexTransaction.php';
-require dirname(__FILE__) . '/classes/MobbexCustomFields.php';
+require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Api.php';
+require_once dirname(__FILE__) . '/classes/Updater.php';
+require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
+require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
+require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
 
 /**
  * Main class of the module
  */
 class Mobbex extends PaymentModule
 {
-    /** @var MobbexUpdater */
+    /** @var \Mobbex\Updater */
     public $updater;
     /**
      * Constructor
@@ -65,7 +67,9 @@ class Mobbex extends PaymentModule
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
-        $this->updater = new MobbexUpdater();
+        $this->updater = new \Mobbex\Updater();
+
+        $this->addExtensionHooks();
     }
 
     /**
@@ -125,9 +129,10 @@ class Mobbex extends PaymentModule
 
         // Delete module config if option is sent
         if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true') {
-            $form_values = $this->getConfigFormValues();
-            foreach (array_keys($form_values) as $key) {
-                Configuration::deleteByName($key);
+            $form = $this->getConfigForm();
+
+            foreach ($form['form']['input'] as $input) {
+                Configuration::deleteByName($input['name']);
             }
         }
 
@@ -182,6 +187,49 @@ class Mobbex extends PaymentModule
     }
 
     /**
+     * Create own hooks to extend features in external modules.
+     */
+    public function addExtensionHooks()
+    {
+        $hooks = [
+            'actionMobbexCheckoutRequest' => [
+                'title'       => 'Create checkout request',
+                'description' => 'Modify checkout request posted data'
+            ],
+            'actionMobbexProcessPayment' => [
+                'title'       => 'Process payment data',
+                'description' => 'Add custom payment data response before display payment options'
+            ],
+            'displayMobbexConfiguration' => [
+                'title'       => 'Modify mobbex configuration form',
+                'description' => 'Modify main mobbex configuration form data'
+            ],
+            'displayMobbexProductSettings' => [
+                'title'       => 'Product admin additionals fields',
+                'description' => 'Display additional fields in mobbex configuration tab of product'
+            ],
+            'displayMobbexCategorySettings' => [
+                'title'       => 'Category admin additionals fields',
+                'description' => 'Display additional fields in mobbex configuration tab of category'
+            ],
+            'displayMobbexOrderWidget' => [
+                'title'       => 'Mobbex order widget aditional info',
+                'description' => 'Display additional info in Mobbex order widget'
+            ]
+        ];
+
+        foreach ($hooks as $name => $data) {
+            if (!Hook::getIdByName($name)) {
+                $hook              = new Hook();
+                $hook->name        = $name;
+                $hook->title       = $data['title'];
+                $hook->description = $data['description'];
+                $hook->add();
+            }
+        }
+    }
+
+    /**
      * Entry point to the module configuration page
      *
      * @see Module::getContent()
@@ -224,23 +272,27 @@ class Mobbex extends PaymentModule
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
+        $form = $this->getConfigForm(true);
+
         $helper->tpl_vars = array(
-            'fields_value' => $this->getConfigFormValues(), /* Add values for your inputs */
+            'fields_value' => $this->getConfigFormValues($form),
             'languages' => $this->context->controller->getLanguages(),
             'id_language' => $this->context->language->id,
         );
 
-        return $helper->generateForm(array($this->getConfigForm()));
+        return $helper->generateForm([$form]);
     }
 
     /**
      * Define the input of the configuration form
      *
+     * @param bool $extensionOptions Include options added by extensions.
+     * 
      * @see $this->renderForm
      *
      * @return array
      */
-    protected function getConfigForm()
+    protected function getConfigForm($extensionOptions = false)
     {
         $form = [
             'form' => [
@@ -319,6 +371,7 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('Dark Mode'),
                     ],
                 ],
+                'default' => MobbexHelper::K_DEF_THEME,
             ],
             [
                 'type' => 'color',
@@ -328,6 +381,7 @@ class Mobbex extends PaymentModule
                 'class' => 'mColorPicker',
                 'desc' => $this->l('Checkout Background Color'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_BACKGROUND,
             ],
             [
                 'type' => 'color',
@@ -337,6 +391,7 @@ class Mobbex extends PaymentModule
                 'class' => 'mColorPicker',
                 'desc' => $this->l('Checkout Primary Color'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PRIMARY,
             ],
             [
                 'type' => 'switch',
@@ -446,6 +501,7 @@ class Mobbex extends PaymentModule
                 'required' => false,
                 'desc' => $this->l('Opcional. Debe utilizar la URL completa y debe ser HTTPS.'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_IMAGE_URL,
             ],
             [
                 'type' => 'text',
@@ -454,6 +510,7 @@ class Mobbex extends PaymentModule
                 'required' => false,
                 'desc' => $this->l('Optional. Text displayed on finnancing button'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_TEXT,
             ],
             [
                 'type' => 'color',
@@ -463,6 +520,7 @@ class Mobbex extends PaymentModule
                 'class' => 'mColorPicker',
                 'desc' => $this->l('Plans Button Text Color'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_TEXT_COLOR,
             ],
             [
                 'type' => 'color',
@@ -472,6 +530,7 @@ class Mobbex extends PaymentModule
                 'class' => 'mColorPicker',
                 'desc' => $this->l('Plans Button Background Color'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_BACKGROUND,
             ],
             [
                 'type' => 'text',
@@ -480,6 +539,7 @@ class Mobbex extends PaymentModule
                 'required' => false,
                 'desc' => $this->l('Plans Button Padding'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_PADDING,
             ],
             [
                 'type' => 'text',
@@ -488,6 +548,7 @@ class Mobbex extends PaymentModule
                 'required' => false,
                 'desc' => $this->l('Plans Button Font-Size (Ej: 5px)'),
                 'tab' => 'tab_appearence',
+                'default' => MobbexHelper::K_DEF_PLANS_FONT_SIZE,
             ],
             [
                 'type' => 'radio',
@@ -508,6 +569,7 @@ class Mobbex extends PaymentModule
                         'label' => $this->l('Dark Mode'),
                     ],
                 ],
+                'default' => MobbexHelper::K_DEF_PLANS_THEME,
             ],
             // DNI
             [
@@ -631,7 +693,7 @@ class Mobbex extends PaymentModule
             ],
         ];
 
-        return $form;
+        return $extensionOptions ? MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
 
     /**
@@ -641,43 +703,16 @@ class Mobbex extends PaymentModule
      *
      * @return array
      */
-    protected function getConfigFormValues()
+    protected function getConfigFormValues($form)
     {
-        return array(
-            MobbexHelper::K_API_KEY => Configuration::get(MobbexHelper::K_API_KEY, ''),
-            MobbexHelper::K_ACCESS_TOKEN => Configuration::get(MobbexHelper::K_ACCESS_TOKEN, ''),
-            MobbexHelper::K_TEST_MODE => Configuration::get(MobbexHelper::K_TEST_MODE, false),
-            MobbexHelper::K_EMBED => Configuration::get(MobbexHelper::K_EMBED, false),
-            MobbexHelper::K_WALLET => Configuration::get(MobbexHelper::K_WALLET, false),
-            MobbexHelper::K_UNIFIED_METHOD => Configuration::get(MobbexHelper::K_UNIFIED_METHOD, false),
-            // Theme
-            MobbexHelper::K_THEME => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME),
-            MobbexHelper::K_THEME_BACKGROUND => Configuration::get(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND),
-            MobbexHelper::K_THEME_PRIMARY => Configuration::get(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY),
-            MobbexHelper::K_THEME_LOGO => Configuration::get(MobbexHelper::K_THEME_LOGO, ''),
-            MobbexHelper::K_THEME_SHOP_LOGO => Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO, ''),
-            // Reseller ID
-            MobbexHelper::K_RESELLER_ID => Configuration::get(MobbexHelper::K_RESELLER_ID, ''),
-            // Plans Widget
-            MobbexHelper::K_PLANS => Configuration::get(MobbexHelper::K_PLANS, false),
-            MobbexHelper::K_PLANS_TEXT => Configuration::get(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT),
-            MobbexHelper::K_PLANS_TEXT_COLOR => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR),
-            MobbexHelper::K_PLANS_BACKGROUND => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND),
-            MobbexHelper::K_PLANS_IMAGE_URL => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL),
-            MobbexHelper::K_PLANS_PADDING => Configuration::get(MobbexHelper::K_PLANS_PADDING, MobbexHelper::K_DEF_PLANS_PADDING),
-            MobbexHelper::K_PLANS_FONT_SIZE => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, MobbexHelper::K_DEF_PLANS_FONT_SIZE),
-            MobbexHelper::K_PLANS_THEME => Configuration::get(MobbexHelper::K_PLANS_THEME, MobbexHelper::K_DEF_PLANS_THEME),
-            // DNI Fields
-            MobbexHelper::K_OWN_DNI => Configuration::get(MobbexHelper::K_OWN_DNI, false),
-            MobbexHelper::K_CUSTOM_DNI => Configuration::get(MobbexHelper::K_CUSTOM_DNI, ''),
-            //Multicard field
-            MobbexHelper::K_MULTICARD => Configuration::get(MobbexHelper::K_MULTICARD, false),
-            //Multivendor field
-            MobbexHelper::K_MULTIVENDOR => Configuration::get(MobbexHelper::K_MULTIVENDOR, false),
-            // Debug mode
-            MobbexHelper::K_DEBUG => Configuration::get(MobbexHelper::K_DEBUG, false),
-            // IMPORTANT! Do not add Order States here. These values are used to save form fields
-        );
+        $values = [];
+
+        foreach ($form['form']['input'] as $input) {
+            $defaultValue  = isset($input['default']) ? $input['default'] : false;
+            $values[$input['name']] = isset($input['value']) ? $input['value'] : (Configuration::get($input['name']) ?: $defaultValue);
+        }
+
+        return $values;
     }
 
     public function _createTable()
@@ -860,10 +895,10 @@ class Mobbex extends PaymentModule
      */
     public function postProcess()
     {
-        $form_values = $this->getConfigFormValues();
+        $form = $this->getConfigForm(true);
 
-        foreach (array_keys($form_values) as $key) {
-            Configuration::updateValue($key, Tools::getValue($key));
+        foreach ($form['form']['input'] as $input) {
+            Configuration::updateValue($input['name'], Tools::getValue($input['name']));
         }
 
         $this->createIdentificationColumn();
@@ -981,11 +1016,12 @@ class Mobbex extends PaymentModule
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         MobbexHelper::addJavascriptData([
-            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'wallet'      => $cards ?: null,
-            'checkoutId'  => $checkoutData['id'],
-            'checkoutUrl' => $checkoutData['url'],
-            'returnUrl'   => $checkoutData['return_url']
+            'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'wallet'    => $cards ?: null,
+            'id'        => $checkoutData['id'],
+            'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
+            'url'       => $checkoutData['url'],
+            'returnUrl' => $checkoutData['return_url']
         ]);
 
         // Get payment methods from checkout
@@ -1114,11 +1150,12 @@ class Mobbex extends PaymentModule
 
         Media::addJsDef([
             'mbbx' => [
-                'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
-                'wallet'      => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
-                'checkoutId'  => $checkoutData['id'],
-                'checkoutUrl' => $checkoutData['url'],
-                'returnUrl'   => $checkoutData['return_url']
+                'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'wallet'    => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
+                'id'        => $checkoutData['id'],
+                'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
+                'url'       => $checkoutData['url'],
+                'returnUrl' => $checkoutData['return_url']
             ]
         ]);
 
@@ -1208,9 +1245,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminProductsExtra($params)
     {
+        $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+
         $this->context->smarty->assign([
-            'plans'  => MobbexHelper::getPlansFilterFields($params['id_product'] ?: Tools::getValue('id_product')),
-            'entity' => MobbexCustomFields::getCustomField($params['id_product'], 'product', 'entity') ?: ''
+            'id'     => $id,
+            'plans'  => MobbexHelper::getPlansFilterFields($id),
+            'entity' => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/product-settings.tpl');
@@ -1223,10 +1263,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
+        $id = !empty($params['id_category']) ? $params['id_category'] : Tools::getValue('id_category');
+
         $this->context->smarty->assign([
-            'plans'  => MobbexHelper::getPlansFilterFields(Tools::getValue('id_category'), 'category'),
-            'entity' => MobbexCustomFields::getCustomField(Tools::getValue('id_category'), 'category', 'entity') ?: ''
+            'id'     => $id,
+            'plans'  => MobbexHelper::getPlansFilterFields($id, 'category'),
+            'entity' => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
         ]);
+
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
     }
 
@@ -1247,6 +1291,7 @@ class Mobbex extends PaymentModule
 
         $this->context->smarty->assign(
             [
+                'id' => $trx->payment_id,
                 'data' => [
                     'payment_id'    => $trx->payment_id,
                     'risk_analysis' => $trx->risk_analysis,

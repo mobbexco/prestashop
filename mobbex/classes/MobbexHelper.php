@@ -225,6 +225,11 @@ class MobbexHelper
             'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
             'merchants'    => MobbexHelper::getMerchants($items),
         );
+        
+        $data = self::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
+
+        if (!$data)
+            return;
 
         curl_setopt_array($curl, array(
             CURLOPT_URL => "https://api.mobbex.com/p/checkout",
@@ -267,7 +272,7 @@ class MobbexHelper
         $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
 
-        return MobbexHelper::createCheckout(null, $cart, $customer);
+        return self::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: MobbexHelper::createCheckout(null, $cart, $customer);
     }
 
     /**
@@ -1032,6 +1037,42 @@ class MobbexHelper
 
             if ($entity)
                 return $entity;
+        }
+    }
+
+    /**
+     * Execute a hook and retrieve the response.
+     * 
+     * @param string $name The hook name.
+     * @param bool $filter Filter first arg in each execution.
+     * @param mixed ...$args Arguments to pass.
+     * 
+     * @return mixed Last execution response or value filtered. Null on exceptions.
+     */
+    public static function executeHook($name, $filter = false, ...$args)
+    {
+        try {
+            // Get modules registerd and first arg to return as default
+            $modules = Hook::getHookModuleExecList($name) ?: [];
+            $value   = $filter ? reset($args) : false;
+
+            foreach ($modules as $moduleData) {
+                $module = Module::getInstanceByName($moduleData['module']);
+                $method = [$module, 'hook' . ucfirst($name)];
+
+                // Only execute if is callable
+                if (!is_callable($method))
+                    continue;
+
+                $value = call_user_func_array($method, $args);
+
+                if ($filter)
+                    $args[0] = $value;
+            }
+
+            return $value;
+        } catch (\Exception $e) {
+            PrestaShopLogger::addLog('Mobbex Hook Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
         }
     }
 }
