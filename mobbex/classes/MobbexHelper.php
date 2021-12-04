@@ -195,7 +195,7 @@ class MobbexHelper
             'intent'       => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
             'wallet'       => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
             'multicard'    => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
-            // 'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
+            'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
             'merchants'    => MobbexHelper::getMerchants($items),
         );
         

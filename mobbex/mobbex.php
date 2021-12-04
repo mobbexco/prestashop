@@ -1215,7 +1215,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
-        
+
         $this->context->smarty->assign([
             'id'     => $id,
             'plans'  => MobbexHelper::getPlansFilterFields($id),
