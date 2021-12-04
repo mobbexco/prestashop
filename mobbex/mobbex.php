@@ -692,7 +692,7 @@ class Mobbex extends PaymentModule
         } else {
             $db->execute(
                 "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                    `id` INT(11) NOT NULL PRIMARY_KEY,
+                    `id` INT(11) NOT NULL PRIMARY KEY,
                     `cart_id` INT(11) NOT NULL,
                     `parent` TEXT NOT NULL,
                     `payment_id` TEXT NOT NULL,
