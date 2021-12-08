@@ -1075,4 +1075,25 @@ class MobbexHelper
             PrestaShopLogger::addLog('Mobbex Hook Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
         }
     }
+
+    public static function getConfigForm($extensionOptions = true)
+    {
+        $form = require dirname(__FILE__) . '/../config-form.php';
+
+        return $extensionOptions ? self::executeHook('displayMobbexConfiguration', true, $form) : $form;
+    }
+
+    public static function getSettings($extensionOptions = true)
+    {
+        $settings = [];
+
+        $form = self::getConfigForm($extensionOptions);
+
+        foreach ($form['form']['input'] as $input) {
+            $defaultValue  = isset($input['default']) ? $input['default'] : false;
+            $settings[$input['name']] = isset($input['value']) ? $input['value'] : (Configuration::get($input['name']) ?: $defaultValue);
+        }
+
+        return $settings;
+    }
 }
