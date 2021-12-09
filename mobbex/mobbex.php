@@ -325,20 +325,18 @@ class Mobbex extends PaymentModule
                     `risk_analysis` TEXT NOT NULL,
                     `data` TEXT NOT NULL,
                     `created` TEXT NOT NULL,
-                    `updated` TEXT NOT NULL,
-                    PRIMARY KEY (`id`)
+                    `updated` TEXT NOT NULL
                 ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
             );
         }
 
         $db->execute(
             "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 `row_id` INT(11) NOT NULL,
-				`object` TEXT NOT NULL,
-				`field_name` TEXT NOT NULL,
-				`data` TEXT NOT NULL,
-				PRIMARY KEY (`id`)
+                `object` TEXT NOT NULL,
+                `field_name` TEXT NOT NULL,
+                `data` TEXT NOT NULL
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
     }
