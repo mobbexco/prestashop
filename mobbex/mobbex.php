@@ -68,7 +68,7 @@ class Mobbex extends PaymentModule
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
-        $this->settings = MobbexHelper::getSettings();
+        $this->settings = $this->getSettings();
 
         $this->addExtensionHooks();
     }
@@ -128,7 +128,7 @@ class Mobbex extends PaymentModule
         // Delete module config if option is sent
         if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true') {
             // Only delete main module settings values
-            $settings = MobbexHelper::getSettings(false);
+            $settings = $this->getSettings(false);
 
             foreach ($settings as $name => $value)
                 Configuration::deleteByName($name);
@@ -270,7 +270,7 @@ class Mobbex extends PaymentModule
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
-        $form = MobbexHelper::getConfigForm(true);
+        $form = $this->getConfigForm(true);
 
         if (MobbexHelper::needUpgrade())
             $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
@@ -1028,5 +1028,26 @@ class Mobbex extends PaymentModule
             if ($order->getCurrentState() != Configuration::get('PS_OS_PAYMENT'))
                 return false;
         }
+    }
+
+    public function getConfigForm($extensionOptions = true)
+    {
+        $form = require dirname(__FILE__) . '/config-form.php';
+
+        return $extensionOptions ? MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
+    }
+
+    public function getSettings($extensionOptions = true)
+    {
+        $settings = [];
+
+        $form = $this->getConfigForm($extensionOptions);
+
+        foreach ($form['form']['input'] as $input) {
+            $defaultValue  = isset($input['default']) ? $input['default'] : false;
+            $settings[$input['name']] = isset($input['value']) ? $input['value'] : (Configuration::get($input['name']) ?: $defaultValue);
+        }
+
+        return $settings;
     }
 }
