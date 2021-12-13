@@ -111,8 +111,6 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
         $this->_createTable();
-
-        return parent::install() && $this->registerHooks();
     }
 
     /**
@@ -155,7 +153,7 @@ class Mobbex extends PaymentModule
             'displayHeader',
             'paymentReturn',
             'actionOrderReturn',
-            'displayAdminOrder'
+            'displayAdminOrder',
         ];
 
         $ps16Hooks = [
@@ -171,6 +169,7 @@ class Mobbex extends PaymentModule
             'additionalCustomerFormFields',
             'actionObjectCustomerUpdateAfter',
             'actionObjectCustomerAddAfter',
+            'displayProductPriceBlock'
         ];
 
         // Merge current version hooks with common hooks
@@ -640,6 +639,9 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayProductAdditionalInfo()
     {
+        if (_PS_VERSION_ >= MobbexHelper::PS_17)
+            return;
+
         $product = new Product(Tools::getValue('id_product'));
 
         if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
@@ -658,6 +660,50 @@ class Mobbex extends PaymentModule
                 'plans_theme'      => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
             ],
         ]);
+
+        return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+    }
+
+    public function hookDisplayProductPriceBlock($params)
+    {
+        if (_PS_VERSION_ < MobbexHelper::PS_17)
+            return;
+
+        if ($params['type'] !== 'after_price') {
+            return;
+        }
+
+        $image_url = 'https://res.mobbex.com/images/sources/mobbex.png';
+        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
+            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
+        }
+
+        $product = $params['product'];
+        $total = $product['price_amount'];
+
+        //Get product and category plans
+        $active_plans = MobbexHelper::getActivePlans($product['id']);
+        $inactive_plans = MobbexHelper::getInactivePlans($product['id']);
+
+        //get sources
+        $sources = MobbexHelper::getSources($total, $inactive_plans, $active_plans);
+
+        $this->context->smarty->assign(
+            [
+                'product_price' => number_format($total, 2),
+                'sources' => $sources,
+                'style_settings' =>
+                [
+                    'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
+                    'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
+                    'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
+                    'button_image' => $image_url,
+                    'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
+                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
+                    'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
+                ],
+            ]
+        );
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
     }
