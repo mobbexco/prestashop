@@ -895,23 +895,29 @@ class MobbexHelper
     /**
      * Create an order from Cart.
      * 
-     * @param string|int $cartId
-     * @param array $transData
+     * @param int|string $cartId
+     * @param int|string $orderStatus
+     * @param string $methodName
      * @param PaymentModuleCore $module
+     * @param bool $die
+     * 
+     * @return Order|null
      */
-    public static function createOrder($cartId, $data, $module)
+    public static function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
     {
         try {
             $cart = new Cart($cartId);
 
             $module->validateOrder(
                 $cartId,
-                $data['order_status'],
-                (float) $cart->getOrderTotal(true, Cart::BOTH),
-                $data['source_name']
+                $orderStatus,
+                (float) $cart->getOrderTotal(),
+                $methodName
             );
+
+            return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
-            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'data'), true, true);
+            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'), true, $die);
         }
     }
 

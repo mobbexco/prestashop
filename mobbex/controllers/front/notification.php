@@ -97,7 +97,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 }
             } else {
                 // Create and validate Order
-                MobbexHelper::createOrder($cartId, $data, $this->module);
+                MobbexHelper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
             }
         }
 
