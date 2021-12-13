@@ -1,36 +1,74 @@
 (function (window, $) {
-/**
- * Get embed checkout options.
- * 
- * @returns {object}
- */
-function getOptions() {
-  let options = {
-    id: mbbx.id,
-    type: mbbx.sid ? 'subscriber_source' : 'checkout',
-    paymentMethod: mbbx.paymentMethod || null,
-    onResult: (data) => {
-      var status = data.status.code;
+  /**
+   * Open the Mobbex checkout modal.
+   */
+  function openCheckoutModal() {
+    let options = {
+      id: mbbx.id,
+      type: mbbx.sid ? 'subscriber_source' : 'checkout',
+      paymentMethod: mbbx.paymentMethod || null,
+      onResult: (data) => {
+        var status = data.status.code;
 
-      if (status > 1 && status < 400) {
-        window.top.location.href = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
-      } else {
+        if (status > 1 && status < 400) {
+          window.top.location.href = mbbx.returnUrl + '&status=' + status + '&transactionId=' + data.id;
+        } else {
+          window.top.location.reload();
+        }
+      },
+      onClose: (cancelled) => {
+        // Only if cancelled
+        if (cancelled === true) {
+          window.top.location.reload();
+        }
+      }
+    };
+
+    if (mbbx.sid)
+      options.sid = mbbx.sid;
+
+    let mobbexEmbed = window.MobbexEmbed.init(options);
+    mobbexEmbed.open();
+  }
+
+  /**
+   * Redirect to Mobbex checkout page.
+   */
+  function redirectToCheckout() {
+    window.top.location.href = mbbx.url + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
+  }
+
+  /**
+   * Process the order if needed.
+   * 
+   * @param {CallableFunction} callback
+   */
+  function processOrder(callback) {
+    if (!mbbx.orderUrl)
+      return callback();
+
+    lockForm();
+    $.ajax({
+      dataType: 'json',
+      method: 'POST',
+      url: mbbx.orderUrl,
+
+      success: (response) => {
+          unlockForm();
+
+          if (response.result) {
+            callback();
+          } else if (response.redirect) {
+            window.top.location = response.redirect;
+          } else {
+            window.top.location.reload();
+          }
+      },
+      error: () => {
         window.top.location.reload();
       }
-    },
-    onClose: (cancelled) => {
-      // Only if cancelled
-      if (cancelled === true) {
-        window.top.location.reload();
-      }
-    }
-  };
-
-  if (mbbx.sid)
-    options.sid = mbbx.sid;
-
-  return options;
-}
+    });
+  }
 
 /**
  * Execute wallet payment.
@@ -152,14 +190,9 @@ function activeCard(cardId) {
  */
 function executePayment() {
   if (mbbx.wallet && !isNewCard()) {
-      executeWallet(mbbx.returnUrl);
+    processOrder(() => executeWallet(mbbx.returnUrl));
   } else {
-    if (mbbx.embed) {
-      var mbbxButton = window.MobbexEmbed.init(getOptions());
-      mbbxButton.open();
-    } else {
-      window.top.location.href = mbbx.url + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
-    }
+    processOrder(() => mbbx.embed ? openCheckoutModal() : redirectToCheckout());
   }
   return false;
 };

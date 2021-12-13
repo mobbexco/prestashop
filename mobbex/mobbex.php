@@ -40,7 +40,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect'];
+        $this->controllers = ['notification', 'redirect', 'order'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -584,6 +584,7 @@ class Mobbex extends PaymentModule
 
         MobbexHelper::addJavascriptData([
             'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
             'wallet'    => $cards ?: null,
             'id'        => $checkoutData['id'],
             'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
@@ -718,6 +719,7 @@ class Mobbex extends PaymentModule
         Media::addJsDef([
             'mbbx' => [
                 'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
                 'wallet'    => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
                 'id'        => $checkoutData['id'],
                 'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
