@@ -27,7 +27,7 @@ class Api
     {
         $this->api_key      = $api_key      ?: \Configuration::get(\MobbexHelper::K_API_KEY);
         $this->access_token = $access_token ?: \Configuration::get(\MobbexHelper::K_ACCESS_TOKEN);
-        $this->ready        = !empty($api_key) && !empty($access_token);
+        $this->ready        = $this->api_key && $this->access_token;
     }
 
     /**
@@ -42,7 +42,7 @@ class Api
     public function request($data)
     {
         if (!$this->ready)
-            return false;
+            throw new \Mobbex\Exception('Mobbex request error. API class not ready', 0, $data);
 
         $curl = curl_init();
 
