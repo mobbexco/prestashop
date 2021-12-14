@@ -681,6 +681,9 @@ class Mobbex extends PaymentModule
 
         $product = $params['product'];
         $total = $product['price_amount'];
+                                                               
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
+           return;
 
         //Get product and category plans
         $active_plans = MobbexHelper::getActivePlans($product['id']);
