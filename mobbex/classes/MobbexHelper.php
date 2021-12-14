@@ -44,6 +44,7 @@ class MobbexHelper
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
     const K_DEBUG = 'MOBBEX_DEBUG';
+    const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
@@ -894,23 +895,29 @@ class MobbexHelper
     /**
      * Create an order from Cart.
      * 
-     * @param string|int $cartId
-     * @param array $transData
+     * @param int|string $cartId
+     * @param int|string $orderStatus
+     * @param string $methodName
      * @param PaymentModuleCore $module
+     * @param bool $die
+     * 
+     * @return Order|null
      */
-    public static function createOrder($cartId, $data, $module)
+    public static function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
     {
         try {
             $cart = new Cart($cartId);
 
             $module->validateOrder(
                 $cartId,
-                $data['order_status'],
-                (float) $cart->getOrderTotal(true, Cart::BOTH),
-                $data['source_name']
+                $orderStatus,
+                (float) $cart->getOrderTotal(),
+                $methodName
             );
+
+            return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
-            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'data'), true, true);
+            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'), true, $die);
         }
     }
 
@@ -1074,5 +1081,59 @@ class MobbexHelper
         } catch (\Exception $e) {
             PrestaShopLogger::addLog('Mobbex Hook Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
         }
+    }
+
+    /**
+     * Create an order from current Cart and recreate cart if it fail.
+     * 
+     * @param \Module $module
+     * 
+     * @return bool Order creation result.
+     */
+    public static function processOrder($module)
+    {
+        $cart = Context::getContext()->cart;
+
+        if (!Validate::isLoadedObject($cart)) {
+            self::log('Error Loading Cart On Order Process', $_REQUEST, true);
+
+            return false;
+        }
+
+        // Create order if not exists
+        $order = self::getOrderByCartId($cart->id, true) ?: MobbexHelper::createOrder($cart->id, \Configuration::get(MobbexHelper::K_OS_PENDING), 'Mobbex', $module, false);
+
+        // Validate that order looks good
+        if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
+            self::log('Error Creating/Loading Order On Order Process', $cart->id, true);
+            self::restoreCart($cart);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Duplicate a Cart instance and save it to context.
+     * 
+     * @param \Cart $cart
+     * 
+     * @return \Cart|null New Cart.
+     */
+    public static function restoreCart($cart)
+    {
+        $result = $cart->duplicate();
+
+        if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
+            return \MobbexHelper::log('Error Creating/Loading Order On Order Process', isset($cart->id) ? $cart->id : 0 , true);
+
+        \Context::getContext()->cookie->id_cart = $result['cart']->id;
+        $context = \Context::getContext();
+        $context->cart = $result['cart'];
+        \CartRule::autoAddToCart($context);
+        \Context::getContext()->cookie->write();
+
+        return $result['cart'];
     }
 }
