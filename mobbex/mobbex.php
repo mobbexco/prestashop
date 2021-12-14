@@ -882,7 +882,7 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
-        $id = !empty($params['id_category']) ? $params['id_category'] : Tools::getValue('id_category');
+        $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
 
         $this->context->smarty->assign([
             'id'     => $id,
