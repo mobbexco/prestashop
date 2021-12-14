@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.6.5
+ * @version 2.7.0
  * @see     PaymentModuleCore
  */
 
@@ -69,8 +69,6 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
-
-        $this->addExtensionHooks();
     }
 
     /**
@@ -111,7 +109,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
         $this->_createTable();
-        return parent::install() && $this->registerHooks();
+        return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
     /**
