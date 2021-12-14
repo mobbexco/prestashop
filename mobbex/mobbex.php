@@ -69,8 +69,6 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
-
-        $this->addExtensionHooks();
     }
 
     /**
@@ -111,7 +109,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
         $this->_createTable();
-        return parent::install() && $this->registerHooks();
+        return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
     /**
