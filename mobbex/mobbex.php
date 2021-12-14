@@ -671,7 +671,7 @@ class Mobbex extends PaymentModule
         if (_PS_VERSION_ < MobbexHelper::PS_17)
             return;
 
-        if ($params['type'] !== 'after_price' || empty($params['product'))) {
+        if ($params['type'] !== 'after_price' || empty($params['product'])) {
             return;
         }
 
