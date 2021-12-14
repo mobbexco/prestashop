@@ -111,6 +111,7 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
 
         $this->_createTable();
+        return parent::install() && $this->registerHooks();
     }
 
     /**
