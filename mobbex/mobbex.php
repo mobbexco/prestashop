@@ -184,6 +184,8 @@ class Mobbex extends PaymentModule
 
     /**
      * Create own hooks to extend features in external modules.
+     * 
+     * @return bool Result of addition.
      */
     public function addExtensionHooks()
     {
@@ -220,9 +222,13 @@ class Mobbex extends PaymentModule
                 $hook->name        = $name;
                 $hook->title       = $data['title'];
                 $hook->description = $data['description'];
-                $hook->add();
+
+                if (!$hook->add())
+                    return false;
             }
         }
+
+        return true;
     }
 
     /**
