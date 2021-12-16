@@ -661,8 +661,8 @@ class Mobbex extends PaymentModule
             return;
         }
 
-        $id = $params['product']['id'];
-        $total = $product['price_amount'];
+        $id    = $params['product']['id'];
+        $total = $params['product']['price_amount'];
 
         return $this->displayPlansWidget($id, $total);
     }
