@@ -535,7 +535,7 @@ class MobbexHelper
     /**
      * Get sources with common and advanced plans from mobbex.
      * 
-     * @param int|null $total
+     * @param int|float|null $total
      * @param array $installments
      * 
      * @return array

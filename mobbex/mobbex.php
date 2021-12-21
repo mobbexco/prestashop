@@ -303,7 +303,7 @@ class Mobbex extends PaymentModule
         } else {
             $db->execute(
                 "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                    `id` INT(11) NOT NULL PRIMARY KEY,
+                    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `cart_id` INT(11) NOT NULL,
                     `parent` TEXT NOT NULL,
                     `payment_id` TEXT NOT NULL,
@@ -670,13 +670,13 @@ class Mobbex extends PaymentModule
     public function displayPlansWidget($id, $total = null)
     {
         $product = new Product($id);
-        $price   = $total ?: number_format($product->getPrice(), 2);
+        $price   = (float) ($total ?: $product->getPrice());
 
         if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
 
         $this->context->smarty->assign([
-            'product_price'  => $price,
+            'product_price'  => number_format($price, 2),
             'sources'        => MobbexHelper::getSources($price, MobbexHelper::getInstallments([$product])),
             'style_settings' => [
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
