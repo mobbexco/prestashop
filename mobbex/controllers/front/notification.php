@@ -89,15 +89,17 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
             // If Order exists
             if ($order) {
-                // If it was not updated recently
-                if ($order->getCurrentState() != $data['order_status']) {
-                    // Update order status
+                if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
+                    $order->payment = $data['source_name'];
+
+                // Update order status onlu if it was not updated recently
+                if ($order->getCurrentState() != $data['order_status'])
                     $order->setCurrentState($data['order_status']);
-                    $order->save();
-                }
+
+                $order->update();
             } else {
                 // Create and validate Order
-                MobbexHelper::createOrder($cartId, $data, $this->module);
+                MobbexHelper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
             }
         }
 

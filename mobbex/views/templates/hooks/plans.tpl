@@ -176,6 +176,12 @@
                 color: rgb(226, 226, 226);
             }
 
+            /* Normalize styles */
+            .mobbex-plans div {
+                margin: 0;
+                color: rgb(35, 35, 35);
+                font-size: 15px;
+            }
         </style>
     {/literal}
 

@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.6.5
+ * @version 2.7.0
  * @see     PaymentModuleCore
  */
 
@@ -40,7 +40,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect'];
+        $this->controllers = ['notification', 'redirect', 'order', 'sources'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -69,8 +69,6 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
-
-        $this->addExtensionHooks();
     }
 
     /**
@@ -109,8 +107,10 @@ class Mobbex extends PaymentModule
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
+        MobbexHelper::updateMobbexSources();
 
         $this->_createTable();
+        return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
     /**
@@ -185,6 +185,8 @@ class Mobbex extends PaymentModule
 
     /**
      * Create own hooks to extend features in external modules.
+     * 
+     * @return bool Result of addition.
      */
     public function addExtensionHooks()
     {
@@ -221,9 +223,13 @@ class Mobbex extends PaymentModule
                 $hook->name        = $name;
                 $hook->title       = $data['title'];
                 $hook->description = $data['description'];
-                $hook->add();
+
+                if (!$hook->add())
+                    return false;
             }
         }
+
+        return true;
     }
 
     /**
@@ -298,7 +304,7 @@ class Mobbex extends PaymentModule
         } else {
             $db->execute(
                 "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                    `id` INT(11) NOT NULL PRIMARY KEY,
+                    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
                     `cart_id` INT(11) NOT NULL,
                     `parent` TEXT NOT NULL,
                     `payment_id` TEXT NOT NULL,
@@ -338,6 +344,7 @@ class Mobbex extends PaymentModule
                 `data` TEXT NOT NULL
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
     }
 
     public function _alterTable()
@@ -583,6 +590,7 @@ class Mobbex extends PaymentModule
 
         MobbexHelper::addJavascriptData([
             'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
             'wallet'    => $cards ?: null,
             'id'        => $checkoutData['id'],
             'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
@@ -641,15 +649,37 @@ class Mobbex extends PaymentModule
     {
         if (_PS_VERSION_ >= MobbexHelper::PS_17)
             return;
+        $id = Tools::getValue('id_product');
+        
+        return $this->displayPlansWidget($id);
+    }
 
-        $product = new Product(Tools::getValue('id_product'));
+    public function hookDisplayProductPriceBlock($params)
+    {
+        if (_PS_VERSION_ < MobbexHelper::PS_17)
+            return;
+
+        if ($params['type'] !== 'after_price' || empty($params['product'])) {
+            return;
+        }
+
+        $id    = $params['product']['id'];
+        $total = $params['product']['price_amount'];
+
+        return $this->displayPlansWidget($id, $total);
+    }
+
+    public function displayPlansWidget($id, $total = null)
+    {
+        $product = new Product($id);
+        $price   = $total ?: number_format($product->getPrice(), 2);
 
         if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
 
         $this->context->smarty->assign([
-            'product_price'  => number_format($product->getPrice(), 2),
-            'sources'        => MobbexHelper::getSources($product->getPrice(), MobbexHelper::getInstallments([$product])),
+            'product_price'  => number_format($price, 2),
+            'sources'        => MobbexHelper::getSources($price, MobbexHelper::getInstallments([$product])),
             'style_settings' => [
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
                 'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
@@ -660,50 +690,6 @@ class Mobbex extends PaymentModule
                 'plans_theme'      => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
             ],
         ]);
-
-        return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
-    }
-
-    public function hookDisplayProductPriceBlock($params)
-    {
-        if (_PS_VERSION_ < MobbexHelper::PS_17)
-            return;
-
-        if ($params['type'] !== 'after_price') {
-            return;
-        }
-
-        $image_url = 'https://res.mobbex.com/images/sources/mobbex.png';
-        if (Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL)) {
-            $image_url = trim(Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL));
-        }
-
-        $product = $params['product'];
-        $total = $product['price_amount'];
-
-        //Get product and category plans
-        $active_plans = MobbexHelper::getActivePlans($product['id']);
-        $inactive_plans = MobbexHelper::getInactivePlans($product['id']);
-
-        //get sources
-        $sources = MobbexHelper::getSources($total, $inactive_plans, $active_plans);
-
-        $this->context->smarty->assign(
-            [
-                'product_price' => number_format($total, 2),
-                'sources' => $sources,
-                'style_settings' =>
-                [
-                    'text' => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
-                    'text_color' => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
-                    'background' => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
-                    'button_image' => $image_url,
-                    'button_padding' => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                    'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
-                    'plans_theme' => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
-                ],
-            ]
-        );
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
     }
@@ -764,6 +750,7 @@ class Mobbex extends PaymentModule
         Media::addJsDef([
             'mbbx' => [
                 'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
                 'wallet'    => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
                 'id'        => $checkoutData['id'],
                 'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
@@ -858,12 +845,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminProductsExtra($params)
     {
-        $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+        $id   = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+        $hash = md5(MobbexHelper::K_API_KEY . '!' . MobbexHelper::K_ACCESS_TOKEN);
 
         $this->context->smarty->assign([
-            'id'     => $id,
-            'plans'  => MobbexHelper::getPlansFilterFields($id),
-            'entity' => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: ''
+            'id'             => $id,
+            'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
+            'plans'          => MobbexHelper::getPlansFilterFields($id),
+            'entity'         => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/product-settings.tpl');
@@ -876,12 +865,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
-        $id = !empty($params['id_category']) ? $params['id_category'] : Tools::getValue('id_category');
-
+        $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
+        $hash = md5(MobbexHelper::K_API_KEY . '!' . MobbexHelper::K_ACCESS_TOKEN);
+        
         $this->context->smarty->assign([
-            'id'     => $id,
-            'plans'  => MobbexHelper::getPlansFilterFields($id, 'category'),
-            'entity' => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
+            'id'             => $id,
+            'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
+            'plans'          => MobbexHelper::getPlansFilterFields($id, 'category'),
+            'entity'         => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');

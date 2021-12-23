@@ -385,6 +385,27 @@ return [
                     ],
                 ],
             ],
+            [
+                'type'     => 'switch',
+                'label'    => $this->l('Modo de pedidos priorizados'),
+                'desc'     => $this->l('Los pedidos se crearán al momento de comenzar el pago con Mobbex en lugar de esperar la llegada del webhook.'),
+                'name'     => MobbexHelper::K_ORDER_FIRST,
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_order_first',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id'    => 'active_off_order_first',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
         ]
     ]
 ];
