@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
@@ -69,6 +70,9 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
+
+        if (!defined('mobbexTasksExecuted'))
+            MobbexTask::executePendingTasks() && define('mobbexTasksExecuted', true);
     }
 
     /**
@@ -343,6 +347,23 @@ class Mobbex extends PaymentModule
                 `data` TEXT NOT NULL
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
+        $db->execute(
+            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_task` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `name` TEXT NOT NULL,
+                `args` TEXT NOT NULL,
+                `interval` INT(11) NOT NULL,
+                `period` TEXT NOT NULL,
+                `limit` INT(11) NOT NULL,
+                `executions` INT(11) NOT NULL,
+                `start_date` DATETIME NOT NULL,
+                `last_execution` DATETIME NOT NULL,
+                `next_execution` DATETIME NOT NULL
+            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+        );
+
+        return true;
     }
 
     public function _alterTable()

@@ -1,8 +1,6 @@
 <?php
 
-namespace Mobbex;
-
-class Task extends \ObjectModel
+class MobbexTask extends \ObjectModel
 {
     public $id;
     public $name;
@@ -94,7 +92,9 @@ class Task extends \ObjectModel
      */
     public function add($autoDate = true, $nullValues = false)
     {
-        // Also, create hook if not exists
+        $result = true;
+
+        // Create hook if not exists
         if (!\Hook::getIdByName($this->name)) {
             $hook       = new \Hook();
             $hook->name = $this->name;
@@ -102,6 +102,9 @@ class Task extends \ObjectModel
             if (!$hook->add())
                 $result = false;
         }
+
+        // Set first execution date
+        $this->next_execution = date('Y-m-d H:i:s', strtotime("$this->interval $this->period"));
 
         return parent::add($autoDate, $nullValues) && $result;
     }
@@ -115,8 +118,10 @@ class Task extends \ObjectModel
     {
         $result = \MobbexHelper::executeHook($this->name, false, ...json_decode($this->args, true));
 
-        if (!$result)
+        if (!$result) {
+            \MobbexHelper::log('Error Execution Task #' . $this->id, $this->name . ' ' . $this->args, true);
             return false;
+        }
 
         $this->executions += 1;
 
@@ -125,10 +130,10 @@ class Task extends \ObjectModel
             return $this->delete();
 
         // Update execution dates
-        $this->last_execution = date('Y-m-d'); // TODO: use date('Y-m-d H:i:s')
-        $this->next_execution = strtotime("$this->last_execution + $this->interval $this->period");
+        $this->last_execution = date('Y-m-d H:i:s');
+        $this->next_execution = date('Y-m-d H:i:s', strtotime("$this->last_execution + $this->interval $this->period"));
 
-        if (!$this->start_date)
+        if (!$this->start_date || strtotime($this->start_date) < 0)
             $this->start_date = $this->last_execution;
 
         $this->save();
@@ -145,10 +150,10 @@ class Task extends \ObjectModel
      */
     public static function getByName($name)
     {
-        $tasks = new \PrestaShopCollection('Mobbex\\Task');
+        $tasks = new \PrestaShopCollection('MobbexTask');
         $tasks->where('name', '=', $name);
 
-        return $tasks ?: [];
+        return $tasks->getResults() ?: [];
     }
 
     /**
@@ -158,10 +163,10 @@ class Task extends \ObjectModel
      */
     public static function getPendingTasks()
     {
-        $tasks = new PrestaShopCollection('Mobbex\\Task');
-        $tasks->where('next_execution', '<=', date('Y-m-d'));
+        $tasks = new \PrestaShopCollection('MobbexTask');
+        $tasks->sqlWhere("DATE(`next_execution`) <= '" . date('Y-m-d') . "'");
 
-        return $tasks ?: [];
+        return $tasks->getResults() ?: [];
     }
 
     /**
@@ -175,7 +180,7 @@ class Task extends \ObjectModel
         $result = true;
 
         foreach ($tasks as $task)
-            $result = $result && $task->execute();
+            $result = $task->execute() && $result;
 
         return $result;
     }
