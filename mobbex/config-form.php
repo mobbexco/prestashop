@@ -406,6 +406,27 @@ return [
                     ],
                 ],
             ],
+            [
+                'type'     => 'switch',
+                'label'    => $this->l('Usar CRON'),
+                'desc'     => $this->l('Utilizar CRON para el manejo de tareas programadas. Recuerde configurarlo para que acceda al siguiente enlace diariamente: ' . \MobbexHelper::getModuleUrl('task')),
+                'name'     => 'MOBBEX_CRON_MODE',
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_cron_mode',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id'    => 'active_off_cron_mode',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
         ]
     ]
 ];

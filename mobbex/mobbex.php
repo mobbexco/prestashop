@@ -41,7 +41,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect', 'order'];
+        $this->controllers = ['notification', 'redirect', 'order', 'task'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -71,7 +71,8 @@ class Mobbex extends PaymentModule
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
 
-        if (!defined('mobbexTasksExecuted'))
+        // Execute pending tasks if cron is disabled
+        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE'))
             MobbexTask::executePendingTasks() && define('mobbexTasksExecuted', true);
     }
 
