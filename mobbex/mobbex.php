@@ -72,8 +72,8 @@ class Mobbex extends PaymentModule
         $this->settings = $this->getSettings();
 
         // Execute pending tasks if cron is disabled
-        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE'))
-            MobbexTask::executePendingTasks() && define('mobbexTasksExecuted', true);
+        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE') && !MobbexHelper::needUpgrade())
+            define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
     }
 
     /**

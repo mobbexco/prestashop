@@ -1118,7 +1118,7 @@ class MobbexHelper
                 $task = new MobbexTask(
                     null,
                     'actionMobbexExpireOrder',
-                    3,
+                    \Configuration::get('MOBBEX_EXPIRATION_INTERVAL') ?: 3,
                     'day',
                     1,
                     $order->id
