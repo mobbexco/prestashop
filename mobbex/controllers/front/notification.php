@@ -95,6 +95,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 // Update order status only if it was not updated recently
                 if ($order->getCurrentState() != $data['order_status']) {
                     $order->setCurrentState($data['order_status']);
+                    $this->removeExpirationTasks($order);
                     $this->updateOrderPayment($order, $data);
                 }
 
@@ -137,5 +138,45 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } catch (\Exception $e) {
             MobbexHelper::log('Error Updating Order Payment on Webhook Process: ' . $e->getMessage(), $order->id, true);
         }
+    }
+
+    /**
+     * Remove expiration tasks from an order.
+     * 
+     * @param Order $order
+     * 
+     * @return bool Result of execution.
+     */
+    public function removeExpirationTasks($order)
+    {
+        if (MobbexHelper::needUpgrade())
+            return false;
+
+        $tasks = $this->getExpirationTasks($order);
+
+        foreach ($tasks as $task) {
+            if (!$task->delete()) {
+                MobbexHelper::log('Error removing order expiration task on Webhook', $order->id, true);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get all expiration tasks from an order.
+     * 
+     * @param Order $order
+     * 
+     * @return array
+     */
+    public function getExpirationTasks($order)
+    {
+        $tasks = new \PrestaShopCollection('MobbexTask');
+        $tasks->where('name', '=', 'actionMobbexExpireOrder');
+        $tasks->where('args', '=', "[$order->id]");
+
+        return $tasks->getResults() ?: [];
     }
 }

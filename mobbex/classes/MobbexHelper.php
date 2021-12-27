@@ -1100,8 +1100,32 @@ class MobbexHelper
             return false;
         }
 
+        // First, try to get from db
+        $order = self::getOrderByCartId($cart->id, true);
+
         // Create order if not exists
-        $order = self::getOrderByCartId($cart->id, true) ?: MobbexHelper::createOrder($cart->id, \Configuration::get(MobbexHelper::K_OS_PENDING), 'Mobbex', $module, false);
+        if (!$order) {
+            $order = self::createOrder(
+                $cart->id,
+                \Configuration::get(self::K_OS_PENDING),
+                'Mobbex',
+                $module,
+                false
+            );
+
+            // Add order expiration task
+            if (!self::needUpgrade()) {
+                $task = new MobbexTask(
+                    null,
+                    'actionMobbexExpireOrder',
+                    3,
+                    'day',
+                    1,
+                    $order->id
+                );
+                $task->add();
+            }
+        }
 
         // Validate that order looks good
         if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {

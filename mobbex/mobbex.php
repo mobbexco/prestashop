@@ -158,6 +158,7 @@ class Mobbex extends PaymentModule
             'paymentReturn',
             'actionOrderReturn',
             'displayAdminOrder',
+            'actionMobbexExpireOrder',
         ];
 
         $ps16Hooks = [
@@ -1102,5 +1103,19 @@ class Mobbex extends PaymentModule
         }
 
         return $settings;
+    }
+
+    public function hookActionMobbexExpireOrder($orderId)
+    {
+        $order = new Order($orderId);
+
+        // Exit if order cannot be loaded correctly
+        if (!$order)
+            return false;
+
+        if ($order->getCurrentState() == Configuration::get(MobbexHelper::K_OS_PENDING))
+            $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+
+        return true;
     }
 }
