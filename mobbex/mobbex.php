@@ -347,7 +347,15 @@ class Mobbex extends PaymentModule
 
     public function _alterTable()
     {
-        DB::getInstance()->execute(
+        $db = DB::getInstance();
+
+        // Check if table has already been modified
+        $db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';");
+
+        if ($db->numRows())
+            return true;
+
+        $db->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
                 DROP PRIMARY KEY,
                 ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -377,6 +385,8 @@ class Mobbex extends PaymentModule
                 ADD `updated` TEXT NOT NULL,
             ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
+        return true;
     }
 
     private function _createStates()

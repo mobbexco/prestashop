@@ -116,7 +116,8 @@ class MobbexTransaction extends ObjectModel
 
         if($parent) {
             $trx = Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id=' . $cart_id . ' and parent=1');
-            $trx = new MobbexTransaction($trx[0]['id']);
+            $id  = !empty($trx[0]['id']) ? $trx[0]['id'] : null;
+            $trx = new MobbexTransaction($id);
             return $trx; 
         }
         
