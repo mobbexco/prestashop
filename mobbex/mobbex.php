@@ -276,11 +276,15 @@ class Mobbex extends PaymentModule
 
         $form = $this->getConfigForm(true);
 
-        if (MobbexHelper::needUpgrade())
-            $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
-
-        if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
-            $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
+        try {
+            if (MobbexHelper::needUpgrade())
+                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
+    
+            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
+        } catch (\Exception $e) {
+            MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+        }
 
         $helper->tpl_vars = array(
             'fields_value' => $this->settings,
@@ -1046,9 +1050,13 @@ class Mobbex extends PaymentModule
         if ($currentPage == 'AdminModules' && Tools::getValue('configure') == 'mobbex') {
             MobbexHelper::addAsset("$mediaPath/views/js/mobbex-config.js");
 
-            // If plugin has updates, add update data to javascript
-            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
-                MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
+            try {
+                // If plugin has updates, add update data to javascript
+                if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                    MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
+            } catch (\Exception $e) {
+                MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+            }
         }
     }
 
