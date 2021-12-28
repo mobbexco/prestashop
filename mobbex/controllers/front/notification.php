@@ -122,11 +122,13 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
      */
     public function updateOrderPayment($order, $data)
     {
-        if (!$order->hasPayments())
-            return false;
-
         try {
-            $payment                  = $order->getOrderPaymentCollection()[0];
+            $payments = $order->getOrderPaymentCollection() ?: [];
+            $payment  = isset($payments[0]) ? $payments[0] : false;
+
+            if (!$payment)
+                return false;
+
             $payment->payment_method  = $data['source_name'];
             $payment->transaction_id  = $data['payment_id'] ?: null;
             $payment->card_number     = $data['source_number'] ?: null;
