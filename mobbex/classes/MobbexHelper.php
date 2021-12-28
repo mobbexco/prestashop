@@ -176,9 +176,9 @@ class MobbexHelper
             $image = Image::getCover($product['id_product']);
 
             $prd = new Product($product['id_product']);
-            if ($prd->hasAttributes()) {
+            if ($prd->hasAttributes() && !empty($product['id_product_attribute'])) {
                 $images = $prd->getCombinationImages(Context::getContext()->language->id);
-                $image = $images[$product['id_product_attribute']][0];
+                $image = !empty($images[$product['id_product_attribute']][0]) ? $images[$product['id_product_attribute']][0] : $image;
             }
 
             $link = new Link;
