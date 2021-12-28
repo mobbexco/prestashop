@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
@@ -40,7 +41,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect', 'order'];
+        $this->controllers = ['notification', 'redirect', 'order', 'task'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -69,6 +70,10 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
+
+        // Execute pending tasks if cron is disabled
+        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE') && !MobbexHelper::needUpgrade())
+            define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
     }
 
     /**
@@ -153,6 +158,7 @@ class Mobbex extends PaymentModule
             'paymentReturn',
             'actionOrderReturn',
             'displayAdminOrder',
+            'actionMobbexExpireOrder',
         ];
 
         $ps16Hooks = [
@@ -347,6 +353,23 @@ class Mobbex extends PaymentModule
                 `data` TEXT NOT NULL
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
+        $db->execute(
+            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_task` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `name` TEXT NOT NULL,
+                `args` TEXT NOT NULL,
+                `interval` INT(11) NOT NULL,
+                `period` TEXT NOT NULL,
+                `limit` INT(11) NOT NULL,
+                `executions` INT(11) NOT NULL,
+                `start_date` DATETIME NOT NULL,
+                `last_execution` DATETIME NOT NULL,
+                `next_execution` DATETIME NOT NULL
+            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+        );
+
+        return true;
     }
 
     public function _alterTable()
@@ -1098,5 +1121,19 @@ class Mobbex extends PaymentModule
         }
 
         return $settings;
+    }
+
+    public function hookActionMobbexExpireOrder($orderId)
+    {
+        $order = new Order($orderId);
+
+        // Exit if order cannot be loaded correctly
+        if (!$order)
+            return false;
+
+        if ($order->getCurrentState() == Configuration::get(MobbexHelper::K_OS_PENDING))
+            $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+
+        return true;
     }
 }
