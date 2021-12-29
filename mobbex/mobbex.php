@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.7.0
+ * @version 2.7.2
  * @see     PaymentModuleCore
  */
 
@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
@@ -40,7 +41,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect', 'order', 'sources'];
+        $this->controllers = ['notification', 'redirect', 'order', 'task', 'sources'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -69,6 +70,10 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
         $this->updater = new \Mobbex\Updater();
         $this->settings = $this->getSettings();
+
+        // Execute pending tasks if cron is disabled
+        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE') && !MobbexHelper::needUpgrade())
+            define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
     }
 
     /**
@@ -154,6 +159,7 @@ class Mobbex extends PaymentModule
             'paymentReturn',
             'actionOrderReturn',
             'displayAdminOrder',
+            'actionMobbexExpireOrder',
         ];
 
         $ps16Hooks = [
@@ -277,11 +283,15 @@ class Mobbex extends PaymentModule
 
         $form = $this->getConfigForm(true);
 
-        if (MobbexHelper::needUpgrade())
-            $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
-
-        if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
-            $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
+        try {
+            if (MobbexHelper::needUpgrade())
+                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
+    
+            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
+        } catch (\Exception $e) {
+            MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+        }
 
         $helper->tpl_vars = array(
             'fields_value' => $this->settings,
@@ -345,11 +355,35 @@ class Mobbex extends PaymentModule
             ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
 
+        $db->execute(
+            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_task` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `name` TEXT NOT NULL,
+                `args` TEXT NOT NULL,
+                `interval` INT(11) NOT NULL,
+                `period` TEXT NOT NULL,
+                `limit` INT(11) NOT NULL,
+                `executions` INT(11) NOT NULL,
+                `start_date` DATETIME NOT NULL,
+                `last_execution` DATETIME NOT NULL,
+                `next_execution` DATETIME NOT NULL
+            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
+        );
+
+        return true;
     }
 
     public function _alterTable()
     {
-        DB::getInstance()->execute(
+        $db = DB::getInstance();
+
+        // Check if table has already been modified
+        $db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';");
+
+        if ($db->numRows())
+            return true;
+
+        $db->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
                 DROP PRIMARY KEY,
                 ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -379,6 +413,8 @@ class Mobbex extends PaymentModule
                 ADD `updated` TEXT NOT NULL,
             ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
         );
+
+        return true;
     }
 
     private function _createStates()
@@ -1042,9 +1078,13 @@ class Mobbex extends PaymentModule
         if ($currentPage == 'AdminModules' && Tools::getValue('configure') == 'mobbex') {
             MobbexHelper::addAsset("$mediaPath/views/js/mobbex-config.js");
 
-            // If plugin has updates, add update data to javascript
-            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
-                MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
+            try {
+                // If plugin has updates, add update data to javascript
+                if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                    MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
+            } catch (\Exception $e) {
+                MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+            }
         }
     }
 
@@ -1086,5 +1126,19 @@ class Mobbex extends PaymentModule
         }
 
         return $settings;
+    }
+
+    public function hookActionMobbexExpireOrder($orderId)
+    {
+        $order = new Order($orderId);
+
+        // Exit if order cannot be loaded correctly
+        if (!$order)
+            return false;
+
+        if ($order->getCurrentState() == Configuration::get(MobbexHelper::K_OS_PENDING))
+            $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+
+        return true;
     }
 }

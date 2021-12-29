@@ -406,6 +406,39 @@ return [
                     ],
                 ],
             ],
+            [
+                'type'     => 'text',
+                'label'    => 'Cancelar pedidos pendientes luego de',
+                'hint'     => 'Número de días en los que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
+                'name'     => 'MOBBEX_EXPIRATION_INTERVAL',
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'col'      => 2,
+                'suffix'   => 'días',
+                'default'  => 3,
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => 'Utilizar Cron para tareas programadas',
+                'hint'     => 'Mejora el rendimiento del sitio separando la ejecución de las tareas programadas del módulo. Recuerde configurar el Cron Job del lado del servidor.',
+                'desc'     => 'Una vez activada, configure su servidor para que ejecute el siguiente comando diariamente: <code>curl -s ' . \MobbexHelper::getModuleUrl('task') . '</code>',
+                'name'     => 'MOBBEX_CRON_MODE',
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_cron_mode',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id'    => 'active_off_cron_mode',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
         ]
     ]
 ];

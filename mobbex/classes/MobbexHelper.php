@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.7.1';
+    const MOBBEX_VERSION = '2.7.2';
     const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
     const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
@@ -178,9 +178,9 @@ class MobbexHelper
             $image = Image::getCover($product['id_product']);
 
             $prd = new Product($product['id_product']);
-            if ($prd->hasAttributes()) {
+            if ($prd->hasAttributes() && !empty($product['id_product_attribute'])) {
                 $images = $prd->getCombinationImages(Context::getContext()->language->id);
-                $image = $images[$product['id_product_attribute']][0];
+                $image = !empty($images[$product['id_product_attribute']][0]) ? $images[$product['id_product_attribute']][0] : $image;
             }
 
             $link = new Link;
@@ -1116,8 +1116,32 @@ class MobbexHelper
             return false;
         }
 
+        // First, try to get from db
+        $order = self::getOrderByCartId($cart->id, true);
+
         // Create order if not exists
-        $order = self::getOrderByCartId($cart->id, true) ?: MobbexHelper::createOrder($cart->id, \Configuration::get(MobbexHelper::K_OS_PENDING), 'Mobbex', $module, false);
+        if (!$order) {
+            $order = self::createOrder(
+                $cart->id,
+                \Configuration::get(self::K_OS_PENDING),
+                'Mobbex',
+                $module,
+                false
+            );
+
+            // Add order expiration task
+            if (!self::needUpgrade()) {
+                $task = new MobbexTask(
+                    null,
+                    'actionMobbexExpireOrder',
+                    \Configuration::get('MOBBEX_EXPIRATION_INTERVAL') ?: 3,
+                    'day',
+                    1,
+                    $order->id
+                );
+                $task->add();
+            }
+        }
 
         // Validate that order looks good
         if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
