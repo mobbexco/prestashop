@@ -17,8 +17,8 @@ abstract class Model extends \ObjectModel
         parent::__construct(isset($props[0]) ? $props[0] : null);
 
         // The id is always fillable
-        if (isset(self::$definition['primary']))
-            array_unshift($this->fillable, self::$definition['primary']);
+        if (isset($this::$definition['primary']) && !in_array($this::$definition['primary'], $this->fillable))
+            array_unshift($this->fillable, $this::$definition['primary']);
 
         if ($this->fillable)
             $this->fill(...$props);

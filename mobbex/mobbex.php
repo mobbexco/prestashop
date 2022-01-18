@@ -635,7 +635,7 @@ class Mobbex extends PaymentModule
         ]);
 
         // Get payment methods from checkout
-        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD)) {
+        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
                 $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
