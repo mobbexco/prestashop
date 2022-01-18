@@ -10,12 +10,15 @@ abstract class Model extends \ObjectModel
     /**
      * Instance the model and try to fill properties.
      * 
-     * @param int|string|null $id
-     * @param mixed $props
+     * @param mixed ...$props
      */
-    public function __construct($id, ...$props)
+    public function __construct(...$props)
     {
-        parent::__construct($id);
+        parent::__construct(isset($props[0]) ? $props[0] : null);
+
+        // The id is always fillable
+        if (isset(self::$definition['primary']))
+            array_unshift($this->fillable, self::$definition['primary']);
 
         if ($this->fillable)
             $this->fill(...$props);
