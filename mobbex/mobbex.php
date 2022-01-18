@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Model.php';
 require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
