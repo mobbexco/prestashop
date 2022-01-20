@@ -19,6 +19,7 @@ require_once dirname(__FILE__) . '/classes/Model.php';
 require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
+require_once dirname(__FILE__) . '/classes/OrderUpdate.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
 require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
 require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
