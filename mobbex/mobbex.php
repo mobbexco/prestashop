@@ -710,7 +710,7 @@ class Mobbex extends PaymentModule
     public function displayPlansWidget($id, $total = null)
     {
         $product = new Product($id);
-        $price   = $total ?: number_format($product->getPrice(), 2);
+        $price   = (float) ($total ?: $product->getPrice());
 
         if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
