@@ -15,9 +15,11 @@ if (!defined('_PS_VERSION_')) {
 }
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/classes/Model.php';
 require_once dirname(__FILE__) . '/classes/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
 require_once dirname(__FILE__) . '/classes/Updater.php';
+require_once dirname(__FILE__) . '/classes/OrderUpdate.php';
 require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
 require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
 require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
@@ -635,7 +637,7 @@ class Mobbex extends PaymentModule
         ]);
 
         // Get payment methods from checkout
-        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD)) {
+        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
                 $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),

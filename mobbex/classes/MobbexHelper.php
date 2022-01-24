@@ -117,6 +117,7 @@ class MobbexHelper
             'content-type: application/json',
             'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
             'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . self::MOBBEX_VERSION,
         );
     }
 
