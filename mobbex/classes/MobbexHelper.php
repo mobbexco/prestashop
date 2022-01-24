@@ -999,8 +999,10 @@ class MobbexHelper
         // Get current checked plans from db
         $checkedCommonPlans   = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans')) ?: [];
         $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans')) ?: [];
-
-        $sources = Configuration::get('MOBBEX_SOURCES_COMMON') ? json_decode(Configuration::get('MOBBEX_SOURCES_COMMON'), true) : 'se consulto la api';
+        $sources = Configuration::get('MOBBEX_SOURCES_COMMON') ? json_decode(Configuration::get('MOBBEX_SOURCES_COMMON'), true) : self::getSources();
+        
+        if(!$sources)
+            $sources = [];
         
         foreach ($sources as $source) {
             // Only if have installments
@@ -1017,8 +1019,11 @@ class MobbexHelper
             }
         }
 
-        $sources_advanced = Configuration::get('MOBBEX_SOURCES_ADVANCED') ? json_decode(Configuration::get('MOBBEX_SOURCES_ADVANCED'), true) : 'se hizo masl';
-      
+        $sources_advanced = Configuration::get('MOBBEX_SOURCES_ADVANCED') ? json_decode(Configuration::get('MOBBEX_SOURCES_ADVANCED'), true) : self::getSourcesAdvanced();
+        
+        if(!$sources_advanced)
+            $sources_advanced = [];
+
         foreach ($sources_advanced as $source) {
             // Only if have installments
             if (empty($source['installments']))
