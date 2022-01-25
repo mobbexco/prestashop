@@ -379,10 +379,12 @@ class Mobbex extends PaymentModule
         $db = DB::getInstance();
 
         // Check if table has already been modified
-        $db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';");
-
-        if ($db->numRows())
+        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
             return true;
+
+        // If it was modified but id has not auto_increment property, add to column
+        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
+            return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
 
         $db->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
