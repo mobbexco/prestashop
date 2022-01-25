@@ -6,7 +6,11 @@
                     <p class="payment_module">
                         <a class="mbbx-method payment-option" href="#" group="{$method['group']}:{$method['subgroup']}">
                             <img src="{$method['subgroup_logo']}" style="">
-                            {$method['subgroup_title']}
+                            {if (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE')}
+                                {Configuration::get('MOBBEX_TITLE')}
+                            {else}
+                                {$method['subgroup_title']}
+                            {/if}
                         </a>
                     </p>
                 </div>
@@ -17,7 +21,9 @@
             <div class="col-xs-12">
                 <p class="payment_module">
                     <a class="mbbx-method" href="#" style="background: url({$base_dir}modules/mobbex/views/img/logo_transparent.png) 15px 15px no-repeat;">
-                        {if $cards}
+                        {if Configuration::get('MOBBEX_TITLE')}
+                            {Configuration::get('MOBBEX_TITLE')}
+                        {elseif $cards}
                             {l s='Use other Card/Payment Method' mod='mobbex'}
                         {else}
                             {l s='Pay with Credit/Debit Cards' mod='mobbex'}
