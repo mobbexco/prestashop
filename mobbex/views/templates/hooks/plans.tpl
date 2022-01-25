@@ -215,12 +215,12 @@
                                                 {$installment['name']}
                                                 {if $installment['totals']['installment']['count'] != 1}
                                                     <small>
-                                                        {$installment['totals']['installment']['count']} cuotas de ${$installment['totals']['installment']['amount']}
+                                                        {$installment['totals']['installment']['count']} cuotas de {Product::convertAndFormatPrice($installment['totals']['installment']['amount'])}
                                                     </small>
                                                 {/if}
                                             </td>
                                             {if isset($installment['totals']['total'])}
-                                                <td class="mbbxPlansPrice">${number_format($installment['totals']['total'], 2)}</td>
+                                                <td class="mbbxPlansPrice">{Product::convertAndFormatPrice($installment['totals']['total'])}</td>
                                             {else}
                                                 <td></td>
                                             {/if}
@@ -229,7 +229,7 @@
                                 </table>
                             {else}
                                 <p class="mobbexSourceTotal">
-                                    ${$product_price}
+                                    {$product_price}
                                 </p>
                             {/if}
                         </div>

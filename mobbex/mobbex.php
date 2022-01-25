@@ -717,7 +717,7 @@ class Mobbex extends PaymentModule
             return;
 
         $this->context->smarty->assign([
-            'product_price'  => number_format($price, 2),
+            'product_price'  => Product::convertAndFormatPrice($price),
             'sources'        => MobbexHelper::getSources($price, MobbexHelper::getInstallments([$product])),
             'style_settings' => [
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
