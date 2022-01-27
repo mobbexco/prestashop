@@ -884,7 +884,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $id   = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
-        $hash = md5(MobbexHelper::K_API_KEY . '!' . MobbexHelper::K_ACCESS_TOKEN);
+        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
 
         $this->context->smarty->assign([
             'id'             => $id,
