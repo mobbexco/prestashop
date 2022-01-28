@@ -56,6 +56,15 @@ return [
                 'tab' => 'tab_general'
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l('Título del medio de pago'),
+                'name'     => 'MOBBEX_TITLE',
+                'required' => false,
+                'desc'     => $this->l('En caso de tener varios métodos de pago, sólo se remplazará el texto del medio "Tarjeta de Crédito/Débito"'),
+                'tab'      => 'tab_appearence',
+                'default'  => '',
+            ],
+            [
                 'type' => 'radio',
                 'label' => $this->l('Theme Mode'),
                 'name' => MobbexHelper::K_THEME,

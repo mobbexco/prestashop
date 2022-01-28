@@ -640,7 +640,7 @@ class Mobbex extends PaymentModule
         // Get payment methods from checkout
         if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
-                $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Configuration::get('MOBBEX_TITLE') ?: $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
                 ['checkoutUrl' => MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url']))]
@@ -650,7 +650,7 @@ class Mobbex extends PaymentModule
                 $checkoutUrl = MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url'] . "?paymentMethod={$method['group']}:{$method['subgroup']}"));
 
                 $options[] = $this->createPaymentOption(
-                    $method['subgroup_title'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE') ? Configuration::get('MOBBEX_TITLE') : $method['subgroup_title'],
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl')
