@@ -216,7 +216,7 @@ class MobbexHelper
             'return_url'   => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items'        => $items,
-            'installments' => MobbexHelper::getInstallments($products),
+            'installments' => MobbexHelper::getInstallments(array_column($products, 'id_product')),
             'options'      => MobbexHelper::getOptions(),
             'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer'     => self::getCustomer($cart),
@@ -503,7 +503,7 @@ class MobbexHelper
     /**
      * Retrieve installments checked on plans filter of each product.
      * 
-     * @param array $products
+     * @param array $products Array of products or their ids.
      * 
      * @return array
      */
@@ -513,7 +513,7 @@ class MobbexHelper
 
         // Get plans from order products
         foreach ($products as $product) {
-            $id = $product instanceOf Product ? $product->id : $product['id_product'];
+            $id = $product instanceOf Product ? $product->id : $product;
 
             $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($id));
             $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($id));
@@ -523,7 +523,7 @@ class MobbexHelper
         foreach ($inactivePlans as $plan)
             $installments[] = '-' . $plan;
 
-        // Add active (advanced) plans to installments only if the plan is active on all products
+        // Add active (advanced) plans to installments (only if the plan is active on all products)
         foreach (array_count_values($activePlans) as $plan => $reps) {
             if ($reps == count($products))
                 $installments[] = '+uid:' . $plan;
