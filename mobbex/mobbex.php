@@ -59,14 +59,8 @@ class Mobbex extends PaymentModule
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
-        $modules = PaymentModuleCore::getInstalledPaymentModules();
-        foreach ($modules as $module) {
-            // Check if the module is installed
-            if ($module['name'] === $this->name) {
-                $this->_createStates();
-                break;
-            }
-        }
+        if ($this::isEnabled($this->name))
+            $this->_createStates();
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
@@ -184,6 +178,26 @@ class Mobbex extends PaymentModule
 
         foreach ($hooks as $hookName) {
             if (!$this->registerHook($hookName))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Unregister all current module hooks.
+     * 
+     * @return bool Result.
+     */
+    public function unregisterHooks()
+    {
+        // Get hooks used by module
+        $hooks = Db::getInstance()->executeS(
+            'SELECT DISTINCT(`id_hook`) FROM `' . _DB_PREFIX_ . 'hook_module` WHERE `id_module` = ' . $this->id
+        ) ?: [];
+
+        foreach ($hooks as $hook) {
+            if (!$this->unregisterHook($hook['id_hook']) || !$this->unregisterExceptions($hook['id_hook']))
                 return false;
         }
 
