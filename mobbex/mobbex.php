@@ -162,15 +162,16 @@ class Mobbex extends PaymentModule
             'displayProductButtons',
             'displayCustomerAccountForm',
             'actionCustomerAccountAdd',
+            'displayShoppingCartFooter',
         ];
 
         $ps17Hooks = [
             'paymentOptions',
-            'displayProductAdditionalInfo',
             'additionalCustomerFormFields',
             'actionObjectCustomerUpdateAfter',
             'actionObjectCustomerAddAfter',
-            'displayProductPriceBlock'
+            'displayProductPriceBlock',
+            'displayExpressCheckout',
         ];
 
         // Merge current version hooks with common hooks
@@ -698,42 +699,27 @@ class Mobbex extends PaymentModule
         return $option;
     }
 
-    public function hookDisplayProductAdditionalInfo()
-    {
-        if (_PS_VERSION_ >= MobbexHelper::PS_17)
-            return;
-        $id = Tools::getValue('id_product');
-        
-        return $this->displayPlansWidget($id);
-    }
-
     public function hookDisplayProductPriceBlock($params)
     {
-        if (_PS_VERSION_ < MobbexHelper::PS_17)
+        if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !Configuration::get(MobbexHelper::K_PLANS))
             return;
 
-        if ($params['type'] !== 'after_price' || empty($params['product'])) {
-            return;
-        }
-
-        $id    = $params['product']['id'];
-        $total = $params['product']['price_amount'];
-
-        return $this->displayPlansWidget($id, $total);
+        return $this->displayPlansWidget($params['product']['price_amount'], [$params['product']['id']]);
     }
 
-    public function displayPlansWidget($id, $total = null)
+    /**
+     * Display finance widget.
+     * 
+     * @param float|int|string $total Amount to calculate sources.
+     * @param array|null $products
+     */
+    public function displayPlansWidget($total, $products = [])
     {
-        $product = new Product($id);
-        $price   = (float) ($total ?: $product->getPrice());
-
-        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
-            return;
-
         $this->context->smarty->assign([
-            'product_price'  => Product::convertAndFormatPrice($price),
-            'sources'        => MobbexHelper::getSources($price, MobbexHelper::getInstallments([$product])),
+            'product_price'  => Product::convertAndFormatPrice($total),
+            'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
+                'default_styles'   => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
                 'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
                 'background'       => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
@@ -745,6 +731,33 @@ class Mobbex extends PaymentModule
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+    }
+
+    /**
+     * Hook to display finance widget in cart page.
+     * 
+     * Support for 1.6 Only.
+     * 
+     * @return string|bool
+     */
+    public function hookDisplayShoppingCartFooter()
+    {
+        return $this->hookDisplayExpressCheckout();
+    }
+
+    /**
+     * Hook to display finance widget in cart page.
+     * 
+     * @return string|bool
+     */
+    public function hookDisplayExpressCheckout()
+    {
+        $cart = Context::getContext()->cart;
+
+        if (!Validate::isLoadedObject($cart) || !Configuration::get('MOBBEX_PLANS_ON_CART'))
+            return false;
+
+        return $this->displayPlansWidget((float) $cart->getOrderTotal(true, Cart::BOTH), array_column($cart->getProducts(), 'id_product'));
     }
 
     public function hookAdditionalCustomerFormFields($params)
@@ -829,7 +842,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayProductButtons()
     {
-        return $this->hookDisplayProductAdditionalInfo(null);
+        $product = new Product(Tools::getValue('id_product'));
+
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
+            return;
+
+        return $this->displayPlansWidget($product->getPrice(), [$product]);
     }
 
     /**

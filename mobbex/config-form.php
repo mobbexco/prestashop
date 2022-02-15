@@ -184,7 +184,8 @@ return [
             ],
             [
                 'type' => 'switch',
-                'label' => $this->l('Widget de planes'),
+                'label' => $this->l('Widget de financación en productos'),
+                'desc' => $this->l('Mostrar el botón de financiación en la página del producto.'),
                 'name' => MobbexHelper::K_PLANS,
                 'is_bool' => true,
                 'required' => true,
@@ -201,6 +202,27 @@ return [
                     ],
                 ],
                 'tab' => 'tab_general',
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => $this->l('Widget de financiación en carrito'),
+                'desc'     => $this->l('Mostrar el botón de financiación en la página del carrito.'),
+                'name'     => 'MOBBEX_PLANS_ON_CART',
+                'is_bool'  => true,
+                'required' => false,
+                'values'   => [
+                    [
+                        'id' => 'active_on_plans_cart',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id' => 'active_off_plans_cart',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+                'tab' => 'tab_appearence',
             ],
             [
                 'type' => 'text',

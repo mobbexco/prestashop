@@ -2,7 +2,7 @@
     {literal}
         <style>
             /* CLOSE-OPEN BUTTONS */
-            #mbbxProductBtn {
+            .mbbxWidgetOpenBtn {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -239,7 +239,7 @@
         </div>
     </div>
 
-    <button type="button" id="mbbxProductBtn">{$style_settings['text']}
+    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" 
                  width="40" 
