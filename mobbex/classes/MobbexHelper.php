@@ -185,13 +185,21 @@ class MobbexHelper
             $link = new Link;
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            $items[] = [
-                "image"       => 'https://' . $imagePath,
-                "description" => $product['name'],
-                "quantity"    => $product['cart_quantity'],
-                "total"       => round($product['price_wt'], 2),
-                "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
-            ];
+            if(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
+                $items[] = [
+                    'type'      => 'subscription',
+                    'reference' => MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
+                ];
+            } else {
+                $items[] = [
+                    "image"       => 'https://' . $imagePath,
+                    "description" => $product['name'],
+                    "quantity"    => $product['cart_quantity'],
+                    "total"       => round($product['price_wt'], 2),
+                    "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
+                ];
+            }
+
         }
 
         $shippingTotal = $cart->getTotalShippingCost();
@@ -227,7 +235,7 @@ class MobbexHelper
             'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
             'merchants'    => MobbexHelper::getMerchants($items),
         );
-        
+
         $data = self::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
 
         if (!$data)

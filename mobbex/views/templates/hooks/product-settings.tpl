@@ -14,6 +14,13 @@
         <div class="form-group">
             {include file="./multivendor.tpl"}
         </div>
+        <div class="form-group">
+            <h2>Suscripciones</h2>
+            <p class="subtitle">Activa si el producto es de tipo suscripción.</p>
+        </div>
+        <div class="form-group">
+            {include file="./subscription-option.tpl"}
+        </div>
         {hook h="displayMobbexProductSettings" id="$id"}
         {if constant('_PS_VERSION_') < '1.7'}
             <div class="panel-footer">
