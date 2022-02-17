@@ -1000,6 +1000,8 @@ class MobbexHelper
         // Get current checked plans from db
         $checkedCommonPlans   = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans')) ?: [];
         $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans')) ?: [];
+        if(!Configuration::get('MOBBEX_SOURCES_COMMON'))
+            updateMobbexSources();
         $sources = Configuration::get('MOBBEX_SOURCES_COMMON') ? json_decode(Configuration::get('MOBBEX_SOURCES_COMMON'), true) : self::getSources();
         
         if(!$sources)
@@ -1020,6 +1022,8 @@ class MobbexHelper
             }
         }
 
+        if(!Configuration::get('MOBBEX_SOURCES_ADVANCED'))
+            updateMobbexSources();
         $sources_advanced = Configuration::get('MOBBEX_SOURCES_ADVANCED') ? json_decode(Configuration::get('MOBBEX_SOURCES_ADVANCED'), true) : self::getSourcesAdvanced();
         
         if(!$sources_advanced)
