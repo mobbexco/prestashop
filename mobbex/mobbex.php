@@ -720,13 +720,10 @@ class Mobbex extends PaymentModule
             'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
                 'default_styles'   => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
+                'styles'           => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
-                'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
-                'background'       => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
                 'button_image'     => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL) ?: 'https://res.mobbex.com/images/sources/mobbex.png',
-                'button_padding'   => Configuration::get(MobbexHelper::K_PLANS_PADDING, '4px 18px'),
-                'button_font_size' => Configuration::get(MobbexHelper::K_PLANS_FONT_SIZE, '16px'),
-                'plans_theme'      => Configuration::get(MobbexHelper::K_PLANS_THEME, 'light'),
+                'plans_theme'      => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
             ],
         ]);
 
