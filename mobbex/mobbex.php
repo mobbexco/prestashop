@@ -642,14 +642,10 @@ class Mobbex extends PaymentModule
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
-        MobbexHelper::addJavascriptData([
-            'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
-            'wallet'    => $cards ?: null,
-            'id'        => $checkoutData['id'],
-            'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
-            'url'       => $checkoutData['url'],
-            'returnUrl' => $checkoutData['return_url']
+        \MobbexHelper::addJavascriptData([
+            'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
+            'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+            'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
         ]);
 
         // Get payment methods from checkout
@@ -815,13 +811,9 @@ class Mobbex extends PaymentModule
 
         Media::addJsDef([
             'mbbx' => [
-                'embed'     => (bool) Configuration::get(MobbexHelper::K_EMBED),
-                'orderUrl'  => (bool) Configuration::get(MobbexHelper::K_ORDER_FIRST) ? \MobbexHelper::getModuleUrl('order', 'process') : false,
-                'wallet'    => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : null,
-                'id'        => $checkoutData['id'],
-                'sid'       => isset($checkoutData['sid']) ? $checkoutData['sid'] : null,
-                'url'       => $checkoutData['url'],
-                'returnUrl' => $checkoutData['return_url']
+                'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
+                'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+                'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
             ]
         ]);
 
