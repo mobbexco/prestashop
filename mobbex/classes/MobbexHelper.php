@@ -46,7 +46,7 @@ class MobbexHelper
     const K_DEF_PLANS_STYLES = 
     '/* Modifica los valores para cambiar el estilo deseado. */
 
-    #mbbxProductBtn {
+    .mbbxWidgetOpenBtn {
     width: fit-content;
     min-height: 40px;
     border-radius: 6px;
@@ -60,7 +60,7 @@ class MobbexHelper
     }
 
     /* Hover Options */
-    #mbbxProductBtn:hover {
+    .mbbxWidgetOpenBtn:hover {
     color: #ffffff;
     background-color: #6f00ff;
     }
