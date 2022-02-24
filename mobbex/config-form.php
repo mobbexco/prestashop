@@ -247,7 +247,7 @@ return [
                 'label' => $this->l('Finance widget styles'),
                 'name' => MobbexHelper::K_PLANS_STYLES,
                 'required' => false,
-                'desc' => $this->l('Use the CSS sintaxys to give styles to your finance widget.'),
+                'desc' => $this->l('Use the CSS syntaxis to give styles to your finance widget.'),
                 'tab' => 'tab_appearence',
                 'default' => MobbexHelper::K_DEF_PLANS_STYLES,
             ],
