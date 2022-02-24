@@ -5,15 +5,17 @@
    * @param {array} response Mobbex checkout or subscriber response.
    */
   function openCheckoutModal(response) {
+    unlockForm();
+
     let options = {
       id: response.data.id,
       type: response.data.sid ? 'subscriber_source' : 'checkout',
-      paymentMethod: mbbx.paymentMethod || null,
+      paymentMethod: mbbx.method || null,
       onResult: (data) => {
         var status = data.status.code;
 
         if (status > 1 && status < 400) {
-          window.top.location.href = response.data.returnUrl + '&status=' + status + '&transactionId=' + data.id;
+          window.top.location.href = response.data.return_url + '&status=' + status + '&transactionId=' + data.id;
         } else {
           window.top.location.reload();
         }
@@ -39,7 +41,7 @@
    * @param {array} response Mobbex checkout or subscriber response.
    */
   function redirectToCheckout(response) {
-    window.top.location.href = response.data.url + (mbbx.paymentMethod ? '?paymentMethod=' + mbbx.paymentMethod : '');
+    window.top.location.href = response.data.url + (mbbx.method ? '?paymentMethod=' + mbbx.method : '');
   }
 
   /**
@@ -48,14 +50,14 @@
    * @param {CallableFunction} callback
    */
   function processPayment(callback) {
+    lockForm();
+
     $.ajax({
       dataType: 'json',
       method: 'POST',
       url: mbbx.paymentUrl,
 
       success: (response) => {
-          unlockForm();
-
           if (response.data && response.order) {
             callback(response);
           } else if (mbbx.errorUrl) {
@@ -76,43 +78,29 @@
    * @param {array} response Mobbex checkout response.
    */
   function executeWallet(response) {
-    let card        = $('[name=walletCard][checked=checked]').val() ?? null;
-    let cardNumber  = $(`#card-${card}-number`).val();
+    let cardNumber  = $(`#card-${mbbx.card}-number`).val();
     let updatedCard = response.data.wallet.find(card => card.card.card_number == cardNumber);
 
     var options = {
         intentToken: updatedCard.it,
-        installment: $(`#card-${card}-installments`).val(),
-        securityCode: $(`#card-${card}-code`).val()
+        installment: $(`#card-${mbbx.card}-installments`).val(),
+        securityCode: $(`#card-${mbbx.card}-code`).val()
     };
-
-    // Validate security code
-    if (options.securityCode.length < parseInt($(`#card-${card}-code`).attr('maxlength'))) {
-      $(`#card-${card}-code`).style.borderColor = '#dc3545';
-      return alert("Código de seguridad incompleto") && unlockForm();
-    }
 
     // Execute operation
     window.MobbexJS.operation.process(options).then(data => {
       let status = data.result ? data.data.status.code : 0;
 
       if (status > 1 && status < 400) {
-        setTimeout(function(){
-          window.top.location.href = returnUrl + '&status=' + status + '&transactionId=' + data.data.id;
+        setTimeout(function() {
+          window.top.location.href = response.data.return_url + '&status=' + status + '&transactionId=' + data.data.id;
         }, 5000);
       } else {
         alert('Error procesando el pago')
         unlockForm()
       }
-    }).catch(error => alert('Error: ' + error) && unlockForm());
+    }).catch(error => alert('Error: ' + error) || unlockForm());
   }
-
-/**
- * Return true if a card is current selected.
- */
-function isCardSelected() {
-  return $('[name=walletCard][checked=checked]').length > 0;
-}
 
 /**
  * Render form loader element.
@@ -145,38 +133,59 @@ function unlockForm() {
 }
 
 /**
- * Active a wallet card by card key.
+ * Set method/card selected in mbbx global var. Use only in jQuery events.
  * 
- * @param {number} cardId 
+ * @param {Element} method Current method element.
  */
-function activeCard(cardId) {
-  let cards = $('[name=walletCard]');
-  let forms = $('.walletForm]');
-
-  for (const card of cards)
-    card.attr('checked', card.value == cardId);
+function setCurrentMethod(method) {
+  mbbx.card   = $(method).attr('card');
+  mbbx.method = $(method).attr('group');
 
   // Only for ps 1.6. In ps 1.7 forms are natively hidden
-  if (!window.prestashop) {
-    for (const form of forms)
-      form.style.display = form.id == `card_${cardId}_form` ? 'block' : 'none';
+  if (!window.prestashop)
+    hideCardForms()
+}
+
+/**
+ * Hide unchecked card options for ps 1.6.
+ */
+function hideCardForms() {
+  let forms = $('.walletForm');
+
+  for (const form of forms)
+    form.style.display = form.id == `card_${mbbx.card}_form` ? 'block' : 'none';
+}
+
+/**
+ * Validate checked card form fields.
+ */
+ function validateCardForm() {
+  let securityCode = $(`#card-${mbbx.card}-code`);
+
+  // Validate security code field length
+  if (securityCode.val().length < parseInt(securityCode.attr('maxlength'))) {
+    securityCode.css('borderColor', '#dc3545');
+    return alert("Código de seguridad incompleto");
   }
 
-  return false;
+  return true;
 }
 
 /**
  * Execute mobbex payment.
  */
 function executePayment() {
-  lockForm();
+  if (mbbx.card && !validateCardForm())
+    return;
 
-  if (isCardSelected()) {
-    processPayment(response => executeWallet(response));
-  } else {
-    processPayment(response => mbbx.embed ? openCheckoutModal(response) : redirectToCheckout(response));
-  }
-  return false;
+  processPayment(response => {
+    if (mbbx.card)
+      executeWallet(response)
+    else if (mbbx.embed)
+      openCheckoutModal(response)
+    else
+      redirectToCheckout(response)
+  });
 };
 
 function renderEmbedContainer() {
@@ -193,27 +202,19 @@ window.addEventListener('load', function () {
 
   // Use jquery to listen checkout events before ajax calls end (for onepage plugins support)
   $(document).on(window.prestashop ? 'submit' : 'click', '.mbbx-method', function (e) {
-    e.preventDefault();
-    activeCard(null);
-    mbbx.paymentMethod = $(this).attr('group');
-    return executePayment();
+    return e.preventDefault() || setCurrentMethod(this) || executePayment();
   });
 
-  // If it is prestashop 1.7
+  // Add wallet payment events
   if (window.prestashop) {
     $(document).on('submit', '.walletForm', function (e) {
-      e.preventDefault();
-      activeCard($(this).attr('card'));
-      return executePayment();
+      return e.preventDefault() || setCurrentMethod(this) || executePayment();
     });
   } else {
     $(document).on('click', '.walletAnchor', function () {
-      return activeCard($(this).attr('card'));
+      return setCurrentMethod(this);
     });
-
-    $(document).on('click', '#mobbexExecute', function () {
-      return executePayment();
-    });
+    $(document).on('click', '#mobbexExecute', () => executePayment());
   }
 });
 }) (window, jQuery);
