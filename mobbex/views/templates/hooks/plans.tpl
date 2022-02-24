@@ -2,7 +2,7 @@
     {literal}
         <style>
             /* CLOSE-OPEN BUTTONS */
-            #mbbxProductBtn {
+            .mbbxWidgetOpenBtn {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -215,12 +215,12 @@
                                                 {$installment['name']}
                                                 {if $installment['totals']['installment']['count'] != 1}
                                                     <small>
-                                                        {$installment['totals']['installment']['count']} cuotas de ${$installment['totals']['installment']['amount']}
+                                                        {$installment['totals']['installment']['count']} cuotas de {Product::convertAndFormatPrice($installment['totals']['installment']['amount'])}
                                                     </small>
                                                 {/if}
                                             </td>
                                             {if isset($installment['totals']['total'])}
-                                                <td class="mbbxPlansPrice">${number_format($installment['totals']['total'], 2)}</td>
+                                                <td class="mbbxPlansPrice">{Product::convertAndFormatPrice($installment['totals']['total'])}</td>
                                             {else}
                                                 <td></td>
                                             {/if}
@@ -229,7 +229,7 @@
                                 </table>
                             {else}
                                 <p class="mobbexSourceTotal">
-                                    ${$product_price}
+                                    {$product_price}
                                 </p>
                             {/if}
                         </div>
@@ -239,7 +239,7 @@
         </div>
     </div>
 
-    <button type="button" id="mbbxProductBtn">{$style_settings['text']}
+    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">{$style_settings['text']}
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" 
                  width="40" 

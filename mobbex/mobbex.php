@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 2.7.2
+ * @version 2.7.3
  * @see     PaymentModuleCore
  */
 
@@ -59,14 +59,8 @@ class Mobbex extends PaymentModule
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
-        $modules = PaymentModuleCore::getInstalledPaymentModules();
-        foreach ($modules as $module) {
-            // Check if the module is installed
-            if ($module['name'] === $this->name) {
-                $this->_createStates();
-                break;
-            }
-        }
+        if ($this::isEnabled($this->name))
+            $this->_createStates();
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
@@ -169,15 +163,16 @@ class Mobbex extends PaymentModule
             'displayProductButtons',
             'displayCustomerAccountForm',
             'actionCustomerAccountAdd',
+            'displayShoppingCartFooter',
         ];
 
         $ps17Hooks = [
             'paymentOptions',
-            'displayProductAdditionalInfo',
             'additionalCustomerFormFields',
             'actionObjectCustomerUpdateAfter',
             'actionObjectCustomerAddAfter',
-            'displayProductPriceBlock'
+            'displayProductPriceBlock',
+            'displayExpressCheckout',
         ];
 
         // Merge current version hooks with common hooks
@@ -185,6 +180,26 @@ class Mobbex extends PaymentModule
 
         foreach ($hooks as $hookName) {
             if (!$this->registerHook($hookName))
+                return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Unregister all current module hooks.
+     * 
+     * @return bool Result.
+     */
+    public function unregisterHooks()
+    {
+        // Get hooks used by module
+        $hooks = Db::getInstance()->executeS(
+            'SELECT DISTINCT(`id_hook`) FROM `' . _DB_PREFIX_ . 'hook_module` WHERE `id_module` = ' . $this->id
+        ) ?: [];
+
+        foreach ($hooks as $hook) {
+            if (!$this->unregisterHook($hook['id_hook']) || !$this->unregisterExceptions($hook['id_hook']))
                 return false;
         }
 
@@ -380,10 +395,12 @@ class Mobbex extends PaymentModule
         $db = DB::getInstance();
 
         // Check if table has already been modified
-        $db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';");
-
-        if ($db->numRows())
+        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
             return true;
+
+        // If it was modified but id has not auto_increment property, add to column
+        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
+            return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
 
         $db->execute(
             "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
@@ -639,7 +656,7 @@ class Mobbex extends PaymentModule
         // Get payment methods from checkout
         if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
-                $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Configuration::get('MOBBEX_TITLE') ?: $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
                 ['checkoutUrl' => MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url']))]
@@ -649,7 +666,7 @@ class Mobbex extends PaymentModule
                 $checkoutUrl = MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url'] . "?paymentMethod={$method['group']}:{$method['subgroup']}"));
 
                 $options[] = $this->createPaymentOption(
-                    $method['subgroup_title'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE') ? Configuration::get('MOBBEX_TITLE') : $method['subgroup_title'],
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl')
@@ -683,42 +700,27 @@ class Mobbex extends PaymentModule
         return $option;
     }
 
-    public function hookDisplayProductAdditionalInfo()
-    {
-        if (_PS_VERSION_ >= MobbexHelper::PS_17)
-            return;
-        $id = Tools::getValue('id_product');
-        
-        return $this->displayPlansWidget($id);
-    }
-
     public function hookDisplayProductPriceBlock($params)
     {
-        if (_PS_VERSION_ < MobbexHelper::PS_17)
+        if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !Configuration::get(MobbexHelper::K_PLANS))
             return;
 
-        if ($params['type'] !== 'after_price' || empty($params['product'])) {
-            return;
-        }
-
-        $id    = $params['product']['id'];
-        $total = $params['product']['price_amount'];
-
-        return $this->displayPlansWidget($id, $total);
+        return $this->displayPlansWidget($params['product']['price_amount'], [$params['product']['id']]);
     }
 
-    public function displayPlansWidget($id, $total = null)
+    /**
+     * Display finance widget.
+     * 
+     * @param float|int|string $total Amount to calculate sources.
+     * @param array|null $products
+     */
+    public function displayPlansWidget($total, $products = [])
     {
-        $product = new Product($id);
-        $price   = (float) ($total ?: $product->getPrice());
-
-        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
-            return;
-
         $this->context->smarty->assign([
-            'product_price'  => number_format($price, 2),
-            'sources'        => MobbexHelper::getSources($price, MobbexHelper::getInstallments([$product])),
+            'product_price'  => Product::convertAndFormatPrice($total),
+            'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
+                'default_styles'   => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
                 'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
                 'text_color'       => Configuration::get(MobbexHelper::K_PLANS_TEXT_COLOR, '#ffffff'),
                 'background'       => Configuration::get(MobbexHelper::K_PLANS_BACKGROUND, '#8900ff'),
@@ -730,6 +732,33 @@ class Mobbex extends PaymentModule
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+    }
+
+    /**
+     * Hook to display finance widget in cart page.
+     * 
+     * Support for 1.6 Only.
+     * 
+     * @return string|bool
+     */
+    public function hookDisplayShoppingCartFooter()
+    {
+        return $this->hookDisplayExpressCheckout();
+    }
+
+    /**
+     * Hook to display finance widget in cart page.
+     * 
+     * @return string|bool
+     */
+    public function hookDisplayExpressCheckout()
+    {
+        $cart = Context::getContext()->cart;
+
+        if (!Validate::isLoadedObject($cart) || !Configuration::get('MOBBEX_PLANS_ON_CART'))
+            return false;
+
+        return $this->displayPlansWidget((float) $cart->getOrderTotal(true, Cart::BOTH), array_column($cart->getProducts(), 'id_product'));
     }
 
     public function hookAdditionalCustomerFormFields($params)
@@ -814,7 +843,12 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayProductButtons()
     {
-        return $this->hookDisplayProductAdditionalInfo(null);
+        $product = new Product(Tools::getValue('id_product'));
+
+        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
+            return;
+
+        return $this->displayPlansWidget($product->getPrice(), [$product]);
     }
 
     /**
@@ -890,7 +924,11 @@ class Mobbex extends PaymentModule
             'id'             => $id,
             'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
             'plans'          => MobbexHelper::getPlansFilterFields($id),
-            'entity'         => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: ''
+            'entity'         => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: '',
+            'subscription' => [
+                'uid'    => MobbexCustomFields::getCustomField($id, 'product', 'subscription_uid') ?: '',
+                'enable' => MobbexCustomFields::getCustomField($id, 'product', 'subscription_enable') ?: 'no'
+            ]
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/product-settings.tpl');
@@ -952,6 +990,8 @@ class Mobbex extends PaymentModule
     {
         $commonPlans = $advancedPlans = [];
         $entity = isset($_POST['entity']) ? $_POST['entity'] : null;
+        $isSubscription = isset($_POST['sub_enable']) ? $_POST['sub_enable'] : 'no';
+        $subscriptionUid = isset($_POST['sub_uid']) ? $_POST['sub_uid'] : '';
 
         // Get plans selected
         foreach ($_POST as $key => $value) {
@@ -973,11 +1013,17 @@ class Mobbex extends PaymentModule
                 MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
             if ($entity)
                 MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
+            if ($isSubscription)
+                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
+            if($subscriptionUid)    
+                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
         } else {
             // Save data directly
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
             MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
+            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
         }
     }
 

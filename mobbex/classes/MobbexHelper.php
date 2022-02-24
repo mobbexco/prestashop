@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '2.7.2';
+    const MOBBEX_VERSION = '2.7.3';
     const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
     const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
@@ -187,13 +187,21 @@ class MobbexHelper
             $link = new Link;
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            $items[] = [
-                "image"       => 'https://' . $imagePath,
-                "description" => $product['name'],
-                "quantity"    => $product['cart_quantity'],
-                "total"       => round($product['price_wt'], 2),
-                "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
-            ];
+            if(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
+                $items[] = [
+                    'type'      => 'subscription',
+                    'reference' => MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
+                ];
+            } else {
+                $items[] = [
+                    "image"       => 'https://' . $imagePath,
+                    "description" => $product['name'],
+                    "quantity"    => $product['cart_quantity'],
+                    "total"       => round($product['price_wt'], 2),
+                    "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
+                ];
+            }
+
         }
 
         $shippingTotal = $cart->getTotalShippingCost();
@@ -218,7 +226,7 @@ class MobbexHelper
             'return_url'   => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items'        => $items,
-            'installments' => MobbexHelper::getInstallments($products),
+            'installments' => MobbexHelper::getInstallments(array_column($products, 'id_product')),
             'options'      => MobbexHelper::getOptions(),
             'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer'     => self::getCustomer($cart),
@@ -229,7 +237,7 @@ class MobbexHelper
             'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
             'merchants'    => MobbexHelper::getMerchants($items),
         );
-        
+
         $data = self::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
 
         if (!$data)
@@ -515,7 +523,7 @@ class MobbexHelper
     /**
      * Retrieve installments checked on plans filter of each product.
      * 
-     * @param array $products
+     * @param array $products Array of products or their ids.
      * 
      * @return array
      */
@@ -525,7 +533,7 @@ class MobbexHelper
 
         // Get plans from order products
         foreach ($products as $product) {
-            $id = $product instanceOf Product ? $product->id : $product['id_product'];
+            $id = $product instanceOf Product ? $product->id : $product;
 
             $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($id));
             $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($id));
@@ -535,7 +543,7 @@ class MobbexHelper
         foreach ($inactivePlans as $plan)
             $installments[] = '-' . $plan;
 
-        // Add active (advanced) plans to installments only if the plan is active on all products
+        // Add active (advanced) plans to installments (only if the plan is active on all products)
         foreach (array_count_values($activePlans) as $plan => $reps) {
             if ($reps == count($products))
                 $installments[] = '+uid:' . $plan;
