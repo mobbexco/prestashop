@@ -46,6 +46,20 @@ class MobbexHelper
     const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
 
+    //Order statuses
+    const K_OS_PENDING  = 'MOBBEX_OS_PENDING';
+    const K_OS_WAITING  = 'MOBBEX_OS_WAITING';
+    const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
+    const K_ORDER_STATUS_APPROVED = 'MOBBEX_ORDER_STATUS_APPROVED';
+    const K_ORDER_STATUS_FAILED   = 'MOBBEX_ORDER_STATUS_FAILED';
+    const K_ORDER_STATUS_REJECTED = 'MOBBEX_ORDER_STATUS_REJECTED';
+    const K_ORDER_STATUS_REFUNDED = 'MOBBEX_ORDER_STATUS_REFUNDED';
+
+    const K_DEF_ORDER_STATUS_APPROVED = 2;
+    const K_DEF_ORDER_STATUS_FAILED   = 8;
+    const K_DEF_ORDER_STATUS_REJECTED = 7;
+    const K_DEF_ORDER_STATUS_REFUNDED = 8;
+
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
     const K_DEF_PLANS_BACKGROUND = '#8900ff';
@@ -59,9 +73,6 @@ class MobbexHelper
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
 
-    const K_OS_PENDING = 'MOBBEX_OS_PENDING';
-    const K_OS_WAITING = 'MOBBEX_OS_WAITING';
-    const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
 
     /**
      * Add log to PrestaShop log table.
@@ -374,13 +385,13 @@ class MobbexHelper
         if ($state == 'onhold') {
             $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else if ($state == 'approved') {
-            $data['order_status'] = (int) Configuration::get('PS_OS_PAYMENT');
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_APPROVED);
         } else if ($state == 'failed') {
-            $data['order_status'] = (int) Configuration::get('PS_OS_ERROR');
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_FAILED);
         } else if ($state == 'refunded') {
-            $data['order_status'] = (int) Configuration::get('PS_OS_REFUND');
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED);
         } else if ($state == 'rejected') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_REJECTED) ?: Configuration::get('PS_OS_ERROR');
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REJECTED);
         }
 
         return $data;
@@ -1168,5 +1179,20 @@ class MobbexHelper
         \Context::getContext()->cookie->write();
 
         return $result['cart'];
+    }
+
+    public static function getOrderStatusSelect()
+    {
+        $states = new OrderState(1);
+        $states = $states->getOrderStates(1);
+        $query = [];
+        foreach ($states as $state) {
+            $query[] = [
+                'id_option' => $state['id_order_state'],
+                'name'      => $state['name']
+            ];
+        }
+       
+        return $query;
     }
 }

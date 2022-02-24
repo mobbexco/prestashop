@@ -470,6 +470,58 @@ return [
                     ],
                 ],
             ],
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Estado de orden aprobado'),
+                'desc'     => $this->l('Elige que estado mostrar en ordenes aprobadas.'),
+                'name'     => MobbexHelper::K_ORDER_STATUS_APPROVED,
+                'required' => false,
+                'tab'      => 'tab_general',
+                'options'  => [
+                    'query' => MobbexHelper::getOrderStatusSelect(),
+                    'id'    => 'id_option',
+                    'name'  => 'name'
+                ]
+            ],
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Estado de orden fallido'),
+                'desc'     => $this->l('Elige que estado mostrar en ordenes fallidas.'),
+                'name'     => MobbexHelper::K_ORDER_STATUS_FAILED,
+                'required' => false,
+                'tab'      => 'tab_general',
+                'options'  => [
+                    'query' => MobbexHelper::getOrderStatusSelect(),
+                    'id'    => 'id_option',
+                    'name'  => 'name'
+                ]
+            ],
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Estado de orden rechazado'),
+                'desc'     => $this->l('Elige que estado mostrar en ordenes rechazadas.'),
+                'name'     => MobbexHelper::K_ORDER_STATUS_REJECTED,
+                'required' => false,
+                'tab'      => 'tab_general',
+                'options'  => [
+                    'query' => MobbexHelper::getOrderStatusSelect(),
+                    'id'    => 'id_option',
+                    'name'  => 'name'
+                ]
+            ],
+            [
+                'type'     => 'select',
+                'label'    => $this->l('Estado de orden reembolsado'),
+                'desc'     => $this->l('Elige que estado mostrar en ordenes reembolsadas.'),
+                'name'     => MobbexHelper::K_ORDER_STATUS_REFUNDED,
+                'required' => false,
+                'tab'      => 'tab_general',
+                'options'  => [
+                    'query' => MobbexHelper::getOrderStatusSelect(),
+                    'id'    => 'id_option',
+                    'name'  => 'name'
+                ]
+            ],
         ]
     ]
 ];
