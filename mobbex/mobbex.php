@@ -904,7 +904,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayBackOfficeCategory($params)
     {
         $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
-        $hash = md5(MobbexHelper::K_API_KEY . '!' . MobbexHelper::K_ACCESS_TOKEN);
+        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_API_KEY));
         
         $this->context->smarty->assign([
             'id'             => $id,
