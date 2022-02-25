@@ -102,8 +102,6 @@ class Mobbex extends PaymentModule
         // Plans Widget
         Configuration::updateValue(MobbexHelper::K_PLANS, false);
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
-        Configuration::updateValue(MobbexHelper::K_PLANS_TEXT_COLOR, MobbexHelper::K_DEF_PLANS_TEXT_COLOR);
-        Configuration::updateValue(MobbexHelper::K_PLANS_BACKGROUND, MobbexHelper::K_DEF_PLANS_BACKGROUND);
         Configuration::updateValue(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL);
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
