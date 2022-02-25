@@ -3,6 +3,8 @@
 class MobbexHelper
 {
     const MOBBEX_VERSION = '2.7.3';
+    const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
+    const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -509,6 +511,16 @@ class MobbexHelper
     }
 
     /**
+     * Save sources in config data
+     * 
+     */
+    public static function updateMobbexSources()
+    {
+        \Configuration::updateValue('MOBBEX_SOURCES_COMMON', json_encode(self::getSources()));
+        \Configuration::updateValue('MOBBEX_SOURCES_ADVANCED', json_encode(self::getSourcesAdvanced()));
+    }
+
+    /**
      * Retrieve installments checked on plans filter of each product.
      * 
      * @param array $products Array of products or their ids.
@@ -997,7 +1009,12 @@ class MobbexHelper
         $checkedCommonPlans   = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans')) ?: [];
         $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans')) ?: [];
 
-        foreach (MobbexHelper::getSources() as $source) {
+        if(!Configuration::get('MOBBEX_SOURCES_COMMON'))
+            self::updateMobbexSources();
+
+        $sources = json_decode((string) Configuration::get('MOBBEX_SOURCES_COMMON'), true) ?: [];
+
+        foreach ($sources as $source) {
             // Only if have installments
             if (empty($source['installments']['list']))
                 continue;
@@ -1012,7 +1029,12 @@ class MobbexHelper
             }
         }
 
-        foreach (MobbexHelper::getSourcesAdvanced() as $source) {
+        if(!Configuration::get('MOBBEX_SOURCES_ADVANCED'))
+            self::updateMobbexSources();
+
+        $sources_advanced = json_decode((string) Configuration::get('MOBBEX_SOURCES_ADVANCED'), true) ?: [];
+
+        foreach ($sources_advanced as $source) {
             // Only if have installments
             if (empty($source['installments']))
                 continue;

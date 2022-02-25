@@ -43,7 +43,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect', 'order', 'task'];
+        $this->controllers = ['notification', 'redirect', 'order', 'task', 'sources'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -108,6 +108,7 @@ class Mobbex extends PaymentModule
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
+        MobbexHelper::updateMobbexSources();
 
         $this->_createTable();
         return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
@@ -916,13 +917,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminProductsExtra($params)
     {
-        $id = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
-        
+        $id   = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
+        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
 
         $this->context->smarty->assign([
-            'id'           => $id,
-            'plans'        => MobbexHelper::getPlansFilterFields($id),
-            'entity'       => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: '',
+            'id'             => $id,
+            'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
+            'plans'          => MobbexHelper::getPlansFilterFields($id),
+            'entity'         => MobbexCustomFields::getCustomField($id, 'product', 'entity') ?: '',
             'subscription' => [
                 'uid'    => MobbexCustomFields::getCustomField($id, 'product', 'subscription_uid') ?: '',
                 'enable' => MobbexCustomFields::getCustomField($id, 'product', 'subscription_enable') ?: 'no'
@@ -940,11 +942,13 @@ class Mobbex extends PaymentModule
     public function hookDisplayBackOfficeCategory($params)
     {
         $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
-
+        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
+        
         $this->context->smarty->assign([
-            'id'     => $id,
-            'plans'  => MobbexHelper::getPlansFilterFields($id, 'category'),
-            'entity' => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
+            'id'             => $id,
+            'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
+            'plans'          => MobbexHelper::getPlansFilterFields($id, 'category'),
+            'entity'         => MobbexCustomFields::getCustomField($id, 'category', 'entity') ?: ''
         ]);
 
         return $this->display(__FILE__, 'views/templates/hooks/category-settings.tpl');
