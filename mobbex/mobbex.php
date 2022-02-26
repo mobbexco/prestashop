@@ -646,6 +646,7 @@ class Mobbex extends PaymentModule
             'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
             'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'data'       => $checkoutData,
         ]);
 
         // Get payment methods from checkout
@@ -814,6 +815,7 @@ class Mobbex extends PaymentModule
                 'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
                 'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
                 'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'data'       => $checkoutData,
             ]
         ]);
 

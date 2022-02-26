@@ -58,8 +58,8 @@
       url: mbbx.paymentUrl,
 
       success: (response) => {
-          if (response.data && response.order) {
-            callback(response);
+          if (response.order) {
+            callback(response.data ? response : mbbx);
           } else if (mbbx.errorUrl) {
             window.top.location = mbbx.errorUrl;
           } else {
