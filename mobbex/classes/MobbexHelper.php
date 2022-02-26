@@ -47,6 +47,7 @@ class MobbexHelper
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
     const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
+    const K_CHECKOUT_ON_PROCESS = 'MOBBEX_CHECKOUT_ON_PROCESS';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
     const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
