@@ -16,11 +16,15 @@ class OrderUpdate
     {
         try {
             $payments = $order->getOrderPaymentCollection() ?: [];
-            $payment  = isset($payments[0]) ? $payments[0] : false;
+            $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment)
+            if (!$payment || \MobbexHelper::getState($data['status']) != 'approved')
                 return false;
 
+            $payment->order_reference = $order->reference;
+            $payment->id_currency     = $order->id_currency;
+            $payment->conversion_rate = 1;
+            $payment->amount          = $order->total_paid; // TODO: Use $data['total']
             $payment->payment_method  = $data['source_name'];
             $payment->transaction_id  = $data['payment_id'] ?: null;
             $payment->card_number     = $data['source_number'] ?: null;
@@ -28,7 +32,11 @@ class OrderUpdate
             $payment->card_holder     = $data['cardholder'] ? json_decode($data['cardholder'], true)['name'] : null;
             $payment->card_brand      = $data['source_type'];
 
-            return $payment->update();
+            // If is new payment, update order real paid
+            if (!isset($payments[0]))
+                $order->total_paid_real = $order->total_paid;
+
+            return $payment->save() && $order->update();
         } catch (\Exception $e) {
             \MobbexHelper::log('Error Updating Order Payment on Webhook Process: ' . $e->getMessage(), $order->id, true);
         }
