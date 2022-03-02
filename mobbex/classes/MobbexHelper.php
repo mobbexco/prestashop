@@ -35,13 +35,9 @@ class MobbexHelper
     const K_THEME_DARK = 'dark';
 
     const K_PLANS = 'MOBBEX_PLANS';
+    const K_PLANS_STYLES = 'MOBBEX_PLANS_STYLES';
     const K_PLANS_TEXT = 'MOBBEX_PLANS_TEXT';
-    const K_PLANS_TEXT_COLOR = 'MOBBEX_PLANS_TEXT_COLOR';
-    const K_PLANS_BACKGROUND = 'MOBBEX_PLANS_BACKGROUND';
     const K_PLANS_IMAGE_URL = 'MOBBEX_PLANS_IMAGE_URL';
-    const K_PLANS_PADDING = 'MOBBEX_PLANS_PADDING';
-    const K_PLANS_FONT_SIZE = 'MOBBEX_PLANS_FONT_SIZE';
-    const K_PLANS_THEME = 'MOBBEX_PLANS_THEME';
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
@@ -50,12 +46,25 @@ class MobbexHelper
     const K_CHECKOUT_ON_PROCESS = 'MOBBEX_CHECKOUT_ON_PROCESS';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
-    const K_DEF_PLANS_TEXT_COLOR = '#ffffff';
-    const K_DEF_PLANS_BACKGROUND = '#8900ff';
+    const K_DEF_PLANS_STYLES =
+'.mbbxWidgetOpenBtn {
+    width: fit-content;
+    min-height: 40px;
+    border-radius: 6px;
+    padding: 8px 18px; /* arriba/abajo, izquierda/derecha */
+    font-size: 16px;
+    color: #6f00ff;
+    background-color: #ffffff;
+    border: 2px solid #6f00ff; /* grosor, estilo de linea, color */
+    cursor: pointer;
+    /*box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);*/
+}
+
+.mbbxWidgetOpenBtn:hover {
+    color: #ffffff;
+    background-color: #6f00ff;
+}';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
-    const K_DEF_PLANS_PADDING = '4px 18px';
-    const K_DEF_PLANS_FONT_SIZE = '16px';
-    const K_DEF_PLANS_THEME = MobbexHelper::K_THEME_LIGHT;
     const K_DEF_MULTICARD = false;
     const K_DEF_MULTIVENDOR = false;
 
@@ -136,7 +145,7 @@ class MobbexHelper
         $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
 
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
+            "type" => Configuration::get(MobbexHelper::K_THEME) ?: MobbexHelper::K_DEF_THEME,
             "header" => [
                 "name" => Configuration::get('PS_SHOP_NAME'),
                 "logo" => !empty($custom_logo) ? $custom_logo : $default_logo,

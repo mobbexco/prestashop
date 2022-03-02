@@ -1,21 +1,18 @@
 <div class="mobbex-plans">
     {literal}
         <style>
+            /* OPEN BUTTON CUSTOM OPTIONS */
+            {/literal}
+            
+            {$style_settings['styles']}
+            
+            {literal}
+
             /* CLOSE-OPEN BUTTONS */
             .mbbxWidgetOpenBtn {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
                 width: fit-content;
-                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px{/if}{literal};
-                font-size: {/literal}{if $style_settings['button_font_size']}{$style_settings['button_font_size']}{else}16px{/if}{literal};
-                color: {/literal}{if $style_settings['text_color']}{$style_settings['text_color']}{else}#ffffff{/if}{literal};
-                background: {/literal}{if $style_settings['background']}{$style_settings['background']}{else}#8900ff{/if}{literal};
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);
-                min-height: 40px;
             }
             #closembbxProduct {
                 font-size: 35px;
@@ -239,13 +236,14 @@
         </div>
     </div>
 
-    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">{$style_settings['text']}
+    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" 
                  width="40" 
                  height="40"
-                 style="margin-left: 15px; border-radius: 40px;">
+                 style="margin-right: 15px; border-radius: 40px;">
         {/if}
+        {$style_settings['text']}
     </button>
 
     <script>
