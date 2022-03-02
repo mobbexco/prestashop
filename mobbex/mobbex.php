@@ -955,9 +955,9 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminOrder($params)
     {
-
         $order = new Order($params['id_order']);
-        $trx = MobbexTransaction::getTransactions($order->id_cart, true);
+        $trx = MobbexTransaction::getParentTransaction($order->id_cart);
+        $transactions = MobbexTransaction::getTransactions($order->id_cart);
 
         if (!$trx) {
             return;
@@ -972,8 +972,8 @@ class Mobbex extends PaymentModule
                     'currency'      => $trx->currency,
                     'total'         => $trx->total,
                 ],
-                'sources'  => MobbexHelper::getWebhookSources(MobbexTransaction::getTransactions($order->id_cart)),
-                'entities' => MobbexHelper::getWebhookEntities(MobbexTransaction::getTransactions($order->id_cart))
+                'sources'  => MobbexHelper::getWebhookSources($transactions),
+                'entities' => MobbexHelper::getWebhookEntities($transactions)
             ]
         );
 

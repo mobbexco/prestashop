@@ -111,30 +111,15 @@ class MobbexTransaction extends ObjectModel
      * 
      * @return array|object
      */
-    public static function getTransactions($cart_id, $parent = false)
+    public static function getTransactions($cart_id)
     {
-
-        if($parent) {
-            $trx = Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id=' . $cart_id . ' and parent=1');
-            $id  = !empty($trx[0]['id']) ? $trx[0]['id'] : null;
-            $trx = new MobbexTransaction($id);
-            return $trx; 
-        }
-        
-        $data = Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id);
+        $data = Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ' ORDER BY id DESC');
         $transactions = [];
 
-        foreach ($data as $value) {
+        foreach ($data as $value)
             $transactions[] = new MobbexTransaction($value['id']);
-        }
 
-        try {
-            return $transactions;
-        } catch (Exception $ex) {
-            p($ex);
-
-            return [];
-        }
+        return $transactions;
     }
 
     /**
@@ -146,6 +131,6 @@ class MobbexTransaction extends ObjectModel
      */
     public static function getParentTransaction($cartId)
     {
-        return new MobbexTransaction(Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1')); 
+        return new MobbexTransaction(Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1  ORDER BY id DESC')); 
     }
 }
