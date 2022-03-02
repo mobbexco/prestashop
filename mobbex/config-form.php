@@ -323,7 +323,7 @@ return [
             ],
             [
                 'type' => 'switch',
-                'label' => $this->l('Permite el uso de multiples tarjetas'),
+                'label' => $this->l('Permite el uso de múltiples tarjetas'),
                 'name' => MobbexHelper::K_MULTICARD,
                 'is_bool' => true,
                 'required' => false,
@@ -418,8 +418,8 @@ return [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Modo de pedidos priorizados'),
-                'desc'     => $this->l('Los pedidos se crearán al momento de comenzar el pago con Mobbex en lugar de esperar la llegada del webhook.'),
+                'label'    => $this->l('Pedido al procesar pago'),
+                'desc'     => $this->l('El pedido será creado justo antes de comenzar el pago en vez de hacerlo al recibir el webhook.'),
                 'name'     => MobbexHelper::K_ORDER_FIRST,
                 'is_bool'  => true,
                 'required' => false,

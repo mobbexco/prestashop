@@ -278,12 +278,15 @@ class MobbexHelper
     /**
      * Get the payment data
      *
-     * @return array
+     * @return array|null
      */
     public static function getPaymentData()
     {
         $cart = Context::getContext()->cart;
         $customer = Context::getContext()->customer;
+
+        if (!$cart->id)
+            return;
 
         return self::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: MobbexHelper::createCheckout(null, $cart, $customer);
     }
