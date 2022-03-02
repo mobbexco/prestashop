@@ -143,7 +143,7 @@ class Mobbex extends PaymentModule
     {
         $hooks = [
             'displayAdminProductsExtra',
-            'actionProductUpdate',
+            'actionAdminProductsControllerSaveBefore',
             'displayBackOfficeCategory',
             'categoryAddition',
             'categoryUpdate',
@@ -975,7 +975,7 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
     }
 
-    public function hookActionProductUpdate($params)
+    public function hookActionAdminProductsControllerSaveBefore($params)
     {
         $commonPlans = $advancedPlans = [];
         $entity = isset($_POST['entity']) ? $_POST['entity'] : null;
@@ -993,27 +993,12 @@ class Mobbex extends PaymentModule
             }
         }
 
-        // If is bulk import
-        if (strnatcasecmp(Tools::getValue('controller'), 'adminImport') === 0) {
-            // Only save when they are not empty
-            if (!empty($commonPlans))
-                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
-            if (!empty($advancedPlans))
-                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
-            if ($entity)
-                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
-            if ($isSubscription)
-                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
-            if($subscriptionUid)    
-                MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
-        } else {
-            // Save data directly
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
-            MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
-        }
+        // Save data directly
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
+        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
     }
 
     /**
