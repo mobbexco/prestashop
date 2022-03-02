@@ -150,10 +150,9 @@ function setCurrentMethod(method) {
  * Hide unchecked card options for ps 1.6.
  */
 function hideCardForms() {
-  let forms = $('.walletForm');
-
-  for (const form of forms)
-    form.style.display = form.id == `card_${mbbx.card}_form` ? 'block' : 'none';
+  $('.walletForm').each(function (i, form) {
+    $(form).css('display', $(form).attr('card') == mbbx.card ? 'block' : 'none')
+  });
 }
 
 /**
@@ -211,8 +210,8 @@ window.addEventListener('load', function () {
       return e.preventDefault() || setCurrentMethod(this) || executePayment();
     });
   } else {
-    $(document).on('click', '.walletAnchor', function () {
-      return setCurrentMethod(this);
+    $(document).on('click', '.walletAnchor', function (e) {
+      return e.preventDefault() || setCurrentMethod(this);
     });
     $(document).on('click', '#mobbexExecute', () => executePayment());
   }

@@ -122,7 +122,7 @@
             }
 
             #mbbx-method-select {
-                width: 100%;
+                width: 94%;
                 min-height: 40px;
                 padding: 0.5rem;
                 border: 1px #d8d8d8 solid;
@@ -184,18 +184,16 @@
 
     <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}" style="display: none;">
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
-        <div id="mbbxProductModalHeader">
-        <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
-        <span id="closembbxProduct">&times;</span>
+            <div id="mbbxProductModalHeader">
                 <select name="mbbx-method-select" id="mbbx-method-select">
-                    <option id="0" value="0">Todos</option>
+                    <option id="0" value="0">Seleccione un método de pago</option>
                     {foreach from=$sources item=source}
                         {if !empty($source['source']['name'])}
-                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">
-                                {$source['source']['name']}</option>
+                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">{$source['source']['name']}</option>
                         {/if}
                     {/foreach}
                 </select>
+                <span id="closembbxProduct">&times;</span>
             </div>
             <div id="mbbxProductModalBody">
                 {foreach from=$sources item=source }

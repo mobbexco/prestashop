@@ -42,14 +42,13 @@
                         {$card['name']}
                     </a>
                 </p>
-                <div id="card_{$key}_form" class="walletForm">
+                <div class="walletForm" card="{$key}">
                     <input type="password" name="securityCode" id="card-{$key}-code" placeholder="{$card['source']['card']['product']['code']['name']}" maxlength="{$card['source']['card']['product']['code']['length']}">
                     <select name="installment" id="card-{$key}-installments" >
                         {foreach from=$card['installments'] item=installment}
                             <option value="{$installment['reference']}">{$installment['name']}</option>
                         {/foreach}
                     </select>
-                    <input type="hidden" name="walletCard" value="{$key}">
                     <input type="hidden" name="cardNumber" id="card-{$key}-number" value="{$card['card']['card_number']}">
                     <button type="submit" id="mobbexExecute" class="button btn btn-default button-medium pull-right">
                         <span>

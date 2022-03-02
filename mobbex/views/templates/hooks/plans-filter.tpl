@@ -35,8 +35,7 @@
 </table>
 
 <div class="mbbx-update-plans">
-    <a class="mbbx-update-button" id="mbbx-update-btn" href="#">Actualizar medios de pago.</a>
-    <p>Toca para actualizar los medios de pago.</p>
+    <button class="btn btn-secondary mt-1" id="mbbx-update-btn">Actualizar medios de pago</button>
 </div>
 
 {literal}
@@ -77,20 +76,6 @@
             margin: 20px 0;
         }
 
-        .mbbx-update-plans .mbbx-update-button {
-            text-decoration: none;
-            padding: 10px 20px;
-            color: white;
-            background-color: rgb(99, 1, 182);
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        .mbbx-update-plans .mbbx-update-button:hover {
-            text-decoration: none;
-            color: white;
-        }
-
         .mbbx-update-plans p {
             margin-top: 10px;
         }
@@ -102,7 +87,7 @@
             var mbbxControllerUrl = {/literal}"{$update_sources}"{literal};
 
             function updateMbbxSources() {
-
+                $('#mbbx-update-btn').toggleClass('disabled');
                 $.ajax({
                     method: 'POST',
                     url: mbbxControllerUrl,

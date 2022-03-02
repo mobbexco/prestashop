@@ -102,6 +102,7 @@ class Mobbex extends PaymentModule
         // Plans Widget
         Configuration::updateValue(MobbexHelper::K_PLANS, false);
         Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
+        Configuration::updateValue(MobbexHelper::K_PLANS_STYLES, MobbexHelper::K_DEF_PLANS_STYLES);
         Configuration::updateValue(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL);
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
@@ -109,7 +110,7 @@ class Mobbex extends PaymentModule
         MobbexHelper::updateMobbexSources();
 
         $this->_createTable();
-        return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
+        return parent::install() && $this->unregisterHooks() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
     /**
@@ -975,15 +976,16 @@ class Mobbex extends PaymentModule
         return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
     }
 
-    public function hookActionAdminProductsControllerSaveBefore($params)
+    public function hookActionAdminProductsControllerSaveBefore()
     {
         $commonPlans = $advancedPlans = [];
-        $entity = isset($_POST['entity']) ? $_POST['entity'] : null;
-        $isSubscription = isset($_POST['sub_enable']) ? $_POST['sub_enable'] : 'no';
-        $subscriptionUid = isset($_POST['sub_uid']) ? $_POST['sub_uid'] : '';
+
+        $entity          = isset($_REQUEST['entity'])     ? $_REQUEST['entity']     : null;
+        $isSubscription  = isset($_REQUEST['sub_enable']) ? $_REQUEST['sub_enable'] : 'no';
+        $subscriptionUid = isset($_REQUEST['sub_uid'])    ? $_REQUEST['sub_uid']    : '';
 
         // Get plans selected
-        foreach ($_POST as $key => $value) {
+        foreach ($_REQUEST as $key => $value) {
             if (strpos($key, 'common_plan_') !== false && $value === 'no') {
                 // Add UID to common plans
                 $commonPlans[] = explode('common_plan_', $key)[1];
@@ -994,11 +996,11 @@ class Mobbex extends PaymentModule
         }
 
         // Save data directly
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'entity', $entity);
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'common_plans', json_encode($commonPlans));
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_enable', $isSubscription);
-        MobbexCustomFields::saveCustomField($params['id_product'], 'product', 'subscription_uid', $subscriptionUid);
+        MobbexCustomFields::saveCustomField($_POST['id_product'], 'product', 'entity', $entity);
+        MobbexCustomFields::saveCustomField($_POST['id_product'], 'product', 'common_plans', json_encode($commonPlans));
+        MobbexCustomFields::saveCustomField($_POST['id_product'], 'product', 'advanced_plans', json_encode($advancedPlans));
+        MobbexCustomFields::saveCustomField($_POST['id_product'], 'product', 'subscription_enable', $isSubscription);
+        MobbexCustomFields::saveCustomField($_POST['id_product'], 'product', 'subscription_uid', $subscriptionUid);
     }
 
     /**
