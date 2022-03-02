@@ -717,11 +717,11 @@ class Mobbex extends PaymentModule
             'product_price'  => Product::convertAndFormatPrice($total),
             'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
-                'default_styles'   => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
-                'styles'           => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
-                'text'             => Configuration::get(MobbexHelper::K_PLANS_TEXT, 'Planes Mobbex'),
-                'button_image'     => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL) ?: 'https://res.mobbex.com/images/sources/mobbex.png',
-                'plans_theme'      => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
+                'default_styles' => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
+                'styles'         => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
+                'text'           => Configuration::get(MobbexHelper::K_PLANS_TEXT) ?: MobbexHelper::K_DEF_PLANS_TEXT,
+                'button_image'   => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL),
+                'plans_theme'    => Configuration::get(MobbexHelper::K_THEME) ?: MobbexHelper::K_DEF_THEME,
             ],
         ]);
 

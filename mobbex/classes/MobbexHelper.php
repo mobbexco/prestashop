@@ -43,30 +43,24 @@ class MobbexHelper
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
 
     const K_DEF_PLANS_TEXT = 'Planes Mobbex';
-    const K_DEF_PLANS_STYLES = 
-    '/* Modifica los valores para cambiar el estilo deseado. */
-
-    .mbbxWidgetOpenBtn {
+    const K_DEF_PLANS_STYLES =
+'.mbbxWidgetOpenBtn {
     width: fit-content;
     min-height: 40px;
     border-radius: 6px;
-    padding: 8px 18px; /* arriba/abajo, izquierda/derecha´ */
+    padding: 8px 18px; /* arriba/abajo, izquierda/derecha */
     font-size: 16px;
-    color: #6f00ff; 
+    color: #6f00ff;
     background-color: #ffffff;
     border: 2px solid #6f00ff; /* grosor, estilo de linea, color */
     cursor: pointer;
     /*box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);*/
-    }
+}
 
-    /* Hover Options */
-    .mbbxWidgetOpenBtn:hover {
+.mbbxWidgetOpenBtn:hover {
     color: #ffffff;
     background-color: #6f00ff;
-    }
-
-    /* Los colores pueden ser hexadecimales o rgb */
-    /* Para que los estilos funcionen deben respetar la sintaxys de CSS.*/';
+}';
     const K_DEF_PLANS_IMAGE_URL = 'https://res.mobbex.com/images/sources/mobbex.png';
     const K_DEF_MULTICARD = false;
     const K_DEF_MULTIVENDOR = false;
@@ -148,7 +142,7 @@ class MobbexHelper
         $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
 
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME) ? 'light' : 'dark',
+            "type" => Configuration::get(MobbexHelper::K_THEME) ?: MobbexHelper::K_DEF_THEME,
             "header" => [
                 "name" => Configuration::get('PS_SHOP_NAME'),
                 "logo" => !empty($custom_logo) ? $custom_logo : $default_logo,
