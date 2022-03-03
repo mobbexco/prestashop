@@ -380,13 +380,13 @@ class MobbexHelper
         if ($state == 'onhold') {
             $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
         } else if ($state == 'approved') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_APPROVED);
+            $data['order_status'] =  (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_APPROVED) ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
         } else if ($state == 'failed') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_FAILED);
+            $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_FAILED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         } else if ($state == 'refunded') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED);
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED ?: \Configuration::get('PS_OS_' . 'REFUNDED'));
         } else if ($state == 'rejected') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REJECTED);
+            $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_REJECTED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
 
         return $data;
