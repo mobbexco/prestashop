@@ -173,7 +173,7 @@ class MobbexHelper
 
     public static function getReference($cart)
     {
-        return 'ps_order_cart_' . $cart->id . '_time_' . time();
+        return 'ps_order_cart_' . $cart->id;
     }
 
     public static function createCheckout($module, $cart, $customer)
