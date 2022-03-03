@@ -111,10 +111,10 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
         //Order Statuses
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_APPROVED, MobbexHelper::K_DEF_ORDER_STATUS_APPROVED);
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_FAILED, MobbexHelper::K_DEF_ORDER_STATUS_FAILED);
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, MobbexHelper::K_DEF_ORDER_STATUS_REFUNDED);
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REJECTED, MobbexHelper::K_DEF_ORDER_STATUS_REJECTED);
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_APPROVED, \Configuration::get('PS_OS_' . 'PAYMENT'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_FAILED, \Configuration::get('PS_OS_' . 'ERROR'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, \Configuration::get('PS_OS_' . 'REFUNDED'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REJECTED, \Configuration::get('PS_OS_' . 'ERROR'));
 
         $this->_createTable();
         return parent::install() && $this->registerHooks() && $this->addExtensionHooks();
