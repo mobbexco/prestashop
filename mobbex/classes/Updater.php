@@ -67,7 +67,9 @@ class Updater
      */
     public function hasUpdates($version)
     {
-        return version_compare($version, $this->getLatestRelease()['tag_name'], '<');
+        $latestRelease = $this->getLatestRelease();
+
+        return version_compare($version, isset($latestRelease['tag_name']) ? $latestRelease['tag_name'] : $version, '<');
     }
 
     /**

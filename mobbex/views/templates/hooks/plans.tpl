@@ -1,21 +1,18 @@
 <div class="mobbex-plans">
     {literal}
         <style>
+            /* OPEN BUTTON CUSTOM OPTIONS */
+            {/literal}
+            
+            {$style_settings['styles']}
+            
+            {literal}
+
             /* CLOSE-OPEN BUTTONS */
             .mbbxWidgetOpenBtn {
                 display: flex;
-                justify-content: space-between;
                 align-items: center;
                 width: fit-content;
-                padding: {/literal}{if $style_settings['button_padding']}{$style_settings['button_padding']}{else}4px 18px{/if}{literal};
-                font-size: {/literal}{if $style_settings['button_font_size']}{$style_settings['button_font_size']}{else}16px{/if}{literal};
-                color: {/literal}{if $style_settings['text_color']}{$style_settings['text_color']}{else}#ffffff{/if}{literal};
-                background: {/literal}{if $style_settings['background']}{$style_settings['background']}{else}#8900ff{/if}{literal};
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .2);
-                min-height: 40px;
             }
             #closembbxProduct {
                 font-size: 35px;
@@ -125,7 +122,7 @@
             }
 
             #mbbx-method-select {
-                width: 100%;
+                width: 94%;
                 min-height: 40px;
                 padding: 0.5rem;
                 border: 1px #d8d8d8 solid;
@@ -187,18 +184,16 @@
 
     <div id="mbbxProductModal" class="mobbex-plans-modal {$style_settings['plans_theme']}" style="display: none;">
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
-        <div id="mbbxProductModalHeader">
-        <label id="mobbex_select_title" for="mbbx-method-select">Seleccione un método de pago</label>
-        <span id="closembbxProduct">&times;</span>
+            <div id="mbbxProductModalHeader">
                 <select name="mbbx-method-select" id="mbbx-method-select">
-                    <option id="0" value="0">Todos</option>
+                    <option id="0" value="0">Seleccione un método de pago</option>
                     {foreach from=$sources item=source}
                         {if !empty($source['source']['name'])}
-                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">
-                                {$source['source']['name']}</option>
+                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">{$source['source']['name']}</option>
                         {/if}
                     {/foreach}
                 </select>
+                <span id="closembbxProduct">&times;</span>
             </div>
             <div id="mbbxProductModalBody">
                 {foreach from=$sources item=source }
@@ -239,13 +234,14 @@
         </div>
     </div>
 
-    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">{$style_settings['text']}
+    <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">
         {if !empty($style_settings['button_image'])}
             <img src="{$style_settings['button_image']}" 
                  width="40" 
                  height="40"
-                 style="margin-left: 15px; border-radius: 40px;">
+                 style="margin-right: 15px; border-radius: 40px;">
         {/if}
+        {$style_settings['text']}
     </button>
 
     <script>
