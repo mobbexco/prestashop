@@ -6,6 +6,7 @@ return [
     'form' => [
         'tabs'        => [
             'tab_general'    => $this->l('General'),
+            'tab_orders'    => $this->l('Orders Configuration'),
             'tab_appearence' => $this->l('Appearance'),
             'tab_advanced'   => $this->l('Advanced Configuration'),
         ],
@@ -423,7 +424,7 @@ return [
                 'name'     => MobbexHelper::K_ORDER_FIRST,
                 'is_bool'  => true,
                 'required' => false,
-                'tab'      => 'tab_advanced',
+                'tab'      => 'tab_orders',
                 'values'   => [
                     [
                         'id'    => 'active_on_order_first',
@@ -443,7 +444,7 @@ return [
                 'hint'     => 'Número de días en los que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
                 'name'     => 'MOBBEX_EXPIRATION_INTERVAL',
                 'required' => false,
-                'tab'      => 'tab_advanced',
+                'tab'      => 'tab_orders',
                 'col'      => 2,
                 'suffix'   => 'días',
                 'default'  => 3,
@@ -476,7 +477,7 @@ return [
                 'desc'     => $this->l('Elige que estado mostrar en ordenes aprobadas.'),
                 'name'     => MobbexHelper::K_ORDER_STATUS_APPROVED,
                 'required' => false,
-                'tab'      => 'tab_general',
+                'tab'      => 'tab_orders',
                 'options'  => [
                     'query' => MobbexHelper::getOrderStatusSelect(),
                     'id'    => 'id_option',
@@ -489,7 +490,7 @@ return [
                 'desc'     => $this->l('Elige que estado mostrar en ordenes fallidas.'),
                 'name'     => MobbexHelper::K_ORDER_STATUS_FAILED,
                 'required' => false,
-                'tab'      => 'tab_general',
+                'tab'      => 'tab_orders',
                 'options'  => [
                     'query' => MobbexHelper::getOrderStatusSelect(),
                     'id'    => 'id_option',
@@ -502,7 +503,7 @@ return [
                 'desc'     => $this->l('Elige que estado mostrar en ordenes rechazadas.'),
                 'name'     => MobbexHelper::K_ORDER_STATUS_REJECTED,
                 'required' => false,
-                'tab'      => 'tab_general',
+                'tab'      => 'tab_orders',
                 'options'  => [
                     'query' => MobbexHelper::getOrderStatusSelect(),
                     'id'    => 'id_option',
@@ -515,7 +516,7 @@ return [
                 'desc'     => $this->l('Elige que estado mostrar en ordenes reembolsadas.'),
                 'name'     => MobbexHelper::K_ORDER_STATUS_REFUNDED,
                 'required' => false,
-                'tab'      => 'tab_general',
+                'tab'      => 'tab_orders',
                 'options'  => [
                     'query' => MobbexHelper::getOrderStatusSelect(),
                     'id'    => 'id_option',
