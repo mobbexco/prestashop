@@ -46,6 +46,7 @@ class MobbexHelper
     const K_CHECKOUT_ON_PROCESS = 'MOBBEX_CHECKOUT_ON_PROCESS';
 
     //Order statuses
+    const K_OS_APPROVED = 'MOBBEX_OS_APPROVED';
     const K_OS_PENDING  = 'MOBBEX_OS_PENDING';
     const K_OS_WAITING  = 'MOBBEX_OS_WAITING';
     const K_OS_REJECTED = 'MOBBEX_OS_REJECTED';
@@ -399,7 +400,7 @@ class MobbexHelper
         } else if ($state == 'failed') {
             $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_FAILED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         } else if ($state == 'refunded') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED ?: \Configuration::get('PS_OS_' . 'REFUNDED'));
+            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED ?: \Configuration::get('PS_OS_' . 'REFUND'));
         } else if ($state == 'rejected') {
             $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_REJECTED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
