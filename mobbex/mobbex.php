@@ -112,9 +112,8 @@ class Mobbex extends PaymentModule
         //Order Statuses
         Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_APPROVED, \Configuration::get('PS_OS_' . 'PAYMENT'));
         Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_FAILED, \Configuration::get('PS_OS_' . 'ERROR'));
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, \Configuration::get('PS_OS_' . 'REFUNDED'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, \Configuration::get('PS_OS_' . 'REFUND'));
         Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REJECTED, \Configuration::get('PS_OS_' . 'ERROR'));
-        MobbexHelper::updateMobbexSources();
 
         $this->_createTable();
         return parent::install() && $this->unregisterHooks() && $this->registerHooks() && $this->addExtensionHooks();
@@ -444,6 +443,34 @@ class Mobbex extends PaymentModule
 
     private function _createStates()
     {
+        // Approved Status
+        if (
+            !Configuration::hasKey(MobbexHelper::K_OS_APPROVED)
+            || empty(Configuration::get(MobbexHelper::K_OS_APPROVED))
+            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_APPROVED)))
+        ) {
+            $order_state = new OrderState();
+            $order_state->name = array();
+
+            foreach (Language::getLanguages() as $language) {
+                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
+                $order_state->name[$language['id_lang']] = $this->l('Transacción en proceso');
+            }
+
+            $order_state->send_email = true;
+            $order_state->color = '#5bff67';
+            $order_state->hidden = false;
+            $order_state->delivery = false;
+            $order_state->logable = false;
+            $order_state->invoice = false;
+
+            $order_state->module_name = $this->name;
+
+            // Add to database
+            $order_state->add();
+            Configuration::updateValue(MobbexHelper::K_OS_APPROVED, (int) $order_state->id);
+        }
+
         // Pending Status
         if (
             !Configuration::hasKey(MobbexHelper::K_OS_PENDING)
