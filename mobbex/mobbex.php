@@ -95,6 +95,8 @@ class Mobbex extends PaymentModule
         Configuration::updateValue(MobbexHelper::K_EMBED, true);
         Configuration::updateValue(MobbexHelper::K_WALLET, false);
         Configuration::updateValue(MobbexHelper::K_UNIFIED_METHOD, false);
+        Configuration::updateValue(MobbexHelper::K_MULTIVENDOR, MobbexHelper::K_DEF_MULTIVENDOR);
+        Configuration::updateValue(MobbexHelper::K_MULTICARD, MobbexHelper::K_DEF_MULTICARD);
         // Theme
         Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
         Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
@@ -107,6 +109,11 @@ class Mobbex extends PaymentModule
         // DNI Fields
         Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
         Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
+        //Order Statuses
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_APPROVED, \Configuration::get('PS_OS_' . 'PAYMENT'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_FAILED, \Configuration::get('PS_OS_' . 'ERROR'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, \Configuration::get('PS_OS_' . 'REFUNDED'));
+        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REJECTED, \Configuration::get('PS_OS_' . 'ERROR'));
         MobbexHelper::updateMobbexSources();
 
         $this->_createTable();
