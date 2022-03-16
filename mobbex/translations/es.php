@@ -3,6 +3,7 @@
 global $_MODULE;
 $_MODULE = array();
 $_MODULE['<{mobbex}prestashop>config-form_0db377921f4ce762c62526131097968f'] = 'General';
+$_MODULE['<{mobbex}prestashop>config-form_1bdd9f018e464c9336092a6f12e2662e'] = 'Pedidos';
 $_MODULE['<{mobbex}prestashop>config-form_a1c58e94227389415de133efdf78ea6e'] = 'Apariencia';
 $_MODULE['<{mobbex}prestashop>config-form_c70ec5b31b31ecef0efd3ea40e33909f'] = 'Configuración avanzada';
 $_MODULE['<{mobbex}prestashop>config-form_f4f70727dc34561dfde1a3c529b6205c'] = 'Ajustes';
@@ -22,6 +23,14 @@ $_MODULE['<{mobbex}prestashop>config-form_00f36a2585c284a6c9c90cf415f5b5c6'] = '
 $_MODULE['<{mobbex}prestashop>config-form_824fb1c4a0ba95405051496f32a0b1d6'] = 'Opcional. Texto del botón que abre el widget de financiación';
 $_MODULE['<{mobbex}prestashop>config-form_ea5bd4962870273a91d447f9a8f29077'] = 'Estilos del widget de finanaciación';
 $_MODULE['<{mobbex}prestashop>config-form_18be3471160c983c435e5ead13b5e652'] = 'Modifique los estilos del widget de finanaciación utilizando la sintaxis de CSS';
+$_MODULE['<{mobbex}prestashop>config-form_a92a38d07069d3e07f025c163c52b3ac'] = 'Estado tras pago aprobado';
+$_MODULE['<{mobbex}prestashop>config-form_434a91f102ceb8a781f8cf551edf0364'] = 'Elige que estado mostrar en ordenes con pagos aprobados';
+$_MODULE['<{mobbex}prestashop>config-form_a671512990e9f7eadf0f4555e0324109'] = 'Estado tras pago fallido';
+$_MODULE['<{mobbex}prestashop>config-form_4f6f57a38f69abc7a7634df0b3fe4520'] = 'Elige que estado mostrar en ordenes con pagos fallidos';
+$_MODULE['<{mobbex}prestashop>config-form_7f1606a9fb075605e6d47e2e4b74d040'] = 'Estado tras pago rechazado';
+$_MODULE['<{mobbex}prestashop>config-form_96e2b055d07fe9802462cd1f594290c7'] = 'Elige que estado mostrar en ordenes con pagos rechazados (por ejemplo, por detección de fraude)';
+$_MODULE['<{mobbex}prestashop>config-form_dcda157672018bdb0ff6c5596c73dbb6'] = 'Estado tras pago rembolsado';
+$_MODULE['<{mobbex}prestashop>config-form_0b9874e02bbd5e29666005690d56574b'] = 'Elige que estado mostrar en ordenes con pagos rembolsados';
 $_MODULE['<{mobbex}prestashop>mobbex_876f23178c29dc2552c0b48bf23cd9bd'] = '¿Está seguro que desea desinstalar el módulo?';
 $_MODULE['<{mobbex}prestashop>mobbex_a88f84d8cb58f8230240e1665058c7ff'] = 'Debe instalar la extensión CURL';
 $_MODULE['<{mobbex}prestashop>mobbex_d4423ad419d2bf8911d67aae2710b2bf'] = 'en su servidor para instalar el módulo.';
