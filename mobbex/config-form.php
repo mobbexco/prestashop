@@ -412,13 +412,38 @@ return [
             [
                 'type'     => 'text',
                 'label'    => 'Cancelar pedidos pendientes luego de',
-                'hint'     => 'Número de días en los que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
+                'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
                 'name'     => 'MOBBEX_EXPIRATION_INTERVAL',
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'col'      => 2,
-                'suffix'   => 'días',
                 'default'  => 3,
+            ],
+            [
+                'type'     => 'select',
+                'name'     => 'MOBBEX_EXPIRATION_PERIOD',
+                'desc'     => 'Recuerde utilizar un Cron Job para períodos inferiores a 24 horas',
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'default'  => 'day',
+                'options'  => [
+                    'id'    => 'id_option',
+                    'name'  => 'name',
+                    'query' => [
+                        [
+                            'id_option' => 'minute',
+                            'name'      => 'minutos',
+                        ],
+                        [
+                            'id_option' => 'hour',
+                            'name'      => 'horas',
+                        ],
+                        [
+                            'id_option' => 'day',
+                            'name'      => 'días',
+                        ],
+                    ],
+                ],
             ],
             [
                 'type'     => 'switch',

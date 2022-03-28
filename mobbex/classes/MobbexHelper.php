@@ -1170,7 +1170,7 @@ class MobbexHelper
                     null,
                     'actionMobbexExpireOrder',
                     \Configuration::get('MOBBEX_EXPIRATION_INTERVAL') ?: 3,
-                    'day',
+                    \Configuration::get('MOBBEX_EXPIRATION_PERIOD') ?: 'day',
                     1,
                     $order->id
                 );
