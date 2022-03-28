@@ -10,6 +10,6 @@ class MobbexTaskModuleFrontController extends ModuleFrontController
         if ($this->module->active == false || !\Configuration::get('MOBBEX_CRON_MODE') || MobbexHelper::needUpgrade())
             MobbexHelper::log('Task Controller Call On Module or CRON Inactive', $_REQUEST, true, true);
 
-        MobbexTask::executePendingTasks();
+        die(MobbexTask::executePendingTasks() ? 'Tasks executed successfully' : 'Error executing one or more tasks');
     }
 }

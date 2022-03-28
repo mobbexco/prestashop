@@ -159,7 +159,7 @@ class MobbexTask extends \ObjectModel
     /**
      * Get all current pending tasks from db.
      * 
-     * @return array
+     * @return \MobbexTask[]
      */
     public static function getPendingTasks()
     {
