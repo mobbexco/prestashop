@@ -746,9 +746,13 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
+        $iframeMode = Configuration::get('MOBBEX_PLANS_IFRAME');
+        $entityData = $iframeMode ? MobbexHelper::getEntityData() : [];
+
         $this->context->smarty->assign([
             'product_price'  => Product::convertAndFormatPrice($total),
-            'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
+            'sources'        => $iframeMode ? [] : MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
+            'iframe_url'     => "https://mobbex.com/p/sources/widget/$entityData[countryReference]/$entityData[tax_id]?total=$total",
             'style_settings' => [
                 'default_styles' => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
                 'styles'         => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
@@ -758,7 +762,7 @@ class Mobbex extends PaymentModule
             ],
         ]);
 
-        return $this->display(__FILE__, 'views/templates/hooks/plans.tpl');
+        return $this->display(__FILE__, $iframeMode ? 'views/templates/hooks/finance-widget/iframe.tpl' : 'views/templates/hooks/plans.tpl');
     }
 
     /**
