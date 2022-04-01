@@ -206,7 +206,7 @@ return [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Widget de financación mediante iframe'),
+                'label'    => $this->l('Widget de financiación mediante iframe'),
                 'desc'     => $this->l('Renderiza el widget de financiación utilizando la misma vista que se emplea dentro del checkout'),
                 'name'     => 'MOBBEX_PLANS_IFRAME',
                 'is_bool'  => true,
