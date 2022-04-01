@@ -11,7 +11,7 @@
     <div id="modal-mobbex">
         <div id="mbbx-modal-content">
             <span id="mbbx-close-widget">&times;</span>
-            <iframe id="mbbx-iframe" src="{$iframe_url}"></iframe>
+            <iframe id="mbbx-iframe" src="{$sources}"></iframe>
         </div>
     </div>
 </div>
