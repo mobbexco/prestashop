@@ -43,7 +43,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // If order was not created
         if (empty($order_id)) {
-            $seconds = 10;
+            $seconds = Configuration::get('MOBBEX_REDIRECT_TIME') ?: 10;
 
             // Wait for webhook
             while ($seconds > 0 && !$order_id) {
