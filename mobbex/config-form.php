@@ -490,6 +490,18 @@ return [
                 ],
             ],
             [
+                'type'     => 'text',
+                'label'    => 'Tiempo de espera en redireccion',
+                'hint'     => 'La espera se cortará si el pedido se genera en el plazo. Recuerde configurar su servidor para que el tiempo no exceda el límite definido en <code>max_execution_time</code>',
+                'desc'     => 'Duración máxima de tiempo que se esperará para redirijir a la página de confirmación del pedido una vez realizado el pago',
+                'name'     => 'MOBBEX_REDIRECT_TIME',
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'default'  => 10,
+                'col'      => 3,
+                'suffix'   => 'segundos',
+            ],
+            [
                 'type'     => 'select',
                 'label'    => $this->l('Estado de orden aprobado'),
                 'desc'     => $this->l('Elige que estado mostrar en ordenes aprobadas.'),
