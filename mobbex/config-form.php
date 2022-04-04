@@ -411,27 +411,6 @@ return [
                 ],
             ],
             [
-                'type'     => 'switch',
-                'label'    => $this->l('Checkout al procesar pago'),
-                'desc'     => $this->l('El checkout será creado justo antes de comenzar el pago en vez de hacerlo al cargar la página.'),
-                'name'     => MobbexHelper::K_CHECKOUT_ON_PROCESS,
-                'is_bool'  => true,
-                'required' => false,
-                'tab'      => 'tab_advanced',
-                'values'   => [
-                    [
-                        'id'    => 'active_on_checkout_on_process',
-                        'value' => true,
-                        'label' => $this->l('Activar'),
-                    ],
-                    [
-                        'id'    => 'active_off_checkout_on_process',
-                        'value' => false,
-                        'label' => $this->l('Desactivar'),
-                    ],
-                ],
-            ],
-            [
                 'type'     => 'text',
                 'label'    => 'Cancelar pedidos pendientes luego de',
                 'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',

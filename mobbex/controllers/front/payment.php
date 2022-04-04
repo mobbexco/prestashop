@@ -20,7 +20,7 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
     public function process()
     {
         return [
-            'data'  => Configuration::get(MobbexHelper::K_CHECKOUT_ON_PROCESS) ? MobbexHelper::getPaymentData() : false,
+            'data'  => MobbexHelper::getPaymentData() ?: null,
             'order' => Configuration::get(MobbexHelper::K_ORDER_FIRST) ? MobbexHelper::processOrder($this->module) : true,
         ];
     }
