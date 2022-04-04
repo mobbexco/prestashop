@@ -43,7 +43,7 @@ class Mobbex extends PaymentModule
         $this->version = MobbexHelper::MOBBEX_VERSION;
 
         $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'redirect', 'payment', 'task', 'sources'];
+        $this->controllers = ['notification', 'payment', 'task', 'sources'];
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap = true;
@@ -689,11 +689,11 @@ class Mobbex extends PaymentModule
                 Configuration::get('MOBBEX_TITLE') ?: $this->l('Pagar utilizando tarjetas, efectivo u otros'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url']))]
+                ['checkoutUrl' => MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
             );
         } else {
             foreach ($methods as $method) {
-                $checkoutUrl = MobbexHelper::getModuleUrl('redirect', '', '&checkout_url=' . urlencode($checkoutData['url'] . "?paymentMethod={$method['group']}:{$method['subgroup']}"));
+                $checkoutUrl = MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
 
                 $options[] = $this->createPaymentOption(
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE') ? Configuration::get('MOBBEX_TITLE') : $method['subgroup_title'],
