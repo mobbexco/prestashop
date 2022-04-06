@@ -43,7 +43,6 @@ class MobbexHelper
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
     const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
-    const K_CHECKOUT_ON_PROCESS = 'MOBBEX_CHECKOUT_ON_PROCESS';
 
     //Order statuses
     const K_OS_APPROVED = 'MOBBEX_OS_APPROVED';
