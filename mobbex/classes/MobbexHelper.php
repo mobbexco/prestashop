@@ -948,11 +948,17 @@ class MobbexHelper
         try {
             $cart = new Cart($cartId);
 
+            // Validate order, remember to send secure key to avoid warning logs
             $module->validateOrder(
                 $cartId,
                 $orderStatus,
                 (float) $cart->getOrderTotal(),
-                $methodName
+                $methodName,
+                null,
+                [],
+                null,
+                false,
+                $cart->secure_key
             );
 
             return self::getOrderByCartId($cartId, true);
