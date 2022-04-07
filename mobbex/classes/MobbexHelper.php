@@ -220,7 +220,7 @@ class MobbexHelper
 
         }
 
-        $shippingTotal = $cart->getTotalShippingCost();
+        $shippingTotal = self::getShippingCost($cart);
 
         if ($shippingTotal) {
             $carrier = new Carrier($cart->id_carrier);
@@ -1224,5 +1224,22 @@ class MobbexHelper
         }
        
         return $query;
+    }
+
+    /**
+     * Retrieve final shipping cost for the given cart.
+     * 
+     * @param Cart $cart
+     * 
+     * @return float|int 
+     */
+    public static function getShippingCost($cart)
+    {
+        // Check if cart has a free shipping voucher
+        foreach ($cart->getCartRules() as $rule)
+            if ($rule['free_shipping'] && !$rule['carrier_restriction'])
+                return 0;
+
+        return (float) $cart->getTotalShippingCost();
     }
 }
