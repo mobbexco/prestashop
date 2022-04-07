@@ -687,6 +687,7 @@ class Mobbex extends PaymentModule
         if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
                 Configuration::get('MOBBEX_TITLE') ?: $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Configuration::get('MOBBEX_DESCRIPTION'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
                 ['checkoutUrl' => MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
@@ -697,6 +698,7 @@ class Mobbex extends PaymentModule
 
                 $options[] = $this->createPaymentOption(
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE') ? Configuration::get('MOBBEX_TITLE') : $method['subgroup_title'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Configuration::get('MOBBEX_DESCRIPTION') : null,
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl')
@@ -708,6 +710,7 @@ class Mobbex extends PaymentModule
         foreach ($cards as $key => $card) {
             $options[] = $this->createPaymentOption(
                 $card['name'],
+                null,
                 $card['source']['card']['product']['logo'],
                 'module:mobbex/views/templates/front/card-form.tpl',
                 compact('card', 'key')
@@ -717,7 +720,7 @@ class Mobbex extends PaymentModule
         return $options;
     }
 
-    public function createPaymentOption($title, $logo, $template, $templateVars = null)
+    public function createPaymentOption($title, $description, $logo, $template, $templateVars = null)
     {
         if ($templateVars)
             $this->context->smarty->assign($templateVars);
@@ -725,7 +728,8 @@ class Mobbex extends PaymentModule
         $option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $option->setCallToActionText($title)
             ->setForm($this->context->smarty->fetch($template))
-            ->setLogo($logo);
+            ->setLogo($logo)
+            ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
 
         return $option;
     }

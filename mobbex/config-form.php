@@ -66,6 +66,15 @@ return [
                 'default'  => '',
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l('Descripción del medio de pago'),
+                'name'     => 'MOBBEX_DESCRIPTION',
+                'required' => false,
+                'desc'     => $this->l('En caso de tener varios métodos de pago, esta descripción sólo se mostrará dentro del medio "Tarjeta de Crédito/Débito"'),
+                'tab'      => 'tab_appearence',
+                'default'  => '',
+            ],
+            [
                 'type' => 'radio',
                 'label' => $this->l('Theme Mode'),
                 'name' => MobbexHelper::K_THEME,
@@ -471,8 +480,8 @@ return [
             [
                 'type'     => 'text',
                 'label'    => 'Tiempo de espera en redireccion',
-                'hint'     => 'La espera se cortará si el pedido se genera en el plazo. Recuerde configurar su servidor para que el tiempo no exceda el límite definido en <code>max_execution_time</code>',
-                'desc'     => 'Duración máxima de tiempo que se esperará para redirijir a la página de confirmación del pedido una vez realizado el pago',
+                'hint'     => 'Este tiempo se utilizará sólo si el pedido no existe al redirijir. Recuerde configurar su servidor para que el tiempo no exceda el límite definido en <code>max_execution_time</code>',
+                'desc'     => 'Duración máxima de tiempo que se esperará para redirijir a la página de confirmación del pedido una vez se realiza el pago',
                 'name'     => 'MOBBEX_REDIRECT_TIME',
                 'required' => false,
                 'tab'      => 'tab_advanced',
