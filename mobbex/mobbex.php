@@ -156,7 +156,6 @@ class Mobbex extends PaymentModule
             'categoryUpdate',
             'displayPDFInvoice',
             'displayBackOfficeHeader',
-            'displayHeader',
             'paymentReturn',
             'actionOrderReturn',
             'displayAdminOrder',
@@ -165,6 +164,8 @@ class Mobbex extends PaymentModule
 
         $ps16Hooks = [
             'payment',
+            'header',
+            'displayMobileHeader',
             'displayProductButtons',
             'displayCustomerAccountForm',
             'actionCustomerAccountAdd',
@@ -173,6 +174,7 @@ class Mobbex extends PaymentModule
 
         $ps17Hooks = [
             'paymentOptions',
+            'displayHeader',
             'additionalCustomerFormFields',
             'actionObjectCustomerUpdateAfter',
             'actionObjectCustomerAddAfter',
@@ -1174,6 +1176,14 @@ class Mobbex extends PaymentModule
      * Support displayHeader hook aliases.
      */
     public function hookHeader()
+    {
+        return $this->hookDisplayHeader();
+    }
+
+    /**
+     * Support displayHeader hook aliases.
+     */
+    public function hookDisplayMobileHeader()
     {
         return $this->hookDisplayHeader();
     }
