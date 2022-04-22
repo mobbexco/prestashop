@@ -78,7 +78,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $cartId   = Tools::getValue('id_cart');
         $postData = isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' ? json_decode(file_get_contents('php://input'), true) : $_POST;
 
-        if (!$cartId || !$postData['data'])
+        if (!$cartId || !isset($postData['data']))
             MobbexHelper::log('Invalid Webhook Data', $_REQUEST, true, true);
 
         // Get Order and transaction data
