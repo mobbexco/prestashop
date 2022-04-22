@@ -984,7 +984,9 @@ class MobbexHelper
         if ($addVersion)
             $uri .= '?ver=' . self::MOBBEX_VERSION;
 
-        if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
+        if (Configuration::get('MOBBEX_FORCE_ASSETS')) {
+            echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
+        } else if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
             $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
