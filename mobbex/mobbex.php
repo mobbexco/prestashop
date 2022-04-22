@@ -867,6 +867,10 @@ class Mobbex extends PaymentModule
     {
         $checkoutData = MobbexHelper::getPaymentData();
 
+        // Make sure the assets are loaded correctly
+        $this->hookDisplayHeader();
+
+        // Add payment information to js
         Media::addJsDef([
             'mbbx' => [
                 'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),

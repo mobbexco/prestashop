@@ -490,6 +490,27 @@ return [
                 'suffix'   => 'segundos',
             ],
             [
+                'type'    => 'switch',
+                'label'   => $this->l('Forzar carga de activos'),
+                'hint'    => $this->l('Imprime directamente los elementos que vinculan los activos del plugin, evitando el método de PrestaShop'),
+                'name'    => 'MOBBEX_FORCE_ASSETS',
+                'tab'     => 'tab_advanced',
+                'is_bool' => true,
+                'default' => false,
+                'values'  => [
+                    [
+                        'id'    => 'active_on_force_assets',
+                        'value' => true,
+                        'label' => $this->l('Activar'),
+                    ],
+                    [
+                        'id'    => 'active_off_force_assets',
+                        'value' => false,
+                        'label' => $this->l('Desactivar'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'select',
                 'label'    => $this->l('Estado de orden aprobado'),
                 'desc'     => $this->l('Elige que estado mostrar en ordenes aprobadas.'),
