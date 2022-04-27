@@ -1,5 +1,5 @@
 <div class="mbbx-multivendor">
-<label for="entity">Entidad:</label>
+<label for="entity">{l s='Entity:' mod='mobbex'}</label>
 <input type="text" name="entity" id="entity" value="{$entity}">
 </div>
 

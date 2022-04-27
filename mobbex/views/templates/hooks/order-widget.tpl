@@ -10,19 +10,19 @@
         <table id="mobbex-widget-table">
             <tr>
                 <th>
-                    <h3>Información del pago</h3>
+                    <h3>{l s='Payment Information' mod='mobbex'}</h3>
                 </th>
             </tr>
             <tr>
-                <td>ID Trasacción:</td>
+                <td>{l s='Transaction ID:' mod='mobbex'}</td>
                 <td>{$data['payment_id']}</td>
             </tr>
             <tr class="mobbex-color-column">
-                <td>Analisis de Riesgo:</td>
+                <td>{l s='Risk Analysis:' mod='mobbex'}</td>
                 <td>{$data['risk_analysis']}</td>
             </tr>
             <tr>
-                <td>Moneda:</td>
+                <td>{l s='currency' mod='mobbex'}</td>
                 <td>{$data['currency']}</td>
             </tr>
             <tr class="mobbex-color-column">
@@ -32,7 +32,7 @@
 
             <tr>
                 <th>
-                    <h3>Método de Pago</h3>
+                    <h3>{l s='Payment Method' mod='mobbex'}</h3>
                 </th>
             </tr>
 
@@ -41,26 +41,26 @@
                 {if $source['source_type'] eq 'card'}
 
                     <tr>
-                        <td>Tarjeta:</td>
+                        <td>{l s='Card' mod='mobbex'}</td>
                         <td>{$source['source_name']}</td>
                     </tr>
                     <tr class="mobbex-color-column">
-                        <td>Numero:</td>
+                        <td>{l s='Number:' mod='mobbex'}</td>
                         <td>{$source['source_number']}</td>
                     </tr>
                     <tr>
-                        <td>Plan:</td>
+                        <td>{l s='Installment:' mod='mobbex'}</td>
                         <td>{$source['installment_name']}</td>
                     </tr>
                     <tr class="mobbex-color-column mobbex-end-table">
-                        <td>Monto:</td>
+                        <td>{l s='Amount:' mod='mobbex'}</td>
                         <td><strong>${$source['total']}</strong></td>
                     </tr>
 
                 {/if}
                 {if $source['source_type'] eq 'cash'}
                     <tr>
-                        <td>Medio de Pago:</td>
+                        <td>{l s='Payment Source:' mod='mobbex'}</td>
                         <td>
                             <img src="{$source['source_url']}" style="max-width: 30px; display: inline;" />
                             {$source['source_name']}
@@ -71,14 +71,14 @@
 
             <tr>
                 <th>
-                    <h3>Entidad/es</h3>
+                    <h3>{l s='Entities' mod='mobbex'}</h3>
                 </th>
             </tr>
 
             {foreach from=$entities item=entity}
 
                 <tr>
-                    <td>Nombre:</td>
+                    <td>{l s='Name:' mod='mobbex'}</td>
                     <td>{$entity['entity_name']}</td>
                 </tr>
                 <tr class="mobbex-color-column">

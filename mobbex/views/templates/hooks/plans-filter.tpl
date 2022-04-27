@@ -1,8 +1,8 @@
 <table class="mbbx-plans-cont">
     <tbody>
         <tr style="text-align: center;">
-            <td>{l s='Planes comunes' mod='mobbex'}</td>
-            <td>{l s='Planes con reglas avanzadas' mod='mobbex'}</td>
+            <td>{l s='Common Plans' mod='mobbex'}</td>
+            <td>{l s='Advanced Plans' mod='mobbex'}</td>
         </tr>
         <tr>
             <td class="mbbx-plans">
@@ -35,7 +35,7 @@
 </table>
 
 <div class="mbbx-update-plans">
-    <button class="btn btn-secondary mt-1" id="mbbx-update-btn">Actualizar medios de pago</button>
+    <button class="btn btn-secondary mt-1" id="mbbx-update-btn">{l s='Update Plans' mod='mobbex'}</button>
 </div>
 
 {literal}

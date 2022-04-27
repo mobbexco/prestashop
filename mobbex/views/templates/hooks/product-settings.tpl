@@ -1,22 +1,22 @@
 <div class="{if constant('_PS_VERSION_') < '1.7'}row panel product-tab{else}translations tabbable{/if}">
     <div class="translationsFields tab-content">
         <div class="form-group">
-            <h2>Cofiguración de planes</h2>
-            <p class="subtitle">Active los planes que desee que aparezcan en el checkout</p>
+            <h2>{l s='Plans Configuration' mod='mobbex'}</h2>
+            <p class="subtitle">{l s='Check the plans that will be shown at checkout' mod='mobbex'}</p>
         </div>
         <div class="form-group">
             {include file="./plans-filter.tpl"}
         </div>
         <div class="form-group">
-            <h2>Multivendedor</h2>
-            <p class="subtitle">Coloque el UID de la entidad seleccionada para el producto.</p>
+            <h2>{l s='Multivendor' mod='mobbex'}</h2>
+            <p class="subtitle">{l s='Put the UID of the entity selected for this product.' mod='mobbex'}</p>
         </div>
         <div class="form-group">
             {include file="./multivendor.tpl"}
         </div>
         <div class="form-group">
-            <h2>Suscripciones</h2>
-            <p class="subtitle">Activa si el producto es de tipo suscripción.</p>
+            <h2>{l s='Subscriptions' mod='mobbex'}</h2>
+            <p class="subtitle">{l s='Check if the product is a subscription.' mod='mobbex'}</p>
         </div>
         <div class="form-group">
             {include file="./subscription-option.tpl"}
