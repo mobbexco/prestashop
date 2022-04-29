@@ -4,7 +4,7 @@
             <div class="row">
                 <div class="col-xs-12">
                     <p class="payment_module">
-                        <a class="mbbx-method payment-option" href="#" group="{$method['group']}:{$method['subgroup']}">
+                        <a class="mbbx-method payment-option" href="{$redirectUrl}" group="{$method['group']}:{$method['subgroup']}">
                             <img src="{$method['subgroup_logo']}" style="">
                             {if (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE')}
                                 {Configuration::get('MOBBEX_TITLE')}
@@ -20,7 +20,7 @@
         <div class="row">
             <div class="col-xs-12">
                 <p class="payment_module">
-                    <a class="mbbx-method" href="#" style="background: url({$base_dir}modules/mobbex/views/img/logo_transparent.png) 15px 15px no-repeat;">
+                    <a class="mbbx-method" href="{$redirectUrl}" style="background: url({$base_dir}modules/mobbex/views/img/logo_transparent.png) 15px 15px no-repeat;">
                         {if Configuration::get('MOBBEX_TITLE')}
                             {Configuration::get('MOBBEX_TITLE')}
                         {elseif $cards}

@@ -868,7 +868,7 @@ class Mobbex extends PaymentModule
         $checkoutData = MobbexHelper::getPaymentData();
 
         // Make sure the assets are loaded correctly
-        $this->hookDisplayHeader();
+        $this->hookDisplayHeader(true);
 
         // Add payment information to js
         Media::addJsDef([
@@ -881,8 +881,9 @@ class Mobbex extends PaymentModule
         ]);
 
         $this->context->smarty->assign([
-            'methods' => isset($checkoutData['paymentMethods']) && !Configuration::get(MobbexHelper::K_UNIFIED_METHOD) ? $checkoutData['paymentMethods'] : [],
-            'cards'   => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : []
+            'methods'     => isset($checkoutData['paymentMethods']) && !Configuration::get(MobbexHelper::K_UNIFIED_METHOD) ? $checkoutData['paymentMethods'] : [],
+            'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
+            'redirectUrl' => isset($checkoutData['id']) ? MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
         ]);
 
         return $this->display(__FILE__, 'views/templates/front/payment.tpl');
@@ -1128,16 +1129,17 @@ class Mobbex extends PaymentModule
 
     /**
      * Load front end scripts.
+     * 
+     * @param bool $force Ignore page name check to load scripts.
      */
-    public function hookDisplayHeader()
+    public function hookDisplayHeader($force = false)
     {
         $currentPage = Tools::getValue('controller');
         $mediaPath   = Media::getMediaPath(_PS_MODULE_DIR_ . $this->name);
 
         // Checkout page
-        if ($currentPage == 'order') {
+        if ($currentPage == 'order' || $force) {
             MobbexHelper::addAsset("$mediaPath/views/css/front.css", 'css');
-
             MobbexHelper::addAsset("$mediaPath/views/js/front.js");
 
             if (Configuration::get(MobbexHelper::K_WALLET))
