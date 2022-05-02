@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '3.1.0';
+    const MOBBEX_VERSION = '3.1.1';
     const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
     const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
