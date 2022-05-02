@@ -51,7 +51,7 @@ class Mobbex extends PaymentModule
         parent::__construct();
 
         $this->displayName = $this->l('Mobbex');
-        $this->description = $this->l('Plugin de pago utilizando Mobbex');
+        $this->description = $this->l('Payment plugin using Mobbex ');
 
         $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
 
@@ -70,6 +70,11 @@ class Mobbex extends PaymentModule
         // Execute pending tasks if cron is disabled
         if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE') && !MobbexHelper::needUpgrade())
             define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
+    }
+
+    public function isUsingNewTranslationSystem()
+    {
+        return false;
     }
 
     /**
@@ -310,7 +315,7 @@ class Mobbex extends PaymentModule
         try {
             if (MobbexHelper::needUpgrade())
                 $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
-    
+
             if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
         } catch (\Exception $e) {
@@ -456,7 +461,7 @@ class Mobbex extends PaymentModule
 
             foreach (Language::getLanguages() as $language) {
                 // The locale parameter does not work as it should, so it is impossible to get the translation for each language
-                $order_state->name[$language['id_lang']] = $this->l('Transacción en proceso');
+                $order_state->name[$language['id_lang']] = $this->l('Transaction in Process');
             }
 
             $order_state->send_email = true;
@@ -688,7 +693,7 @@ class Mobbex extends PaymentModule
         // Get payment methods from checkout
         if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
-                Configuration::get('MOBBEX_TITLE') ?: $this->l('Pagar utilizando tarjetas, efectivo u otros'),
+                Configuration::get('MOBBEX_TITLE') ?: $this->l('Paying using cards, cash or others'),
                 Configuration::get('MOBBEX_DESCRIPTION'),
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
@@ -998,7 +1003,7 @@ class Mobbex extends PaymentModule
     {
         $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
         $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
-        
+
         $this->context->smarty->assign([
             'id'             => $id,
             'update_sources' => MobbexHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
