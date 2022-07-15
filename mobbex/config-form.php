@@ -420,6 +420,27 @@ return [
                 ],
             ],
             [
+                'type'     => 'switch',
+                'label'    => $this->l('Discount stock in pending orders', 'config-form'),
+                'desc'     => $this->l('Discount product stock in pending orders', 'config-form'),
+                'name'     => MobbexHelper::K_PENDING_ORDER_DISCOUNT,
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_order_first',
+                        'value' => true,
+                        'label' => $this->l('Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'active_off_order_first',
+                        'value' => false,
+                        'label' => $this->l('Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'text',
                 'label'    => 'Cancelar pedidos pendientes luego de',
                 'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',

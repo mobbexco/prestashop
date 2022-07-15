@@ -98,6 +98,29 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
                     $order->payment = $data['source_name'];
 
+                //Update Stock
+                $refund_status = [
+                    Configuration::get('PS_OS_ERROR'), 
+                    Configuration::get('PS_OS_CANCELLED'), 
+                    Configuration::get(MobbexHelper::K_OS_REJECTED), 
+                    Configuration::get(MobbexHelper::K_OS_WAITING), 
+                    Configuration::get(MobbexHelper::K_OS_PENDING)
+                ];
+
+                if(in_array($order->getCurrentState(), $refund_status) || $data['order_status'] === Configuration::get('PS_OS_CANCELLED') || $data['order_status'] === Configuration::get('PS_OS_ERROR'))
+                    MobbexCustomFields::saveCustomField($cartId, 'order', 'refunded', 'yes');
+
+                if($order->getCurrentState() === Configuration::get(MobbexHelper::K_OS_PENDING) && !Configuration::get(MobbexHelper::K_PENDING_ORDER_DISCOUNT)){
+                    foreach ($order->getProductsDetail() as $product) {
+                        if(!StockAvailable::dependsOnStock($product['product_id']))
+                            StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
+                    }
+                }
+
+                if(MobbexCustomFields::getCustomField($cartId, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status))
+                    $this->updateStock($cartId, $order, $data['order_status']);
+
+
                 // Update order status only if it was not updated recently
                 if ($order->getCurrentState() != $data['order_status']) {
                     $order->setCurrentState($data['order_status']);
@@ -117,5 +140,17 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         }
 
         die('OK: ' . MobbexHelper::MOBBEX_VERSION);
+        
+    }
+
+    public function updateStock($cartId, $order, $state)
+    {    
+        if($state === Configuration::get(MobbexHelper::K_OS_REJECTED) || $state === Configuration::get(MobbexHelper::K_OS_WAITING)){
+            foreach ($order->getProductsDetail() as $product) {
+                if(!StockAvailable::dependsOnStock($product['product_id']))
+                    StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
+            }
+            MobbexCustomFields::saveCustomField($cartId, 'order', 'refunded', 'yes');
+        }
     }
 }
