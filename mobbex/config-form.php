@@ -429,12 +429,12 @@ return [
                 'tab'      => 'tab_orders',
                 'values'   => [
                     [
-                        'id'    => 'active_on_order_first',
+                        'id'    => 'active_on_discount_stock_pending',
                         'value' => true,
                         'label' => $this->l('Enable', 'config-form'),
                     ],
                     [
-                        'id'    => 'active_off_order_first',
+                        'id'    => 'active_off_discount_stock_pending',
                         'value' => false,
                         'label' => $this->l('Disabled', 'config-form'),
                     ],
