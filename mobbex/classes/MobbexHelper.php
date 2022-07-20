@@ -43,6 +43,7 @@ class MobbexHelper
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
     const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
+    const K_PENDING_ORDER_DISCOUNT = 'MOBBEX_PENDING_ORDER_DISCOUNT';
 
     //Order statuses
     const K_OS_APPROVED = 'MOBBEX_OS_APPROVED';
@@ -1191,6 +1192,14 @@ class MobbexHelper
             self::restoreCart($cart);
 
             return false;
+        }
+
+        //refund stock
+        if(!Configuration::get(MobbexHelper::K_PENDING_ORDER_DISCOUNT)){
+            foreach ($order->getProductsDetail() as $product) {
+                if (!StockAvailable::dependsOnStock($product['product_id']))
+                    StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
+            }
         }
 
         return true;
