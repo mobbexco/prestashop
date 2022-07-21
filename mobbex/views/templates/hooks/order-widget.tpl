@@ -29,6 +29,10 @@
                 <td>Total:</td>
                 <td><strong>${$data['total']}</strong></td>
             </tr>
+			 <tr class="mobbex-color-column">
+                <td>Status:</td>
+                <td><strong>{$data['status_message']}</strong></td>
+            </tr>
 
             <tr>
                 <th>
