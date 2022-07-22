@@ -420,6 +420,27 @@ return [
                 ],
             ],
             [
+                'type'     => 'switch',
+                'label'    => $this->l('Cart restoration in Order First Mode', 'config-form'),
+                'desc'     => $this->l('The customer cart will be restored if checkout is closed, it cancell the order and creates new one.', 'config-form'),
+                'name'     => MobbexHelper::K_CART_RESTORE,
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_cart_restore',
+                        'value' => true,
+                        'label' => $this->l('Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'active_off_cart_restore',
+                        'value' => false,
+                        'label' => $this->l('Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'text',
                 'label'    => 'Cancelar pedidos pendientes luego de',
                 'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',

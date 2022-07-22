@@ -64,6 +64,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'key'           => $customer->secure_key,
             ]));
         } else {
+            
+            if(Configuration::get(MobbexHelper::K_ORDER_FIRST) && Configuration::get(MobbexHelper::K_CART_RESTORE)){
+
+                //Cancel the order
+                $order = $order = MobbexHelper::getOrderByCartId($cart_id, true);
+                $order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
+                $order->update();
+
+                //Restore the cart
+                $cart = new Cart($cart_id);
+                MobbexHelper::restoreCart($cart); 
+
+            }
+
             // Go back to checkout
             Tools::redirect('index.php?controller=order&step=1');
         }
@@ -97,13 +111,13 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             if ($order) {
                 if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
                     $order->payment = $data['source_name'];
-
-                // Update order status only if it was not updated recently
-                if ($order->getCurrentState() != $data['order_status']) {
-                    $order->setCurrentState($data['order_status']);
-                    $this->orderUpdate->removeExpirationTasks($order);
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-                }
+                
+                    // Update order status only if it was not updated recently
+                    if ($order->getCurrentState() != $data['order_status']) {
+                        $order->setCurrentState($data['order_status']);
+                        $this->orderUpdate->removeExpirationTasks($order);
+                        $this->orderUpdate->updateOrderPayment($order, $data);
+                    }
 
                 $order->update();
                 
