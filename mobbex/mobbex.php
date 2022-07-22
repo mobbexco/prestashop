@@ -684,10 +684,11 @@ class Mobbex extends PaymentModule
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         \MobbexHelper::addJavascriptData([
-            'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
-            'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-            'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
-            'data'       => $checkoutData,
+            'paymentUrl'  => \MobbexHelper::getModuleUrl('payment', 'process'),
+            'errorUrl'    => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'data'        => $checkoutData,
+            'return'      => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
         ]);
 
         // Get payment methods from checkout
@@ -882,6 +883,7 @@ class Mobbex extends PaymentModule
                 'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
                 'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
                 'data'       => $checkoutData,
+                'return'     => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . explode('#', $checkoutData['description'])[1] . '&status=' . 500)
             ]
         ]);
 
