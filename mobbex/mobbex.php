@@ -883,7 +883,7 @@ class Mobbex extends PaymentModule
                 'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
                 'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
                 'data'       => $checkoutData,
-                'return'     => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . explode('#', $checkoutData['description'])[1] . '&status=' . 500)
+                'return'     => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 

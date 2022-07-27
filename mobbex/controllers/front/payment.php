@@ -24,6 +24,10 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
      */
     public function process()
     {
+        //Store cart id in session
+        $context = Context::getContext();
+        $context->cookie->__set('last_cart', $context->cart->id);
+
         return [
             'data'  => MobbexHelper::getPaymentData() ?: null,
             'order' => Configuration::get(MobbexHelper::K_ORDER_FIRST) ? MobbexHelper::processOrder($this->module) : true,

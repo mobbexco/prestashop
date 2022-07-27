@@ -1186,17 +1186,11 @@ class MobbexHelper
                 $task->add();
             }
         }
-
-        //Store cart id in session
-        $context = Context::getContext();
-        $context->cookie->__set('cart_restore',$cart->id);
-
-        // restore cart
-        // self::restoreCart($cart); 
         
         // Validate that order looks good
         if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
             self::log('Error Creating/Loading Order On Order Process', $cart->id, true);
+            self::restoreCart($cart); 
 
             return false;
         }
