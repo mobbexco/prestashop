@@ -43,6 +43,7 @@ class MobbexHelper
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
     const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
+    const K_CART_RESTORE = 'MOBBEX_CART_RESTORE';
     const K_PENDING_ORDER_DISCOUNT = 'MOBBEX_PENDING_ORDER_DISCOUNT';
 
     //Order statuses
@@ -1185,11 +1186,11 @@ class MobbexHelper
                 $task->add();
             }
         }
-
+        
         // Validate that order looks good
         if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
             self::log('Error Creating/Loading Order On Order Process', $cart->id, true);
-            self::restoreCart($cart);
+            self::restoreCart($cart); 
 
             return false;
         }
@@ -1259,4 +1260,5 @@ class MobbexHelper
 
         return (float) $cart->getTotalShippingCost();
     }
+
 }

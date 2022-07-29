@@ -1,4 +1,9 @@
 (function (window, $) {
+
+  window.onpopstate = function(event) {
+    window.top.location.href = mbbx.return;
+  };
+
   /**
    * Open the Mobbex checkout modal.
    * 
@@ -17,13 +22,13 @@
         if (status > 1 && status < 400) {
           window.top.location.href = response.data.return_url + '&status=' + status + '&transactionId=' + data.id;
         } else {
-          window.top.location.reload();
+          window.top.location.href = mbbx.return ;
         }
       },
       onClose: (cancelled) => {
         // Only if cancelled
         if (cancelled === true) {
-          window.top.location.reload();
+          window.top.location.href = mbbx.return;
         }
       }
     };
@@ -51,6 +56,7 @@
    */
   function processPayment(callback) {
     lockForm();
+    history.pushState({page: 1}, "Mobbex Checkout", "?page=checkout");
 
     $.ajax({
       dataType: 'json',
