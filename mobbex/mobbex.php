@@ -574,14 +574,15 @@ class Mobbex extends PaymentModule
 
     public function createIdentificationColumn()
     {
+        extract(MobbexHelper::getCustomDniColumn());
         $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
-        $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
 
-        if ($custom_dni != '') {
-            // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $custom_dni . "'");
+        if ($dniColumn != '') {
+            // Check if columns exists
+            $table_dni_column        = DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'");
+            $table_identifier_column = DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'");
 
-            if (!empty($table_columns)) {
+            if (!empty($table_dni_column) || !empty($table_identifier_column)) {
                 // If both options are active at the same time, custom_dni takes precedence
                 if ($own_dni) {
                     Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
