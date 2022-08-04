@@ -521,21 +521,25 @@ class MobbexHelper
         return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
     }
 
+    /**
+     * Get the table & column name where dni field is stored from configuration.
+     * @return array
+     */
     public static function getCustomDniColumn()
     {
         //Default values
         $data = [
-            'table'      => 'customer',
+            'table'      => 'ps_customer',
             'identifier' => 'customer_id',
             'dniColumn'  => 'billing_dni',
         ];
 
         if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
-            foreach (explode('@', Configuration::get(MobbexHelper::K_CUSTOM_DNI)) as $value) {
-                if (strpos($value, '%') !== false) {
-                    $data['table'] = trim(str_replace('%', '', $value));
-                } else if (strpos($value, '#') !== false) {
-                    $data['identifier'] = trim(str_replace('#', '', $value));
+            foreach (explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI)) as $key => $value) {
+                if($key === 0 && count(explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI))) > 1){
+                    $data['table'] = trim($value);
+                } else if($key === 1){
+                    $data['identifier'] = trim($value);
                 } else {
                     $data['dniColumn'] = trim($value);
                 }
