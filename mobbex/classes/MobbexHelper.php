@@ -513,13 +513,13 @@ class MobbexHelper
 
     public static function getDni($customer_id)
     {
-        $dniColumn = trim(Configuration::get(MobbexHelper::K_CUSTOM_DNI)) ?: 'billing_dni';
+        $dniColumn = trim(Configuration::get(MobbexHelper::K_CUSTOM_DNI)) ?: 'custom_dni';
 
         // Check if dni column exists
-        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM " . _DB_PREFIX_ . "customer LIKE '$dniColumn'")))
+        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM " . _DB_PREFIX_ . "customFields LIKE '$dniColumn'")))
             return;
 
-        return DB::getInstance()->getValue("SELECT $dniColumn FROM " . _DB_PREFIX_ . "customer WHERE id_customer = $customer_id");
+        return DB::getInstance()->getValue("SELECT $dniColumn FROM " . _DB_PREFIX_ . "customFields WHERE id_customer = $customer_id");
     }
 
     public static function getPsVersion()

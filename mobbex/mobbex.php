@@ -579,7 +579,7 @@ class Mobbex extends PaymentModule
 
         if ($custom_dni != '') {
             // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE '" . $custom_dni . "'");
+            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE '" . $custom_dni . "'");
 
             if (!empty($table_columns)) {
                 // If both options are active at the same time, custom_dni takes precedence
@@ -595,13 +595,13 @@ class Mobbex extends PaymentModule
 
         if ($own_dni) {
             // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customer` LIKE 'billing_dni'");
+            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE 'customer_dni'");
 
             if (!empty($table_columns)) {
                 return;
             }
             return DB::getInstance()->execute(
-                "ALTER TABLE `" . _DB_PREFIX_ . "customer` ADD `billing_dni` varchar(255);"
+                "ALTER TABLE `" . _DB_PREFIX_ . "customFields` ADD `customer_dni` varchar(255);"
             );
         }
     }
@@ -828,8 +828,8 @@ class Mobbex extends PaymentModule
         $customer = Context::getContext()->customer;
 
         $dni_field = array();
-        $dni_field['billing_dni'] = (new FormField)
-            ->setName('billing_dni')
+        $dni_field['customer_dni'] = (new FormField)
+            ->setName('customer_dni')
             ->setValue(isset($customer->id) ? MobbexHelper::getDni($customer->id) : '')
             ->setType('text')
             ->setRequired(true)
@@ -850,15 +850,15 @@ class Mobbex extends PaymentModule
 
     private function updateCustomerDniStatus(array $params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['billing_dni']) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['customer_dni']) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
             return;
         }
 
         $customer_id = $params['object']->id;
-        $billing_dni = $_POST['billing_dni'];
+        $customer_dni = $_POST['customer_dni'];
 
         return DB::getInstance()->execute(
-            "UPDATE `" . _DB_PREFIX_ . "customer` SET billing_dni = $billing_dni WHERE `id_customer` = $customer_id;"
+            "UPDATE `" . _DB_PREFIX_ . "customFields` SET customer_dni = $customer_dni WHERE `id_customer` = $customer_id;"
         );
     }
 
