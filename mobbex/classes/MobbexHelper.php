@@ -529,7 +529,7 @@ class MobbexHelper
     {
         //Default values
         $data = [
-            'table'      => 'ps_customer',
+            'table'      => _DB_PREFIX_.'customer',
             'identifier' => 'customer_id',
             'dniColumn'  => 'billing_dni',
         ];
