@@ -355,7 +355,8 @@ return [
                 'name' => MobbexHelper::K_CUSTOM_DNI,
                 'required' => false,
                 'tab' => 'tab_general',
-                'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
+                'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.<br>
+                (Debe ser escrito respetando el siguiente formato: 'table:column_identifier:column').",
             ],
             [
                 'type' => 'switch',

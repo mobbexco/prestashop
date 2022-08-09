@@ -513,13 +513,40 @@ class MobbexHelper
 
     public static function getDni($customer_id)
     {
-        $dniColumn = trim(Configuration::get(MobbexHelper::K_CUSTOM_DNI)) ?: 'billing_dni';
-
+        extract(MobbexHelper::getCustomDniColumn());
         // Check if dni column exists
-        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM " . _DB_PREFIX_ . "customer LIKE '$dniColumn'")))
+        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'")))
             return;
 
-        return DB::getInstance()->getValue("SELECT $dniColumn FROM " . _DB_PREFIX_ . "customer WHERE id_customer = $customer_id");
+        return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+    }
+
+    /**
+     * Get the table & column name where dni field is stored from configuration.
+     * @return array
+     */
+    public static function getCustomDniColumn()
+    {
+        //Default values
+        $data = [
+            'table'      => _DB_PREFIX_.'customer',
+            'identifier' => 'customer_id',
+            'dniColumn'  => 'billing_dni',
+        ];
+
+        if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
+            foreach (explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI)) as $key => $value) {
+                if($key === 0 && count(explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI))) > 1){
+                    $data['table'] = trim($value);
+                } else if($key === 1){
+                    $data['identifier'] = trim($value);
+                } else {
+                    $data['dniColumn'] = trim($value);
+                }
+            }
+        }
+
+        return $data;
     }
 
     public static function getPsVersion()
