@@ -759,11 +759,9 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        $remoteMode = Configuration::get('MOBBEX_PLANS_IFRAME');
-
         $this->context->smarty->assign([
             'product_price'  => Product::convertAndFormatPrice($total),
-            'sources'        => $remoteMode ? $this->getFinanceWidgetUrl($total, $products) : MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
+            'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
                 'default_styles' => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
                 'styles'         => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
@@ -773,25 +771,7 @@ class Mobbex extends PaymentModule
             ],
         ]);
 
-        return $this->display(__FILE__, 'views/templates/finance-widget/' . ($remoteMode ? 'remote.tpl' : 'local.tpl'));
-    }
-
-    /**
-     * Get finance widget url to render remotely.
-     * 
-     * @param int|float $total Amount to calculate soruces.
-     * @param array $products
-     * 
-     * @return string
-     */
-    public function getFinanceWidgetUrl($total, $products = [])
-    {
-        $entityData = MobbexHelper::getEntityData();
-
-        return "https://mobbex.com/p/sources/widget/$entityData[countryReference]/$entityData[tax_id]?" . http_build_query([
-            'total'        => $total,
-            'installments' => MobbexHelper::getInstallments($products),
-        ]);
+        return $this->display(__FILE__, 'views/templates/finance-widget/' . ('local.tpl'));
     }
 
     /**
