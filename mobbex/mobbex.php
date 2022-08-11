@@ -595,7 +595,7 @@ class Mobbex extends PaymentModule
 
         if ($own_dni) {
             // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE 'customer_dni'");
+            $table_columns = DB::getInstance()->getCustomField('customer_dni', $own_dni, );
 
             if (!empty($table_columns)) {
                 return;
