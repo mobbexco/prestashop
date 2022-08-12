@@ -606,21 +606,10 @@ class MobbexHelper
      * @param array $plans
      * @return string $query
      */
-    public static function getInstallmentsQuery($plans = null)
+    public static function getInstallmentsQuery($installments = null)
     {
-        if (empty($plans))
-            return '';
-
-        $installments = [];
-
-        foreach ($plans as $plan)
-            $installments[] = $plan;
-
-        //Build query param
-        $query = http_build_query(['installments' => $installments]);
-        $query = preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', $query);
-
-        return $query;
+        // Build query params and replace special chars
+        return preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', http_build_query(compact('installments')));
     }
 
     /**
