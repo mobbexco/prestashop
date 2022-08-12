@@ -602,6 +602,18 @@ class MobbexHelper
     }
 
     /**
+     * Returns a query param with the installments of the product.
+     * @param int $total
+     * @param array $installments
+     * @return string $query
+     */
+    public static function getInstallmentsQuery($total, $installments = [])
+    {
+        // Build query params and replace special chars
+        return preg_replace('/%5B[0-9]+%5D/simU', '%5B%5D', http_build_query(compact('total','installments')));
+    }
+
+    /**
      * Get sources with common and advanced plans from mobbex.
      * 
      * @param int|float|null $total
@@ -611,22 +623,17 @@ class MobbexHelper
      */
     public static function getSources($total = null, $installments = [])
     {
-        $entityData = self::getEntityData();
-
-        if (!$entityData)
-            return [];
-
-        $curl = curl_init();
+        $curl  = curl_init();
+        $query = self::getInstallmentsQuery($total, $installments);
 
         curl_setopt_array($curl, [
-            CURLOPT_URL            => "https://api.mobbex.com/p/sources/list/$entityData[countryReference]/$entityData[tax_id]" . ($total ? "?total=$total" : ''),
+            CURLOPT_URL            => "https://api.mobbex.com/p/sources" . ($query ? "?$query" : ''),
             CURLOPT_HTTPHEADER     => self::getHeaders(),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_MAXREDIRS      => 10,
             CURLOPT_TIMEOUT        => 30,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => json_encode(compact('installments')),
+            CURLOPT_CUSTOMREQUEST  => 'GET',
         ]);
 
         $response = curl_exec($curl);
@@ -870,50 +877,6 @@ class MobbexHelper
         } else {
             return 'failed';
         }
-    }
-
-    /**
-     * Get entity data from Mobbex API or db if possible.
-     * 
-     * @return string[] 
-     */
-    public static function getEntityData()
-    {
-        // First, try to get from db
-        $entityData = Configuration::get('MOBBEX_ENTITY_DATA');
-
-        if ($entityData)
-            return json_decode($entityData, true);
-
-        $curl = curl_init();
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => "https://api.mobbex.com/p/entity/validate",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => self::getHeaders(),
-        ));
-
-        $response = curl_exec($curl);
-        $error    = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($error)
-            return self::log('Entity Data Obtaining cURL Error' . $error, $response, true);
-
-        $res = json_decode($response, true);
-
-        if (empty($res['data']))
-            return self::log('Entity Data Obtaining Error', $response, true);
-
-        // Save data
-        Configuration::updateValue('MOBBEX_ENTITY_DATA', json_encode($res['data']));
-
-        return $res['data'];
     }
 
     /**
