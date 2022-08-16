@@ -568,43 +568,8 @@ class Mobbex extends PaymentModule
     {
         foreach ($this->settings as $name => $value)
             Configuration::updateValue($name, Tools::getValue($name));
-
-        $this->createIdentificationColumn();
     }
 
-    public function createIdentificationColumn()
-    {
-        $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
-        $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
-
-        if ($custom_dni != '') {
-            // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE '" . $custom_dni . "'");
-
-            if (!empty($table_columns)) {
-                // If both options are active at the same time, custom_dni takes precedence
-                if ($own_dni) {
-                    Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
-                    $own_dni = false;
-                }
-                return;
-            }
-
-            Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
-        }
-
-        if ($own_dni) {
-            // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE 'customer_dni'");
-
-            if (!empty($table_columns)) {
-                return;
-            }
-            return DB::getInstance()->execute(
-                "ALTER TABLE `" . _DB_PREFIX_ . "customFields` ADD `customer_dni` varchar(255);"
-            );
-        }
-    }
 
     /**
      * Try to update the module.
@@ -857,9 +822,7 @@ class Mobbex extends PaymentModule
         $customer_id = $params['object']->id;
         $customer_dni = $_POST['customer_dni'];
 
-        return DB::getInstance()->execute(
-            "UPDATE `" . _DB_PREFIX_ . "customFields` SET customer_dni = $customer_dni WHERE `id_customer` = $customer_id;"
-        );
+        return DB::getInstance()->saveCustomField($customer_id, 'customer_dni', 'customer_dni', $customer_dni);
     }
 
     /**
