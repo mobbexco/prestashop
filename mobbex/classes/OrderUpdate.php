@@ -24,7 +24,7 @@ class OrderUpdate
             $payment->order_reference = $order->reference;
             $payment->id_currency     = $order->id_currency;
             $payment->conversion_rate = 1;
-            $payment->amount          = $order->total_paid; // TODO: Use $data['total']
+            $payment->amount          = $data['total'];
             $payment->payment_method  = $data['source_name'];
             $payment->transaction_id  = $data['payment_id'] ?: null;
             $payment->card_number     = $data['source_number'] ?: null;
