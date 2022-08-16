@@ -568,43 +568,8 @@ class Mobbex extends PaymentModule
     {
         foreach ($this->settings as $name => $value)
             Configuration::updateValue($name, Tools::getValue($name));
-
-        $this->createIdentificationColumn();
     }
 
-    public function createIdentificationColumn()
-    {
-        $own_dni = Configuration::get(MobbexHelper::K_OWN_DNI);
-        $custom_dni = Configuration::get(MobbexHelper::K_CUSTOM_DNI);
-
-        if ($custom_dni != '') {
-            // Check if column exists
-            $table_columns = DB::getInstance()->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "customFields` LIKE '" . $custom_dni . "'");
-
-            if (!empty($table_columns)) {
-                // If both options are active at the same time, custom_dni takes precedence
-                if ($own_dni) {
-                    Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
-                    $own_dni = false;
-                }
-                return;
-            }
-
-            Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
-        }
-
-        if ($own_dni) {
-            // Check if column exists
-            $table_columns = DB::getInstance()->getCustomField('customer_dni', $own_dni, );
-
-            if (!empty($table_columns)) {
-                return;
-            }
-            return DB::getInstance()->execute(
-                "ALTER TABLE `" . _DB_PREFIX_ . "customFields` ADD `customer_dni` varchar(255);"
-            );
-        }
-    }
 
     /**
      * Try to update the module.
@@ -758,11 +723,9 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        $remoteMode = Configuration::get('MOBBEX_PLANS_IFRAME');
-
         $this->context->smarty->assign([
             'product_price'  => Product::convertAndFormatPrice($total),
-            'sources'        => $remoteMode ? $this->getFinanceWidgetUrl($total, $products) : MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
+            'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
                 'default_styles' => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
                 'styles'         => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
@@ -772,25 +735,7 @@ class Mobbex extends PaymentModule
             ],
         ]);
 
-        return $this->display(__FILE__, 'views/templates/finance-widget/' . ($remoteMode ? 'remote.tpl' : 'local.tpl'));
-    }
-
-    /**
-     * Get finance widget url to render remotely.
-     * 
-     * @param int|float $total Amount to calculate soruces.
-     * @param array $products
-     * 
-     * @return string
-     */
-    public function getFinanceWidgetUrl($total, $products = [])
-    {
-        $entityData = MobbexHelper::getEntityData();
-
-        return "https://mobbex.com/p/sources/widget/$entityData[countryReference]/$entityData[tax_id]?" . http_build_query([
-            'total'        => $total,
-            'installments' => MobbexHelper::getInstallments($products),
-        ]);
+        return $this->display(__FILE__, 'views/templates/finance-widget/' . ('local.tpl'));
     }
 
     /**
@@ -857,9 +802,7 @@ class Mobbex extends PaymentModule
         $customer_id = $params['object']->id;
         $customer_dni = $_POST['customer_dni'];
 
-        return DB::getInstance()->execute(
-            "UPDATE `" . _DB_PREFIX_ . "customFields` SET customer_dni = $customer_dni WHERE `id_customer` = $customer_id;"
-        );
+        return DB::getInstance()->saveCustomField($customer_id, 'customer_dni', 'customer_dni', $customer_dni);
     }
 
     /**
@@ -1190,6 +1133,63 @@ class Mobbex extends PaymentModule
      */
     public function hookHeader()
     {
+        return $this->hookDisplayHeader();
+    }
+
+    /**
+     * Support displayHeader hook aliases.
+     */
+    public function hookDisplayMobileHeader()
+    {
+        return $this->hookDisplayHeader();
+    }
+
+    public function hookActionEmailSendBefore($params)
+    {
+        if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
+            $order = new Order($params['templateVars']['id_order']);
+
+            // If current order state is not approved, block mail sending
+            if ($order->getCurrentState() != Configuration::get('PS_OS_PAYMENT'))
+                return false;
+        }
+    }
+
+    public function getConfigForm($extensionOptions = true)
+    {
+        $form = require dirname(__FILE__) . '/config-form.php';
+
+        return $extensionOptions ? MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
+    }
+
+    public function getSettings($extensionOptions = true)
+    {
+        $settings = [];
+
+        $form = $this->getConfigForm($extensionOptions);
+
+        foreach ($form['form']['input'] as $input) {
+            $defaultValue  = isset($input['default']) ? $input['default'] : false;
+            $settings[$input['name']] = isset($input['value']) ? $input['value'] : (Configuration::get($input['name']) ?: $defaultValue);
+        }
+
+        return $settings;
+    }
+
+    public function hookActionMobbexExpireOrder($orderId)
+    {
+        $order = new Order($orderId);
+
+        // Exit if order cannot be loaded correctly
+        if (!$order)
+            return false;
+
+        if ($order->getCurrentState() == Configuration::get(MobbexHelper::K_OS_PENDING))
+            $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+
+        return true;
+    }
+}
         return $this->hookDisplayHeader();
     }
 
