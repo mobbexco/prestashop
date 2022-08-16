@@ -215,28 +215,6 @@ return [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Iframe Finance Widget', 'config-form'),
-                'desc'     => $this->l('Render the finance widget using the same view used inside the checkout.', 'config-form'),
-                'name'     => 'MOBBEX_PLANS_IFRAME',
-                'is_bool'  => true,
-                'required' => false,
-                'default'  => false,
-                'values'   => [
-                    [
-                        'id'    => 'active_on_plans_iframe',
-                        'value' => true,
-                        'label' => $this->l('Enabled', 'config-form'),
-                    ],
-                    [
-                        'id'    => 'active_off_plans_iframe',
-                        'value' => false,
-                        'label' => $this->l('Disabled', 'config-form'),
-                    ],
-                ],
-                'tab' => 'tab_appearence',
-            ],
-            [
-                'type'     => 'switch',
                 'label'    => $this->l('Finance Widget on Cart', 'config-form'),
                 'desc'     => $this->l('Show the finance widget on cart page.', 'config-form'),
                 'name'     => 'MOBBEX_PLANS_ON_CART',
@@ -355,7 +333,8 @@ return [
                 'name' => MobbexHelper::K_CUSTOM_DNI,
                 'required' => false,
                 'tab' => 'tab_general',
-                'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.",
+                'desc' => "Si ya solicita el campo DNI al finalizar la compra o al registrarse, proporcione el nombre del campo personalizado.<br>
+                (Debe ser escrito respetando el siguiente formato: 'table:column_identifier:column').",
             ],
             [
                 'type' => 'switch',
