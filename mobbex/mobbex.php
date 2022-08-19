@@ -802,7 +802,7 @@ class Mobbex extends PaymentModule
         $customer_id = $params['object']->id;
         $customer_dni = $_POST['customer_dni'];
 
-        return DB::getInstance()->saveCustomField($customer_id, 'customer_dni', 'customer_dni', $customer_dni);
+        return MobbexCustomFields::saveCustomField($customer_id, 'customer', 'dni', $customer_dni);
     }
 
     /**
