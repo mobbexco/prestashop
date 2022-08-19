@@ -515,10 +515,16 @@ class MobbexHelper
     {
         extract(MobbexHelper::getCustomDniColumn());
         // Check if dni column exists
-        if (empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'")))
+        $custom_dni = MobbexCustomFields::getCustomField($customer_id, 'customer', 'dni');
+        if($custom_dni){
+            return $custom_dni;
+        }else if(!empty($dniColumn)){
+            if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
+            return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+            }
+        }else{
             return;
-
-        return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+        }
     }
 
     /**
@@ -531,7 +537,6 @@ class MobbexHelper
         $data = [
             'table'      => _DB_PREFIX_.'customer',
             'identifier' => 'customer_id',
-            'dniColumn'  => 'billing_dni',
         ];
 
         if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
