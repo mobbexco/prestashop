@@ -518,8 +518,10 @@ class MobbexHelper
         $custom_dni = MobbexCustomFields::getCustomField($customer_id, 'customer', 'dni');
         if(!$custom_dni){
             return $custom_dni;
-        }else if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
+        }else if(!empty($dniColumn)){
+            if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
             return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+            }
         }else{
             return;
         }
