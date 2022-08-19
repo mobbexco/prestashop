@@ -64,11 +64,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'key'           => $customer->secure_key,
             ]));
         } else {
-            
-            if(Configuration::get(MobbexHelper::K_ORDER_FIRST) && Configuration::get(MobbexHelper::K_CART_RESTORE)){
+            $order = MobbexHelper::getOrderByCartId($cart_id, true);
 
+            if($order && Configuration::get(MobbexHelper::K_ORDER_FIRST) && Configuration::get(MobbexHelper::K_CART_RESTORE)){
                 //update stock
-                $order = $order = MobbexHelper::getOrderByCartId($cart_id, true);
                 $this->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
                 $order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
@@ -76,7 +75,6 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 //Restore the cart
                 $cart = new Cart($cart_id);
                 MobbexHelper::restoreCart($cart); 
-
             }
 
             // Go back to checkout

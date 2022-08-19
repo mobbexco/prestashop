@@ -56,7 +56,6 @@
    */
   function processPayment(callback) {
     lockForm();
-    history.pushState({page: 1}, "Mobbex Checkout", "?page=checkout");
 
     $.ajax({
       dataType: 'json',
