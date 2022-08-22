@@ -949,7 +949,7 @@ class MobbexHelper
             $module->validateOrder(
                 $cartId,
                 $orderStatus,
-                (float) $cart->getOrderTotal(),
+                self::getRoundedTotal($cart),
                 $methodName,
                 null,
                 [],
@@ -1256,4 +1256,25 @@ class MobbexHelper
         return (float) $cart->getTotalShippingCost();
     }
 
+    /**
+     * Get rounded total from a Cart.
+     * 
+     * @param int|Cart $cart
+     * 
+     * @return float 
+     */
+    public static function getRoundedTotal($cart)
+    {
+        // Instance cart if needed
+        if (!is_object($cart))
+            $cart = new \Cart($cart);
+
+        // Instance context to get computing precision
+        $context = \Context::getContext();
+
+        return (float) \Tools::ps_round(
+            (float) $cart->getOrderTotal(),
+            method_exists($context, 'getComputingPrecision') ? $context->getComputingPrecision() : 2
+        );
+    }
 }
