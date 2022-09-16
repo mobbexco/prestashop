@@ -516,19 +516,10 @@ class MobbexHelper
         extract(MobbexHelper::getCustomDniColumn());
         // Check if dni column exists
         $custom_dni = MobbexCustomFields::getCustomField($customer_id, 'customer', 'dni');
-<<<<<<< HEAD
         if(!$custom_dni){
             return $custom_dni;
         }else if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
             return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
-=======
-        if($custom_dni){
-            return $custom_dni;
-        }else if(!empty($dniColumn)){
-            if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
-            return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
-            }
->>>>>>> e21660cbd15266cc885dca5ce2d786ca185ecda4
         }else{
             return;
         }
