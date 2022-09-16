@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '3.1.1';
+    const MOBBEX_VERSION = '3.2.0';
     const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
     const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
@@ -516,10 +516,19 @@ class MobbexHelper
         extract(MobbexHelper::getCustomDniColumn());
         // Check if dni column exists
         $custom_dni = MobbexCustomFields::getCustomField($customer_id, 'customer', 'dni');
+<<<<<<< HEAD
         if(!$custom_dni){
             return $custom_dni;
         }else if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
             return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+=======
+        if($custom_dni){
+            return $custom_dni;
+        }else if(!empty($dniColumn)){
+            if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
+            return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+            }
+>>>>>>> e21660cbd15266cc885dca5ce2d786ca185ecda4
         }else{
             return;
         }
@@ -947,7 +956,7 @@ class MobbexHelper
             $module->validateOrder(
                 $cartId,
                 $orderStatus,
-                (float) $cart->getOrderTotal(),
+                self::getRoundedTotal($cart),
                 $methodName,
                 null,
                 [],
@@ -1254,4 +1263,25 @@ class MobbexHelper
         return (float) $cart->getTotalShippingCost();
     }
 
+    /**
+     * Get rounded total from a Cart.
+     * 
+     * @param int|Cart $cart
+     * 
+     * @return float 
+     */
+    public static function getRoundedTotal($cart)
+    {
+        // Instance cart if needed
+        if (!is_object($cart))
+            $cart = new \Cart($cart);
+
+        // Instance context to get computing precision
+        $context = \Context::getContext();
+
+        return (float) \Tools::ps_round(
+            (float) $cart->getOrderTotal(),
+            method_exists($context, 'getComputingPrecision') ? $context->getComputingPrecision() : 2
+        );
+    }
 }

@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 3.1.1
+ * @version 3.2.0
  * @see     PaymentModuleCore
  */
 
@@ -802,7 +802,11 @@ class Mobbex extends PaymentModule
         $customer_id = $params['object']->id;
         $customer_dni = $_POST['customer_dni'];
 
+<<<<<<< HEAD
         return DB::getInstance()->saveCustomField($customer_id, 'customer_dni', 'customer_dni', $customer_dni);
+=======
+        return MobbexCustomFields::saveCustomField($customer_id, 'customer', 'dni', $customer_dni);
+>>>>>>> e21660cbd15266cc885dca5ce2d786ca185ecda4
     }
 
     /**
