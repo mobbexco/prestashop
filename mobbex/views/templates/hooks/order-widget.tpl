@@ -31,7 +31,7 @@
             </tr>
 			 <tr class="mobbex-color-column">
                 <td>Status:</td>
-                <td><strong>{$status_message|escape:'htmlall':'UTF-8'}</strong></td>
+                <td><strong>{$data['status']}</strong></td>
             </tr>
 
             <tr>
