@@ -31,6 +31,7 @@ class OrderUpdate
             $payment->card_expiration = $data['source_expiration'] ? implode('/', json_decode($data['source_expiration'], true)) : null;
             $payment->card_holder     = $data['cardholder'] ? json_decode($data['cardholder'], true)['name'] : null;
             $payment->card_brand      = $data['source_type'];
+            $payment->stauts_message  = $data['status_message'];
 
             // If is new payment, update order real paid
             if (!isset($payments[0]))

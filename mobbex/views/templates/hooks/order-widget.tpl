@@ -31,7 +31,7 @@
             </tr>
 			 <tr class="mobbex-color-column">
                 <td>Status:</td>
-                <td><strong>{$data['status']}</strong></td>
+                <td><strong>{$data['status_message']}</strong></td>
             </tr>
 
             <tr>

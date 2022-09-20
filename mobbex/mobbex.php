@@ -982,6 +982,7 @@ class Mobbex extends PaymentModule
                     'risk_analysis' => $trx->risk_analysis,
                     'currency'      => $trx->currency,
                     'total'         => $trx->total,
+                    'status_message'=> $trx->status_message,
                 ],
                 'sources'  => MobbexHelper::getWebhookSources($transactions),
                 'entities' => MobbexHelper::getWebhookEntities($transactions)
