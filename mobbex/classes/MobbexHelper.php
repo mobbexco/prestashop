@@ -245,6 +245,7 @@ class MobbexHelper
             'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items'        => $items,
             'installments' => MobbexHelper::getInstallments(array_column($products, 'id_product')),
+            'addresses'    => self::getAddresses($cart),
             'options'      => MobbexHelper::getOptions(),
             'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
             'customer'     => self::getCustomer($cart),
@@ -331,6 +332,37 @@ class MobbexHelper
             'identification' => $customer->id ? MobbexHelper::getDni($customer->id) : null,
             'uid'            => $customer->id,
         ];
+    }
+
+    public static function getAddresses($cart)
+    {
+        $address = [];
+        foreach (['shipping' => 'id_address_delivery', 'billing' => 'id_address_invoice'] as $type => $value) {
+
+            $address = new Address($cart->$value);
+            $country = new Country($address->id_country);
+            $state   = new State($address->id_state);
+
+            $addresses[] = [
+                'type'         => $type,
+                'country'      => self::convertCountryCode($country->iso_code),
+                'street'       => !empty($address->address1) ? trim(preg_replace('/[0-9]/', '', (string) $address->address1)) : '',
+                'streetNumber' => !empty($address->address1) ? trim(preg_replace('/[^0-9]/', '', (string) $address->address1)) : '',
+                'streetNotes'  => !empty($address->address2) ? $address->address2 : '',
+                'zipCode'      => !empty($address->postcode) ? $address->postcode : '',
+                'city'         => !empty($address->city) ? $address->city : '',
+                'state'        => !empty($state->iso_code) ? $state->iso_code : ''
+            ];
+        }
+
+        return $addresses;
+    }
+
+    public static function convertCountryCode($code)
+    {
+        $countries = include dirname(__FILE__) . '/iso-3166/country-codes.php' ?: [];
+
+        return isset($countries[$code]) ? $countries[$code] : null;
     }
 
     /**
