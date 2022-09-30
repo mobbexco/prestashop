@@ -346,8 +346,8 @@ class MobbexHelper
             $addresses[] = [
                 'type'         => $type,
                 'country'      => self::convertCountryCode($country->iso_code),
-                'street'       => !empty($address->address1) ? trim(preg_replace('/[0-9]/', '', (string) $address->address1)) : '',
-                'streetNumber' => !empty($address->address1) ? trim(preg_replace('/[^0-9]/', '', (string) $address->address1)) : '',
+                'street'       => trim(preg_replace('/(\D{0})+(\d*)+$/', '', trim($address->address1))),
+                'streetNumber' => str_replace(preg_replace('/(\D{0})+(\d*)+$/', '', trim($address->address1)), '', trim($address->address1)),
                 'streetNotes'  => !empty($address->address2) ? $address->address2 : '',
                 'zipCode'      => !empty($address->postcode) ? $address->postcode : '',
                 'city'         => !empty($address->city) ? $address->city : '',
