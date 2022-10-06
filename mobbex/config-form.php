@@ -539,8 +539,8 @@ return [
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
-                    'query' => MobbexHelper::getOrderStatusSelect(),
-                    'id'    => 'id_option',
+                    'query' => \OrderState::getOrderStates(\Context::getContext()->language->id) ?: [],
+                    'id'    => 'id_order_state',
                     'name'  => 'name'
                 ]
             ],
@@ -552,8 +552,8 @@ return [
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
-                    'query' => MobbexHelper::getOrderStatusSelect(),
-                    'id'    => 'id_option',
+                    'query' => \OrderState::getOrderStates(\Context::getContext()->language->id) ?: [],
+                    'id'    => 'id_order_state',
                     'name'  => 'name'
                 ]
             ],
@@ -565,8 +565,8 @@ return [
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
-                    'query' => MobbexHelper::getOrderStatusSelect(),
-                    'id'    => 'id_option',
+                    'query' => \OrderState::getOrderStates(\Context::getContext()->language->id) ?: [],
+                    'id'    => 'id_order_state',
                     'name'  => 'name'
                 ]
             ],
@@ -578,8 +578,8 @@ return [
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
-                    'query' => MobbexHelper::getOrderStatusSelect(),
-                    'id'    => 'id_option',
+                    'query' => \OrderState::getOrderStates(\Context::getContext()->language->id) ?: [],
+                    'id'    => 'id_order_state',
                     'name'  => 'name'
                 ]
             ],

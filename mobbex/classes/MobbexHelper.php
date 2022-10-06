@@ -1257,21 +1257,6 @@ class MobbexHelper
         return $result['cart'];
     }
 
-    public static function getOrderStatusSelect()
-    {
-        $states = new OrderState(1);
-        $states = $states->getOrderStates(1);
-        $query = [];
-        foreach ($states as $state) {
-            $query[] = [
-                'id_option' => $state['id_order_state'],
-                'name'      => $state['name']
-            ];
-        }
-       
-        return $query;
-    }
-
     /**
      * Retrieve final shipping cost for the given cart.
      * 
