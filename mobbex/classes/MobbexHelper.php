@@ -3,8 +3,6 @@
 class MobbexHelper
 {
     const MOBBEX_VERSION = '3.2.0';
-    const MOBBEX_SOURCES_COMMON = 'MOBBEX_SOURCES_COMMON';
-    const MOBBEX_SOURCES_ADVANCED = 'MOBBEX_SOURCES_ADVANCED';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
@@ -601,8 +599,46 @@ class MobbexHelper
      */
     public static function updateMobbexSources()
     {
-        \Configuration::updateValue('MOBBEX_SOURCES_COMMON', json_encode(self::getSources()));
-        \Configuration::updateValue('MOBBEX_SOURCES_ADVANCED', json_encode(self::getSourcesAdvanced()));
+        $names = $common = $advanced = [];
+
+        foreach (self::getSources() as $source) {
+            if (empty($source['installments']['list']))
+                continue;
+
+            // Format field data
+            foreach ($source['installments']['list'] as $plan) {
+                $common[$plan['reference']] = [
+                    'id'    => "common_plan_$plan[reference]",
+                    'key'   => $plan['reference'],
+                    'label' => $plan['name'] ?: $plan['description'],
+                ];
+            }
+        }
+
+        foreach (self::getSourcesAdvanced() as $source) {
+            if (empty($source['installments']))
+                continue;
+
+            // Save source name
+            $names[$source['source']['reference']] = $source['source']['name'];
+
+            // Format field data
+            foreach ($source['installments'] as $plan) {
+                $advanced[$source['source']['reference']][] = [
+                    'id'    => "advanced_plan_$plan[uid]",
+                    'key'   => $plan['uid'],
+                    'label' => $plan['name'] ?: $plan['description'],
+                ];
+            }
+        }
+
+        // Save to db
+        $shopId = \Context::getContext()->shop->id ?: null;
+        MobbexCustomFields::saveCustomField($shopId, 'shop', 'source_names', json_encode($names));
+        MobbexCustomFields::saveCustomField($shopId, 'shop', 'common_sources', json_encode($common));
+        MobbexCustomFields::saveCustomField($shopId, 'shop', 'advanced_sources', json_encode($advanced));
+
+        return compact('names', 'common', 'advanced');
     }
 
     /**
@@ -700,34 +736,30 @@ class MobbexHelper
     {
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => str_replace('{rule}', $rule, 'https://api.mobbex.com/p/sources/rules/{rule}/installments'),
+        curl_setopt_array($curl, [
+            CURLOPT_URL            => "https://api.mobbex.com/p/sources/rules/$rule/installments",
+            CURLOPT_HTTPHEADER     => self::getHeaders(),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => self::getHeaders(),
-        ));
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'GET',
+        ]);
 
         $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $error    = curl_error($curl);
 
         curl_close($curl);
 
-        if ($err) {
-            d("cURL Error #:" . $err);
-        } else {
-            $response = json_decode($response, true);
-            $data = $response['data'];
+        if ($error)
+            self::log('Advanced Sources Obtaining cURL Error' . $error, $rule, true);
 
-            if ($data) {
-                return $data;
-            }
-        }
+        $result = json_decode($response, true);
 
-        return [];
+        if (empty($result['result']))
+            self::log('Advanced Sources Obtaining Error', $rule, true);
+
+        return isset($result['data']) ? $result['data'] : [];
     }
 
     /**
@@ -1059,56 +1091,25 @@ class MobbexHelper
      */
     public static function getPlansFilterFields($id, $catalogType = 'product')
     {
-        $commonFields = $advancedFields = $sourceNames = [];
+        $shopId = \Context::getContext()->shop->id ?: null;
 
-        // Get current checked plans from db
-        $checkedCommonPlans   = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans')) ?: [];
-        $checkedAdvancedPlans = json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans')) ?: [];
+        // Try to get sources from db
+        $sources = [
+            'names'    => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
+            'common'   => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
+            'advanced' => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
+        ];
 
-        if(!Configuration::get('MOBBEX_SOURCES_COMMON'))
-            self::updateMobbexSources();
+        // Get current checked plans
+        $values = [
+            'common'   => json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans'), true)   ?: [],
+            'advanced' => json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans'), true) ?: [],
+        ];
 
-        $sources = json_decode((string) Configuration::get('MOBBEX_SOURCES_COMMON'), true) ?: [];
+        if (!$sources['common'] || !$sources['advanced'])
+            $sources = self::updateMobbexSources();
 
-        foreach ($sources as $source) {
-            // Only if have installments
-            if (empty($source['installments']['list']))
-                continue;
-
-            // Create field array data
-            foreach ($source['installments']['list'] as $plan) {
-                $commonFields[$plan['reference']] = [
-                    'id'    => 'common_plan_' . $plan['reference'],
-                    'value' => !in_array($plan['reference'], $checkedCommonPlans),
-                    'label' => $plan['name'] ?: $plan['description'],
-                ];
-            }
-        }
-
-        if(!Configuration::get('MOBBEX_SOURCES_ADVANCED'))
-            self::updateMobbexSources();
-
-        $sources_advanced = json_decode((string) Configuration::get('MOBBEX_SOURCES_ADVANCED'), true) ?: [];
-
-        foreach ($sources_advanced as $source) {
-            // Only if have installments
-            if (empty($source['installments']))
-                continue;
-
-            // Save source name
-            $sourceNames[$source['source']['reference']] = $source['source']['name'];
-
-            // Create field array data
-            foreach ($source['installments'] as $plan) {
-                $advancedFields[$source['source']['reference']][] = [
-                    'id'      => 'advanced_plan_' . $plan['uid'],
-                    'value'   => in_array($plan['uid'], $checkedAdvancedPlans),
-                    'label'   => $plan['name'] ?: $plan['description'],
-                ];
-            }
-        }
-
-        return compact('commonFields', 'advancedFields', 'sourceNames');
+        return compact('sources', 'values');
     }
 
     /**
