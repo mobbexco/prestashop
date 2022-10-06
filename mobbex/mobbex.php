@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 3.2.0
+ * @version 3.2.1
  * @see     PaymentModuleCore
  */
 

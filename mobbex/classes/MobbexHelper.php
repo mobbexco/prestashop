@@ -2,7 +2,7 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '3.2.0';
+    const MOBBEX_VERSION = '3.2.1';
 
     const PS_16 = "1.6";
     const PS_17 = "1.7";
