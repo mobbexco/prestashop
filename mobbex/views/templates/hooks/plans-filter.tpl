@@ -9,7 +9,7 @@
                 {foreach from=$plans['sources']['common'] key=key item=field}
                     <div class="mbbx-plan">
                         <input type="hidden" name="{$field['id']}" value="no">
-                        <input type="checkbox" name="{$field['id']}" value="yes" {if in_array($field['key'], $plans['values']['common'])}checked="checked" {/if}
+                        <input type="checkbox" name="{$field['id']}" value="yes" {if !in_array($field['key'], $plans['values']['common'])}checked="checked" {/if}
                             id="{$field['id']}">
                         <label for="{$field['id']}">{$field['label']}</label>
                     </div>
