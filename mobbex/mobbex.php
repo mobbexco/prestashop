@@ -10,17 +10,17 @@
  * @see     PaymentModuleCore
  */
 
-if (!defined('_PS_VERSION_')) {
+if (!defined('_PS_VERSION_'))
     exit;
-}
 
 require_once dirname(__FILE__) . '/classes/Exception.php';
+require_once dirname(__FILE__) . '/helper/Config.php';
 require_once dirname(__FILE__) . '/classes/Model.php';
-require_once dirname(__FILE__) . '/classes/Task.php';
+require_once dirname(__FILE__) . '/helper/Task.php';
 require_once dirname(__FILE__) . '/classes/Api.php';
-require_once dirname(__FILE__) . '/classes/Updater.php';
+require_once dirname(__FILE__) . '/helper/Updater.php';
 require_once dirname(__FILE__) . '/classes/OrderUpdate.php';
-require_once dirname(__FILE__) . '/classes/MobbexHelper.php';
+require_once dirname(__FILE__) . '/helper/MobbexHelper.php';
 require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
 require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
 
@@ -31,44 +31,45 @@ class Mobbex extends PaymentModule
 {
     /** @var \Mobbex\Updater */
     public $updater;
+
+    /** @var \Mobbex\Config */
+    public $config;
+
     /**
      * Constructor
      */
     public function __construct()
     {
-        $this->name = 'mobbex';
-
-        $this->tab = 'payments_gateways';
-
-        $this->version = MobbexHelper::MOBBEX_VERSION;
-
-        $this->author = 'Mobbex Co';
-        $this->controllers = ['notification', 'payment', 'task', 'sources'];
-        $this->currencies = true;
+        $this->name            = 'mobbex';
+        $this->tab             = 'payments_gateways';
+        $this->version         = \Mobbex\Config::MODULE_VERSION;
+        $this->author          = 'Mobbex Co';
+        $this->controllers     = ['notification', 'payment', 'task', 'sources'];
+        $this->currencies      = true;
         $this->currencies_mode = 'checkbox';
-        $this->bootstrap = true;
+        $this->bootstrap       = true;
 
         parent::__construct();
 
-        $this->displayName = $this->l('Mobbex');
-        $this->description = $this->l('Payment plugin using Mobbex ');
-
-        $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
-
+        $this->displayName            = $this->l('Mobbex');
+        $this->description            = $this->l('Payment plugin using Mobbex ');
+        $this->confirmUninstall       = $this->l('Are you sure you want to uninstall?');
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+
+        //Mobbex Classes 
+        $this->config = new \Mobbex\Config();
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
         if ($this::isEnabled($this->name))
-            $this->_createStates();
+            $this->createStates();
 
         // Only if you want to publish your module on the Addons Marketplace
+        $this->updater    = new \Mobbex\Updater();
         $this->module_key = 'mobbex_checkout';
-        $this->updater = new \Mobbex\Updater();
-        $this->settings = $this->getSettings();
 
         // Execute pending tasks if cron is disabled
-        if (!defined('mobbexTasksExecuted') && !\Configuration::get('MOBBEX_CRON_MODE') && !MobbexHelper::needUpgrade())
+        if (!defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !MobbexHelper::needUpgrade())
             define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
     }
 
@@ -93,34 +94,12 @@ class Mobbex extends PaymentModule
             return false;
         }
 
-        // Don't forget to check for PHP extensions like curl here
-        Configuration::updateValue(MobbexHelper::K_API_KEY, '');
-        Configuration::updateValue(MobbexHelper::K_ACCESS_TOKEN, '');
-        Configuration::updateValue(MobbexHelper::K_TEST_MODE, false);
-        Configuration::updateValue(MobbexHelper::K_EMBED, true);
-        Configuration::updateValue(MobbexHelper::K_WALLET, false);
-        Configuration::updateValue(MobbexHelper::K_UNIFIED_METHOD, false);
-        Configuration::updateValue(MobbexHelper::K_MULTIVENDOR, MobbexHelper::K_DEF_MULTIVENDOR);
-        Configuration::updateValue(MobbexHelper::K_MULTICARD, MobbexHelper::K_DEF_MULTICARD);
-        // Theme
-        Configuration::updateValue(MobbexHelper::K_THEME, MobbexHelper::K_DEF_THEME);
-        Configuration::updateValue(MobbexHelper::K_THEME_BACKGROUND, MobbexHelper::K_DEF_BACKGROUND);
-        Configuration::updateValue(MobbexHelper::K_THEME_PRIMARY, MobbexHelper::K_DEF_PRIMARY);
-        // Plans Widget
-        Configuration::updateValue(MobbexHelper::K_PLANS, false);
-        Configuration::updateValue(MobbexHelper::K_PLANS_TEXT, MobbexHelper::K_DEF_PLANS_TEXT);
-        Configuration::updateValue(MobbexHelper::K_PLANS_STYLES, MobbexHelper::K_DEF_PLANS_STYLES);
-        Configuration::updateValue(MobbexHelper::K_PLANS_IMAGE_URL, MobbexHelper::K_DEF_PLANS_IMAGE_URL);
-        // DNI Fields
-        Configuration::updateValue(MobbexHelper::K_OWN_DNI, false);
-        Configuration::updateValue(MobbexHelper::K_CUSTOM_DNI, '');
-        //Order Statuses
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_APPROVED, \Configuration::get('PS_OS_' . 'PAYMENT'));
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_FAILED, \Configuration::get('PS_OS_' . 'ERROR'));
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REFUNDED, \Configuration::get('PS_OS_' . 'REFUND'));
-        Configuration::updateValue(MobbexHelper::K_ORDER_STATUS_REJECTED, \Configuration::get('PS_OS_' . 'ERROR'));
 
-        $this->_createTable();
+        //Set config default values
+        $this->config->resetOptions();
+        //install Tables
+        $this->createTables();
+
         return parent::install() && $this->unregisterHooks() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
@@ -135,15 +114,62 @@ class Mobbex extends PaymentModule
     public function uninstall()
     {
         // Delete module config if option is sent
-        if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true') {
-            // Only delete main module settings values
-            $settings = $this->getSettings(false);
-
-            foreach ($settings as $name => $value)
-                Configuration::deleteByName($name);
-        }
+        if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true')
+            $this->config->deleteSettings();
 
         return parent::uninstall();
+    }
+
+    public function createStates()
+    {
+        foreach ($this->config->orderStatuses as $key => $value) {
+            if (
+                !\Configuration::hasKey($value['name'])
+                || empty(\Configuration::get($value['name']))
+                || !\Validate::isLoadedObject(new \OrderState(\Configuration::get($value['name'])))
+            ) {
+                $order_state = new OrderState();
+                $order_state->name = array();
+
+                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
+                foreach (\Language::getLanguages() as $language)
+                    $order_state->name[$language['id_lang']] = $this->l($value['label']);
+
+                $order_state->send_email  = $value['send_email'];
+                $order_state->color       = $value['color'];
+                $order_state->module_name = $this->name;
+
+                $order_state->hidden = $order_state->delivery = $order_state->logable = $order_state->invoice = false;
+
+                // Add to database
+                $order_state->add();
+                \Configuration::updateValue($value['name'], (int) $order_state->id);
+        }
+        }
+    }
+
+    public function createTables()
+    {
+        // Get install query from sql file
+        $db = \DB::getInstance();
+        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
+
+        // If mobbex transaction table exists
+        if ($db->numRows()) {
+            // Check if table has already been modified
+            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
+                return true;
+
+            // If it was modified but id has not auto_increment property, add to column
+            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
+                return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
+
+            $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/alter.sql'));
+                return $db->execute($sql);
+        }
+        
+        $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/create.sql'));
+            return $db->execute($sql);
     }
 
     /**
@@ -212,7 +238,7 @@ class Mobbex extends PaymentModule
 
         foreach ($hooks as $hook) {
             if (!$this->unregisterHook($hook['id_hook']) || !$this->unregisterExceptions($hook['id_hook']))
-                return false;
+            return false;
         }
 
         return true;
@@ -296,267 +322,39 @@ class Mobbex extends PaymentModule
      */
     protected function renderForm()
     {
-        $helper = new HelperForm();
+        $helper = new \HelperForm();
 
         $helper->show_toolbar = false;
-        $helper->table = $this->table;
-        $helper->module = $this;
-        $helper->default_form_language = $this->context->language->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
+        $helper->table        = $this->table;
+        $helper->module       = $this;
+        $helper->default_form_language    = $this->context->language->id;
+        $helper->allow_employee_form_lang = \Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
 
-        $helper->identifier = $this->identifier;
+        $helper->identifier    = $this->identifier;
         $helper->submit_action = 'submit_mobbex';
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false)
+        $helper->currentIndex  = $this->context->link->getAdminLink('AdminModules', false)
             . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
 
-        $form = $this->getConfigForm(true);
+        $form = $this->config->getConfigForm();
 
         try {
             if (MobbexHelper::needUpgrade())
                 $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
 
-            if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+            if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
         } catch (\Exception $e) {
             MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
         }
 
         $helper->tpl_vars = array(
-            'fields_value' => $this->settings,
-            'languages' => $this->context->controller->getLanguages(),
-            'id_language' => $this->context->language->id,
+            'fields_value' => $this->config->getSettings(false, 'default', 'name'),
+            'languages'    => $this->context->controller->getLanguages(),
+            'id_language'  => $this->context->language->id,
         );
 
         return $helper->generateForm([$form]);
-    }
-
-    public function _createTable()
-    {
-        $db = DB::getInstance();
-
-        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
-
-        // If mobbex transaction table exists
-        if ($db->numRows()) {
-            $this->_alterTable();
-        } else {
-            $db->execute(
-                "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_transaction` (
-                    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                    `cart_id` INT(11) NOT NULL,
-                    `parent` TEXT NOT NULL,
-                    `payment_id` TEXT NOT NULL,
-                    `description` TEXT NOT NULL,
-                    `status_code` TEXT NOT NULL,
-                    `status` TEXT NOT NULL,
-                    `status_message` TEXT NOT NULL,
-                    `source_name` TEXT NOT NULL,
-                    `source_type` TEXT NOT NULL,
-                    `source_reference` TEXT NOT NULL,
-                    `source_number` TEXT NOT NULL,
-                    `source_expiration` TEXT NOT NULL,
-                    `source_installment` TEXT NOT NULL,
-                    `installment_name` TEXT NOT NULL,
-                    `source_url` TEXT NOT NULL,
-                    `cardholder` TEXT NOT NULL,
-                    `entity_name` TEXT NOT NULL,
-                    `entity_uid` TEXT NOT NULL,
-                    `customer` TEXT NOT NULL,
-                    `checkout_uid` TEXT NOT NULL,
-                    `total` DECIMAL(18,2) NOT NULL,
-                    `currency` TEXT NOT NULL,
-                    `risk_analysis` TEXT NOT NULL,
-                    `data` TEXT NOT NULL,
-                    `created` TEXT NOT NULL,
-                    `updated` TEXT NOT NULL
-                ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-            );
-        }
-
-        $db->execute(
-            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_custom_fields` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `row_id` INT(11) NOT NULL,
-                `object` TEXT NOT NULL,
-                `field_name` TEXT NOT NULL,
-                `data` TEXT NOT NULL
-            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-        );
-
-        $db->execute(
-            "CREATE TABLE IF NOT EXISTS `" . _DB_PREFIX_ . "mobbex_task` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                `name` TEXT NOT NULL,
-                `args` TEXT NOT NULL,
-                `interval` INT(11) NOT NULL,
-                `period` TEXT NOT NULL,
-                `limit` INT(11) NOT NULL,
-                `executions` INT(11) NOT NULL,
-                `start_date` DATETIME NOT NULL,
-                `last_execution` DATETIME NOT NULL,
-                `next_execution` DATETIME NOT NULL
-            ) ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-        );
-
-        return true;
-    }
-
-    public function _alterTable()
-    {
-        $db = DB::getInstance();
-
-        // Check if table has already been modified
-        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-            return true;
-
-        // If it was modified but id has not auto_increment property, add to column
-        if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
-            return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
-
-        $db->execute(
-            "ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction`
-                DROP PRIMARY KEY,
-                ADD `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                ADD `parent` BOOLEAN NOT NULL,
-                ADD `payment_id` TEXT NOT NULL,
-                ADD `description` TEXT NOT NULL,
-                ADD `status_code` TEXT NOT NULL,
-                ADD `status` TEXT NOT NULL,
-                ADD `status_message` TEXT NOT NULL,
-                ADD `source_name` TEXT NOT NULL,
-                ADD `source_type` TEXT NOT NULL,
-                ADD `source_reference` TEXT NOT NULL,
-                ADD `source_number` TEXT NOT NULL,
-                ADD `source_expiration` TEXT NOT NULL,
-                ADD `source_installment` TEXT NOT NULL,
-                ADD `installment_name` TEXT NOT NULL,
-                ADD `source_url` TEXT NOT NULL,
-                ADD `cardholder` TEXT NOT NULL,
-                ADD `entity_name` TEXT NOT NULL,
-                ADD `entity_uid` TEXT NOT NULL,
-                ADD `customer` TEXT NOT NULL,
-                ADD `checkout_uid` TEXT NOT NULL,
-                ADD `total` DECIMAL(18,2) NOT NULL,
-                ADD `currency` TEXT NOT NULL,
-                ADD `risk_analysis` TEXT NOT NULL,
-                ADD `created` TEXT NOT NULL,
-                ADD `updated` TEXT NOT NULL,
-            ENGINE=" . _MYSQL_ENGINE_ . " DEFAULT CHARSET=utf8;"
-        );
-
-        return true;
-    }
-
-    private function _createStates()
-    {
-        // Approved Status
-        if (
-            !Configuration::hasKey(MobbexHelper::K_OS_APPROVED)
-            || empty(Configuration::get(MobbexHelper::K_OS_APPROVED))
-            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_APPROVED)))
-        ) {
-            $order_state = new OrderState();
-            $order_state->name = array();
-
-            foreach (Language::getLanguages() as $language) {
-                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
-                $order_state->name[$language['id_lang']] = $this->l('Transaction in Process');
-            }
-
-            $order_state->send_email = true;
-            $order_state->color = '#5bff67';
-            $order_state->hidden = false;
-            $order_state->delivery = false;
-            $order_state->logable = false;
-            $order_state->invoice = false;
-
-            $order_state->module_name = $this->name;
-
-            // Add to database
-            $order_state->add();
-            Configuration::updateValue(MobbexHelper::K_OS_APPROVED, (int) $order_state->id);
-        }
-
-        // Pending Status
-        if (
-            !Configuration::hasKey(MobbexHelper::K_OS_PENDING)
-            || empty(Configuration::get(MobbexHelper::K_OS_PENDING))
-            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_PENDING)))
-        ) {
-            $order_state = new OrderState();
-            $order_state->name = array();
-
-            foreach (Language::getLanguages() as $language) {
-                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
-                $order_state->name[$language['id_lang']] = $this->l('Pending');
-            }
-
-            $order_state->send_email = false;
-            $order_state->color = '#FEFF64';
-            $order_state->hidden = false;
-            $order_state->delivery = false;
-            $order_state->logable = false;
-            $order_state->invoice = false;
-
-            $order_state->module_name = $this->name;
-
-            // Add to database
-            $order_state->add();
-            Configuration::updateValue(MobbexHelper::K_OS_PENDING, (int) $order_state->id);
-        }
-
-        // Waiting Status
-        if (
-            !Configuration::hasKey(MobbexHelper::K_OS_WAITING)
-            || empty(Configuration::get(MobbexHelper::K_OS_WAITING))
-            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_WAITING)))
-        ) {
-            $order_state = new OrderState();
-            $order_state->name = array();
-
-            foreach (Language::getLanguages() as $language)
-                $order_state->name[$language['id_lang']] = $this->l('Waiting');
-
-            $order_state->send_email = false;
-            $order_state->color = '#FEFF64';
-            $order_state->hidden = false;
-            $order_state->delivery = false;
-            $order_state->logable = false;
-            $order_state->invoice = false;
-
-            $order_state->module_name = $this->name;
-
-            // Add to database
-            $order_state->add();
-            Configuration::updateValue(MobbexHelper::K_OS_WAITING, (int) $order_state->id);
-        }
-
-        // Rejected Status
-        if (
-            !Configuration::hasKey(MobbexHelper::K_OS_REJECTED)
-            || empty(Configuration::get(MobbexHelper::K_OS_REJECTED))
-            || !Validate::isLoadedObject(new OrderState(Configuration::get(MobbexHelper::K_OS_REJECTED)))
-        ) {
-            $order_state = new OrderState();
-            $order_state->name = array();
-
-            foreach (Language::getLanguages() as $language)
-                $order_state->name[$language['id_lang']] = $this->l('Rejected Payment');
-
-            $order_state->send_email = false;
-            $order_state->color = '#8F0621';
-            $order_state->hidden = false;
-            $order_state->delivery = false;
-            $order_state->logable = false;
-            $order_state->invoice = false;
-
-            $order_state->module_name = $this->name;
-
-            // Add to database
-            $order_state->add();
-            Configuration::updateValue(MobbexHelper::K_OS_REJECTED, (int) $order_state->id);
-        }
     }
 
     /**
@@ -566,8 +364,8 @@ class Mobbex extends PaymentModule
      */
     public function postProcess()
     {
-        foreach ($this->settings as $name => $value)
-            Configuration::updateValue($name, Tools::getValue($name));
+        foreach ($this->config->names as $key => $value)
+            Configuration::updateValue($value, Tools::getValue($value));
     }
 
 
@@ -651,16 +449,16 @@ class Mobbex extends PaymentModule
         \MobbexHelper::addJavascriptData([
             'paymentUrl'  => \MobbexHelper::getModuleUrl('payment', 'process'),
             'errorUrl'    => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-            'embed'       => (bool) Configuration::get(MobbexHelper::K_EMBED),
+            'embed'       => (bool) $this->config->settings['embed'],
             'data'        => $checkoutData,
             'return'      => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
         ]);
 
         // Get payment methods from checkout
-        if (Configuration::get(MobbexHelper::K_UNIFIED_METHOD) || isset($checkoutData['sid'])) {
+        if ($this->config->settings['unified_method'] || isset($checkoutData['sid'])) {
             $options[] = $this->createPaymentOption(
-                Configuration::get('MOBBEX_TITLE') ?: $this->l('Paying using cards, cash or others'),
-                Configuration::get('MOBBEX_DESCRIPTION'),
+                $this->config->settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
+                $this->config->settings['mobbex_description'],
                 Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
                 ['checkoutUrl' => MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
@@ -670,8 +468,8 @@ class Mobbex extends PaymentModule
                 $checkoutUrl = MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
 
                 $options[] = $this->createPaymentOption(
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && Configuration::get('MOBBEX_TITLE') ? Configuration::get('MOBBEX_TITLE') : $method['subgroup_title'],
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Configuration::get('MOBBEX_DESCRIPTION') : null,
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && $this->config->settings['mobbex_title'] ? $this->config->settings['mobbex_title'] : $method['subgroup_title'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl')
@@ -709,7 +507,7 @@ class Mobbex extends PaymentModule
 
     public function hookDisplayProductPriceBlock($params)
     {
-        if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !Configuration::get(MobbexHelper::K_PLANS))
+        if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !$this->config->settings['finance_product'])
             return;
 
         return $this->displayPlansWidget($params['product']['price_amount'], [$params['product']['id']]);
@@ -728,10 +526,10 @@ class Mobbex extends PaymentModule
             'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
                 'default_styles' => Tools::getValue('controller') == 'cart' || Tools::getValue('controller') == 'order',
-                'styles'         => Configuration::get(MobbexHelper::K_PLANS_STYLES) ?: MobbexHelper::K_DEF_PLANS_STYLES,
-                'text'           => Configuration::get(MobbexHelper::K_PLANS_TEXT) ?: MobbexHelper::K_DEF_PLANS_TEXT,
-                'button_image'   => Configuration::get(MobbexHelper::K_PLANS_IMAGE_URL),
-                'plans_theme'    => Configuration::get(MobbexHelper::K_THEME) ?: MobbexHelper::K_DEF_THEME,
+                'styles'         => $this->config->settings['widget_styles'] ?: $this->config->default['widget_styles'],
+                'text'           => $this->config->settings['widget_text'] ?: $this->config->default['widget_text'],
+                'button_image'   => $this->config->settings['widget_logo'],
+                'plans_theme'    => $this->config->settings['theme'] ?: $this->config->default['theme'],
             ],
         ]);
 
@@ -759,7 +557,7 @@ class Mobbex extends PaymentModule
     {
         $cart = Context::getContext()->cart;
 
-        if (!Validate::isLoadedObject($cart) || !Configuration::get('MOBBEX_PLANS_ON_CART'))
+        if (!Validate::isLoadedObject($cart) || !$this->config->settings['finance_cart'])
             return false;
 
         return $this->displayPlansWidget((float) $cart->getOrderTotal(true, Cart::BOTH), array_column($cart->getProducts(), 'id_product'));
@@ -767,7 +565,7 @@ class Mobbex extends PaymentModule
 
     public function hookAdditionalCustomerFormFields($params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!$this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '') {
             return;
         }
         $customer = Context::getContext()->customer;
@@ -795,7 +593,7 @@ class Mobbex extends PaymentModule
 
     private function updateCustomerDniStatus(array $params)
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || empty($params['object']->id) || empty($_POST['customer_dni']) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!$this->config->settings['mobbex_dni'] || empty($params['object']->id) || empty($_POST['customer_dni']) || $this->config->settings['custom_dni'] != '') {
             return;
         }
 
@@ -824,14 +622,14 @@ class Mobbex extends PaymentModule
             'mbbx' => [
                 'paymentUrl' => \MobbexHelper::getModuleUrl('payment', 'process'),
                 'errorUrl'   => \MobbexHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-                'embed'      => (bool) Configuration::get(MobbexHelper::K_EMBED),
+                'embed'      => (bool) $this->config->settings['embed'],
                 'data'       => $checkoutData,
                 'return'     => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 
         $this->context->smarty->assign([
-            'methods'     => isset($checkoutData['paymentMethods']) && !Configuration::get(MobbexHelper::K_UNIFIED_METHOD) ? $checkoutData['paymentMethods'] : [],
+            'methods'     => isset($checkoutData['paymentMethods']) && $this->config->settings['unified_method'] ? $checkoutData['paymentMethods'] : [],
             'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
             'redirectUrl' => isset($checkoutData['id']) ? MobbexHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
         ]);
@@ -850,7 +648,7 @@ class Mobbex extends PaymentModule
     {
         $product = new Product(Tools::getValue('id_product'));
 
-        if (!Configuration::get(MobbexHelper::K_PLANS) || !Validate::isLoadedObject($product) || !$product->show_price)
+        if (!$this->config->settings['finance_product'] || !Validate::isLoadedObject($product) || !$product->show_price)
             return;
 
         return $this->displayPlansWidget($product->getPrice(), [$product]);
@@ -865,7 +663,7 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayCustomerAccountForm()
     {
-        if (!Configuration::get(MobbexHelper::K_OWN_DNI, false) || Configuration::get(MobbexHelper::K_CUSTOM_DNI, '') != '') {
+        if (!$this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '') {
             return;
         }
         $customer = Context::getContext()->customer;
@@ -923,7 +721,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayAdminProductsExtra($params)
     {
         $id   = !empty($params['id_product']) ? $params['id_product'] : Tools::getValue('id_product');
-        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
+        $hash = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
 
         $this->context->smarty->assign([
             'id'             => $id,
@@ -947,7 +745,7 @@ class Mobbex extends PaymentModule
     public function hookDisplayBackOfficeCategory($params)
     {
         $id = !empty($params['request']) ? $params['request']->get('categoryId') : Tools::getValue('id_category');
-        $hash = md5(\Configuration::get(MobbexHelper::K_API_KEY) . '!' . \Configuration::get(MobbexHelper::K_ACCESS_TOKEN));
+        $hash = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
 
         $this->context->smarty->assign([
             'id'             => $id,
@@ -1093,10 +891,10 @@ class Mobbex extends PaymentModule
             MobbexHelper::addAsset("$mediaPath/views/css/front.css", 'css');
             MobbexHelper::addAsset("$mediaPath/views/js/front.js");
 
-            if (Configuration::get(MobbexHelper::K_WALLET))
+            if ($this->config->settings['wallet'])
                 MobbexHelper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
-            if (Configuration::get(MobbexHelper::K_EMBED))
+            if ($this->config->settings['embed'])
                 MobbexHelper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js');
         }
     }
@@ -1121,7 +919,7 @@ class Mobbex extends PaymentModule
 
             try {
                 // If plugin has updates, add update data to javascript
-                if ($this->updater->hasUpdates(MobbexHelper::MOBBEX_VERSION))
+                if ($this->updater->hasUpdates(\Mobbex\Config::MOBBEX_VERSION))
                     MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
             } catch (\Exception $e) {
                 MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
@@ -1156,27 +954,6 @@ class Mobbex extends PaymentModule
         }
     }
 
-    public function getConfigForm($extensionOptions = true)
-    {
-        $form = require dirname(__FILE__) . '/config-form.php';
-
-        return $extensionOptions ? MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
-    }
-
-    public function getSettings($extensionOptions = true)
-    {
-        $settings = [];
-
-        $form = $this->getConfigForm($extensionOptions);
-
-        foreach ($form['form']['input'] as $input) {
-            $defaultValue  = isset($input['default']) ? $input['default'] : false;
-            $settings[$input['name']] = isset($input['value']) ? $input['value'] : (Configuration::get($input['name']) ?: $defaultValue);
-        }
-
-        return $settings;
-    }
-
     public function hookActionMobbexExpireOrder($orderId)
     {
         $order = new Order($orderId);
@@ -1185,7 +962,7 @@ class Mobbex extends PaymentModule
         if (!$order)
             return false;
 
-        if ($order->getCurrentState() == Configuration::get(MobbexHelper::K_OS_PENDING))
+        if ($order->getCurrentState() == Configuration::get($this->config->orderStatuses['mobbex_status_pending']['name']))
             $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
 
         return true;

@@ -25,8 +25,9 @@ class Api
      */
     public function __construct($api_key = null, $access_token = null)
     {
-        $this->api_key      = $api_key      ?: \Configuration::get(\MobbexHelper::K_API_KEY);
-        $this->access_token = $access_token ?: \Configuration::get(\MobbexHelper::K_ACCESS_TOKEN);
+        $this->config       = new \Mobbex\Config();
+        $this->api_key      = $api_key      ?: $this->config->settings['api_key'];
+        $this->access_token = $access_token ?: $this->config->settings['access_token'];
         $this->ready        = $this->api_key && $this->access_token;
     }
 
@@ -93,7 +94,7 @@ class Api
             'content-type: application/json',
             'x-api-key: ' . $this->api_key,
             'x-access-token: ' . $this->access_token,
-            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \MobbexHelper::MOBBEX_VERSION,
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \\Mobbex\Config::MOBBEX_VERSION,
         ];
     }
 }

@@ -5,6 +5,6 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_2_5_0($module)
 {
-    $module->_alterTable();
+    $module->createTables();
     return true;
 }

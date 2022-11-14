@@ -9,6 +9,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     /** @var \Mobbex\OrderUpdate */
     public $orderUpdate;
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->config = new \Mobbex\Config();
+    }
+
     public function postProcess()
     {
         // We don't do anything if the module has been disabled by the merchant
@@ -43,7 +49,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // If order was not created
         if (empty($order_id)) {
-            $seconds = Configuration::get('MOBBEX_REDIRECT_TIME') ?: 10;
+            $seconds = $this->config->settings['redirect_time'] ?: 10;
 
             // Wait for webhook
             while ($seconds > 0 && !$order_id) {
@@ -66,7 +72,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } else {
             $order = MobbexHelper::getOrderByCartId($cart_id, true);
 
-            if($order && Configuration::get(MobbexHelper::K_ORDER_FIRST) && Configuration::get(MobbexHelper::K_CART_RESTORE)){
+            if($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
                 $this->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
@@ -130,7 +136,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             }
         }
 
-        die('OK: ' . MobbexHelper::MOBBEX_VERSION);
+        die('OK: ' . \Mobbex\Config::MOBBEX_VERSION);
         
     }
 
@@ -144,15 +150,15 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $refund_status = [
             Configuration::get('PS_OS_ERROR'), 
             Configuration::get('PS_OS_CANCELLED'), 
-            Configuration::get(MobbexHelper::K_OS_REJECTED), 
-            Configuration::get(MobbexHelper::K_OS_WAITING), 
-            Configuration::get(MobbexHelper::K_OS_PENDING)
+            Configuration::get($this->config->orderStatuses['mobbex_status_rejected']['name']), 
+            Configuration::get($this->config->orderStatuses['mobbex_status_waiting']['name']), 
+            Configuration::get($this->config->orderStatuses['mobbex_status_pending']['name'])
         ];
 
         if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
             MobbexCustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
 
-        if($order->getCurrentState() === Configuration::get(MobbexHelper::K_OS_PENDING) && !Configuration::get(MobbexHelper::K_PENDING_ORDER_DISCOUNT)){
+        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->setttings['pending_discount']){
             foreach ($order->getProductsDetail() as $product) {
                 if(!StockAvailable::dependsOnStock($product['product_id']))
                     StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
@@ -160,7 +166,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         }
 
         if(MobbexCustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
-            if($status === Configuration::get(MobbexHelper::K_OS_REJECTED) || $status === Configuration::get(MobbexHelper::K_OS_WAITING)){
+            if($status === Configuration::get($this->config->orderStatuses['mobbex_status_rejected']['name']) || $status === Configuration::get($this->config->orderStatuses['mobbex_status_waiting']['name'])){
                 foreach ($order->getProductsDetail() as $product) {
                     if(!StockAvailable::dependsOnStock($product['product_id']))
                         StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);

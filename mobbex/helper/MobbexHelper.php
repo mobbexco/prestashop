@@ -2,11 +2,6 @@
 
 class MobbexHelper
 {
-    const MOBBEX_VERSION = '3.2.1';
-
-    const PS_16 = "1.6";
-    const PS_17 = "1.7";
-
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
     const K_TEST_MODE = 'MOBBEX_TEST_MODE';
@@ -121,7 +116,7 @@ class MobbexHelper
     {
         return array(
             "name" => "prestashop",
-            "version" => MobbexHelper::MOBBEX_VERSION,
+            "version" => \Mobbex\Config::MOBBEX_VERSION,
             "platform_version" => _PS_VERSION_,
         );
     }
@@ -358,7 +353,7 @@ class MobbexHelper
 
     public static function convertCountryCode($code)
     {
-        $countries = include dirname(__FILE__) . '/iso-3166/country-codes.php' ?: [];
+        $countries = include dirname(__FILE__) . '/utils/country-codes.php' ?: [];
 
         return isset($countries[$code]) ? $countries[$code] : null;
     }
