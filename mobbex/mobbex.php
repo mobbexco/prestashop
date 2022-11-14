@@ -919,7 +919,7 @@ class Mobbex extends PaymentModule
 
             try {
                 // If plugin has updates, add update data to javascript
-                if ($this->updater->hasUpdates(\Mobbex\Config::MOBBEX_VERSION))
+                if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                     MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
             } catch (\Exception $e) {
                 MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);

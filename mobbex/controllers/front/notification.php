@@ -136,7 +136,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             }
         }
 
-        die('OK: ' . \Mobbex\Config::MOBBEX_VERSION);
+        die('OK: ' . \Mobbex\Config::MODULE_VERSION);
         
     }
 

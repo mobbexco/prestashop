@@ -94,7 +94,7 @@ class Api
             'content-type: application/json',
             'x-api-key: ' . $this->api_key,
             'x-access-token: ' . $this->access_token,
-            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \\Mobbex\Config::MOBBEX_VERSION,
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \\Mobbex\Config::MODULE_VERSION,
         ];
     }
 }

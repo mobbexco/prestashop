@@ -94,7 +94,7 @@ class MobbexHelper
             $force || $die ? 3 : 1,
             null,
             'Mobbex',
-            str_replace('.', '', self::MOBBEX_VERSION),
+            str_replace('.', '', self::MODULE_VERSION),
             true
         );
 
@@ -116,7 +116,7 @@ class MobbexHelper
     {
         return array(
             "name" => "prestashop",
-            "version" => \Mobbex\Config::MOBBEX_VERSION,
+            "version" => \Mobbex\Config::MODULE_VERSION,
             "platform_version" => _PS_VERSION_,
         );
     }
@@ -128,7 +128,7 @@ class MobbexHelper
             'content-type: application/json',
             'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
             'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
-            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . self::MOBBEX_VERSION,
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . self::MODULE_VERSION,
         );
     }
 
@@ -788,7 +788,7 @@ class MobbexHelper
      */
     public static function needUpgrade()
     {
-        return self::MOBBEX_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
+        return self::MODULE_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
     }
 
     /**
@@ -1038,7 +1038,7 @@ class MobbexHelper
             $controller = Context::getContext()->controller;
 
         if ($addVersion)
-            $uri .= '?ver=' . self::MOBBEX_VERSION;
+            $uri .= '?ver=' . self::MODULE_VERSION;
 
         if (Configuration::get('MOBBEX_FORCE_ASSETS')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
