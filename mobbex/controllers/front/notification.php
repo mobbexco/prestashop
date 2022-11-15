@@ -150,9 +150,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $refund_status = [
             Configuration::get('PS_OS_ERROR'), 
             Configuration::get('PS_OS_CANCELLED'), 
-            Configuration::get($this->config->orderStatuses['mobbex_status_rejected']['name']), 
-            Configuration::get($this->config->orderStatuses['mobbex_status_waiting']['name']), 
-            Configuration::get($this->config->orderStatuses['mobbex_status_pending']['name'])
+            Configuration::get('MOBBEX_OS_REJECTED'), 
+            Configuration::get('MOBBEX_OS_WAITING'), 
+            Configuration::get('MOBBEX_OS_PENDING')
         ];
 
         if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
@@ -166,7 +166,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         }
 
         if(MobbexCustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
-            if($status === Configuration::get($this->config->orderStatuses['mobbex_status_rejected']['name']) || $status === Configuration::get($this->config->orderStatuses['mobbex_status_waiting']['name'])){
+            if($status === Configuration::get('MOBBEX_OS_REJECTED') || $status === Configuration::get('MOBBEX_OS_WAITING')){
                 foreach ($order->getProductsDetail() as $product) {
                     if(!StockAvailable::dependsOnStock($product['product_id']))
                         StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);

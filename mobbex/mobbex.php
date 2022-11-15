@@ -13,16 +13,16 @@
 if (!defined('_PS_VERSION_'))
     exit;
 
-require_once dirname(__FILE__) . '/classes/Exception.php';
-require_once dirname(__FILE__) . '/helper/Config.php';
-require_once dirname(__FILE__) . '/classes/Model.php';
-require_once dirname(__FILE__) . '/helper/Task.php';
-require_once dirname(__FILE__) . '/classes/Api.php';
-require_once dirname(__FILE__) . '/helper/Updater.php';
-require_once dirname(__FILE__) . '/classes/OrderUpdate.php';
-require_once dirname(__FILE__) . '/helper/MobbexHelper.php';
-require_once dirname(__FILE__) . '/classes/MobbexTransaction.php';
-require_once dirname(__FILE__) . '/classes/MobbexCustomFields.php';
+require_once dirname(__FILE__) . '/Models/Exception.php';
+require_once dirname(__FILE__) . '/Models/Config.php';
+require_once dirname(__FILE__) . '/Models/Model.php';
+require_once dirname(__FILE__) . '/Models/Task.php';
+require_once dirname(__FILE__) . '/Models/Api.php';
+require_once dirname(__FILE__) . '/Models/Updater.php';
+require_once dirname(__FILE__) . '/Models/OrderUpdate.php';
+require_once dirname(__FILE__) . '/Models/MobbexHelper.php';
+require_once dirname(__FILE__) . '/Models/MobbexTransaction.php';
+require_once dirname(__FILE__) . '/Models/MobbexCustomFields.php';
 
 /**
  * Main class of the module
@@ -349,7 +349,7 @@ class Mobbex extends PaymentModule
         }
 
         $helper->tpl_vars = array(
-            'fields_value' => $this->config->getSettings(false, 'default', 'name'),
+            'fields_value' => $this->config->getSettings('name'),
             'languages'    => $this->context->controller->getLanguages(),
             'id_language'  => $this->context->language->id,
         );
@@ -364,8 +364,8 @@ class Mobbex extends PaymentModule
      */
     public function postProcess()
     {
-        foreach ($this->config->names as $key => $value)
-            Configuration::updateValue($value, Tools::getValue($value));
+        foreach ($this->config->getSettings('name') as $key => $value)
+            Configuration::updateValue($key, Tools::getValue($key));
     }
 
 
@@ -962,7 +962,7 @@ class Mobbex extends PaymentModule
         if (!$order)
             return false;
 
-        if ($order->getCurrentState() == Configuration::get($this->config->orderStatuses['mobbex_status_pending']['name']))
+        if ($order->getCurrentState() == Configuration::get('MOBBEX_OS_PENDING'))
             $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
 
         return true;
