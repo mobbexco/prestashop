@@ -78,6 +78,7 @@ class MobbexTask extends \ObjectModel
         $this->interval = $interval;
         $this->period   = $period;
         $this->limit    = $limit;
+        $this->logger   = new \Mobbex\Logger();
 
         parent::__construct($id);
     }
@@ -117,9 +118,9 @@ class MobbexTask extends \ObjectModel
     public function execute()
     {
         $result = \MobbexHelper::executeHook($this->name, false, ...json_decode($this->args, true));
-
+        
         if (!$result) {
-            \MobbexHelper::log('Error Execution Task #' . $this->id, $this->name . ' ' . $this->args, true);
+            $this->logger->debug('Error Execution Task #' . $this->id, $this->name . ' ', $this->args);
             return false;
         }
 

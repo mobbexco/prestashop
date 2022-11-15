@@ -8,13 +8,14 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
     {
         parent::__construct();
         $this->config = new \Mobbex\Config();
+        $this->logger = new \Mobbex\Logger();
     }
     
     public function postProcess()
     {
         // We don't do anything if the module has been disabled
         if ($this->module->active == false)
-            MobbexHelper::log('Payment Controller Call On Module Inactive', $_REQUEST, true, true);
+            $this->logger->debug('Payment Controller Call On Module Inactive', $_REQUEST, true);
 
         if (Tools::getValue('action') == 'process')
             die(json_encode($this->process()));

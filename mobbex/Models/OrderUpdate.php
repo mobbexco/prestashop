@@ -4,6 +4,12 @@ namespace Mobbex;
 
 class OrderUpdate
 {
+    public function __construct()
+    {
+        $this->config = new \Mobbex\Config();
+        $this->logger = new \Mobbex\Logger();
+    }
+    
     /**
      * Update the order payment information.
      * 
@@ -38,7 +44,7 @@ class OrderUpdate
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
-            \MobbexHelper::log('Error Updating Order Payment on Webhook Process: ' . $e->getMessage(), $order->id, true);
+            $this->logger->debug('error', 'OrderUpdate | Error Updating Order Payment on Webhook Process: ', [ 'Message: ' => $e->getMessage(), 'order id:' => $order->id]);
         }
     }
 
@@ -58,7 +64,7 @@ class OrderUpdate
 
         foreach ($tasks as $task) {
             if (!$task->delete()) {
-                \MobbexHelper::log('Error removing order expiration task on Webhook', $order->id, true);
+                $this->logger->debug('error', 'Error removing order expiration task on Webhook', $order->id);
                 return false;
             }
         }

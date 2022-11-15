@@ -34,7 +34,6 @@ class MobbexHelper
     const K_MULTICARD = 'MOBBEX_MULTICARD';
     const K_UNIFIED_METHOD = 'MOBBEX_UNIFIED_METHOD';
     const K_MULTIVENDOR = 'MOBBEX_MULTIVENDOR';
-    const K_DEBUG = 'MOBBEX_DEBUG';
     const K_ORDER_FIRST = 'MOBBEX_ORDER_FIRST';
     const K_CART_RESTORE = 'MOBBEX_CART_RESTORE';
     const K_PENDING_ORDER_DISCOUNT = 'MOBBEX_PENDING_ORDER_DISCOUNT';
@@ -74,33 +73,6 @@ class MobbexHelper
 
     const K_OWN_DNI = 'MOBBEX_OWN_DNI';
     const K_CUSTOM_DNI = 'MOBBEX_CUSTOM_DNI';
-
-
-    /**
-     * Add log to PrestaShop log table.
-     * 
-     * @param string $message
-     * @param mixed $data
-     * @param bool $force Add regardless of debug mode.
-     * @param bool $die Die execution after log.
-     */
-    public static function log($message = 'debug', $data = null, $force = false, $die = false)
-    {
-        if (!Configuration::get(MobbexHelper::K_DEBUG) && !$force)
-            return;
-
-        PrestaShopLogger::addLog(
-            "Mobbex: $message " . (is_string($data) ? $data : json_encode($data)),
-            $force || $die ? 3 : 1,
-            null,
-            'Mobbex',
-            str_replace('.', '', \Mobbex\Config::MODULE_VERSION),
-            true
-        );
-
-        if ($die)
-            die($message);
-    }
 
     public static function getUrl($path)
     {
@@ -180,6 +152,7 @@ class MobbexHelper
     public static function createCheckout($module, $cart, $customer)
     {
         $curl = curl_init();
+        $logger = new \Mobbex\Logger();
 
         // Get items
         $items = array();
@@ -267,7 +240,7 @@ class MobbexHelper
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
-        MobbexHelper::log('Creating Checkout', $data);
+        $logger->debug('debug', 'Creating Checkout', $data);
 
         $response = curl_exec($curl);
         $err      = curl_error($curl);
@@ -275,7 +248,7 @@ class MobbexHelper
         curl_close($curl);
 
         if ($err) {
-            MobbexHelper::log('Checkout Creation Error', $err, true);
+            $logger->debug('error', 'Checkout Creation Error', $err);
         } else {
             $res = json_decode($response, true);
 
@@ -1239,9 +1212,10 @@ class MobbexHelper
     public static function restoreCart($cart)
     {
         $result = $cart->duplicate();
+        $logger = new \Mobbex\Logger();
 
         if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
-            return \MobbexHelper::log('Error Creating/Loading Order On Order Process', isset($cart->id) ? $cart->id : 0 , true);
+            return $logger->debug('error', 'Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
 
         \Context::getContext()->cookie->id_cart = $result['cart']->id;
         $context = \Context::getContext();
