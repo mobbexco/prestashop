@@ -94,7 +94,7 @@ class MobbexHelper
             $force || $die ? 3 : 1,
             null,
             'Mobbex',
-            str_replace('.', '', self::MODULE_VERSION),
+            str_replace('.', '', \Mobbex\Config::MODULE_VERSION),
             true
         );
 
@@ -128,7 +128,7 @@ class MobbexHelper
             'content-type: application/json',
             'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
             'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
-            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . self::MODULE_VERSION,
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \Mobbex\Config::MODULE_VERSION,
         );
     }
 
@@ -1038,7 +1038,7 @@ class MobbexHelper
             $controller = Context::getContext()->controller;
 
         if ($addVersion)
-            $uri .= '?ver=' . self::MODULE_VERSION;
+            $uri .= '?ver=' . \Mobbex\Config::MODULE_VERSION;
 
         if (Configuration::get('MOBBEX_FORCE_ASSETS')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
