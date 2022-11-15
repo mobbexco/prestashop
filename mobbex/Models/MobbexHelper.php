@@ -788,7 +788,7 @@ class MobbexHelper
      */
     public static function needUpgrade()
     {
-        return self::MODULE_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
+        return \Mobbex\Config::MODULE_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
     }
 
     /**
