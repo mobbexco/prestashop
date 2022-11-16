@@ -93,10 +93,7 @@ class Mobbex extends PaymentModule
 
             return false;
         }
-
-
-        //Set config default values
-        $this->config->resetOptions();
+        
         //install Tables
         $this->createTables();
 
