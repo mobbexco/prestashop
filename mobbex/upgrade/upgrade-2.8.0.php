@@ -4,6 +4,7 @@ defined('_PS_VERSION_') || exit;
 
 function upgrade_module_2_8_0(Mobbex $module)
 {
+
     $configs = [
         'color'      => trim((string) \Configuration::get('MOBBEX_PLANS_TEXT_COLOR')),
         'background' => trim((string) \Configuration::get('MOBBEX_PLANS_BACKGROUND')),
@@ -12,7 +13,7 @@ function upgrade_module_2_8_0(Mobbex $module)
     ];
 
     // Migrate previus plan configs to new option
-    \Configuration::updateValue(\MobbexHelper::K_PLANS_STYLES,
+    \Configuration::updateValue($module->config->names['widget'],
 '.mbbxWidgetOpenBtn {
     width: fit-content;
     min-height: 40px;
@@ -31,5 +32,5 @@ function upgrade_module_2_8_0(Mobbex $module)
     background-color: #6f00ff;
 }');
 
-    return $module->_createTable() && $module->unregisterHooks() && $module->registerHooks() && $module->addExtensionHooks();
+    return $module->createTables() && $module->unregisterHooks() && $module->registerHooks() && $module->addExtensionHooks();
 }
