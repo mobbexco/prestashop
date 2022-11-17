@@ -99,9 +99,6 @@ class Mobbex extends PaymentModule
             return false;
         }
 
-
-        //Set config default values
-        $this->config->resetOptions();
         //install Tables
         $this->createTables();
 
@@ -350,7 +347,7 @@ class Mobbex extends PaymentModule
             if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
         } catch (\Exception $e) {
-            $this->logger->debug('error', 'Mobbex: Error Obtaining Update/Upgrade Messages ', $e->getMessage());
+            $this->logger->log('error', 'Mobbex > renderForm | Error Obtaining Update/Upgrade Messages', $e->getMessage());
         }
 
         $helper->tpl_vars = array(
@@ -538,7 +535,7 @@ class Mobbex extends PaymentModule
             ],
         ];
         
-        $this->logger->debug('debug', 'Mobbex | displayPlansWidget > data: ', $data);
+        $this->logger->log('debug', 'Mobbex > displayPlansWidget | data:', $data);
         
         $this->context->smarty->assign($data);
 
@@ -931,7 +928,7 @@ class Mobbex extends PaymentModule
                 if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                     MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
             } catch (\Exception $e) {
-                $this->logger->debug('error', 'Mobbex: Error Obtaining Update/Upgrade Messages', $e->getMessage());
+                $this->logger->log('error', 'Mobbex > hookDisplayBackOfficeHeader | Error Obtaining Update/Upgrade Messages', $e->getMessage());
             }
         }
     }

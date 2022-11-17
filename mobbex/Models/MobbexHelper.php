@@ -240,7 +240,7 @@ class MobbexHelper
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
-        $logger->debug('debug', 'Creating Checkout', $data);
+        $logger->log('debug', 'MobbexHelper > createCheckout | Creating Checkout', $data);
 
         $response = curl_exec($curl);
         $err      = curl_error($curl);
@@ -248,7 +248,7 @@ class MobbexHelper
         curl_close($curl);
 
         if ($err) {
-            $logger->debug('error', 'Checkout Creation Error', $err);
+            $logger->log('error', 'MobbexHelper > createCheckout | Checkout Creation Error', $err);
         } else {
             $res = json_decode($response, true);
 
@@ -664,8 +664,9 @@ class MobbexHelper
      */
     public static function getSources($total = null, $installments = [])
     {
-        $curl  = curl_init();
-        $query = self::getInstallmentsQuery($total, $installments);
+        $curl   = curl_init();
+        $query  = self::getInstallmentsQuery($total, $installments);
+        $logger = new \Mobbex\Logger();
 
         curl_setopt_array($curl, [
             CURLOPT_URL            => "https://api.mobbex.com/p/sources" . ($query ? "?$query" : ''),
@@ -683,12 +684,12 @@ class MobbexHelper
         curl_close($curl);
 
         if ($error)
-            self::log('Sources Obtaining cURL Error' . $error, compact('total', 'installments'), true);
+            $logger->log('error', "MobbexHelper > getSources | Sources Obtaining cURL Error $error", compact('total', 'installments'));
 
         $result = json_decode($response, true);
 
         if (empty($result['result']))
-            self::log('Sources Obtaining Error', compact('total', 'installments', 'response'), true);
+            $logger->log('error', 'MobbexHelper > getSources | Sources Obtaining Error', compact('total', 'installments', 'response'));
 
         return isset($result['data']) ? $result['data'] : [];
     }
@@ -702,7 +703,8 @@ class MobbexHelper
      */
     public static function getSourcesAdvanced($rule = 'externalMatch')
     {
-        $curl = curl_init();
+        $curl   = curl_init();
+        $logger = new \Mobbex\Logger();
 
         curl_setopt_array($curl, [
             CURLOPT_URL            => "https://api.mobbex.com/p/sources/rules/$rule/installments",
@@ -720,12 +722,12 @@ class MobbexHelper
         curl_close($curl);
 
         if ($error)
-            self::log('Advanced Sources Obtaining cURL Error' . $error, $rule, true);
+            $logger->log('error', "MobbexHelper > getSourcesAdvanced | Advanced Sources Obtaining cURL Error $error", ['rule' => $rule]);
 
         $result = json_decode($response, true);
 
         if (empty($result['result']))
-            self::log('Advanced Sources Obtaining Error', $rule, true);
+            $logger->log('error', 'MobbexHelper > getSourcesAdvanced | Advanced Sources Obtaining Error', ['rule' => $rule]);
 
         return isset($result['data']) ? $result['data'] : [];
     }
@@ -975,7 +977,8 @@ class MobbexHelper
     public static function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
     {
         try {
-            $cart = new Cart($cartId);
+            $cart   = new Cart($cartId);
+            $logger = new \Mobbex\Logger();
 
             // Validate order, remember to send secure key to avoid warning logs
             $module->validateOrder(
@@ -992,7 +995,7 @@ class MobbexHelper
 
             return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
-            self::log('Order Creation Error' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'), true, $die);
+            $logger->log($die ? 'fatal' : 'error' , 'MobbexHelper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
         }
     }
 
@@ -1148,10 +1151,11 @@ class MobbexHelper
      */
     public static function processOrder($module)
     {
-        $cart = Context::getContext()->cart;
+        $cart   = Context::getContext()->cart;
+        $logger = new \Mobbex\Logger();
 
         if (!Validate::isLoadedObject($cart)) {
-            self::log('Error Loading Cart On Order Process', $_REQUEST, true);
+            $logger->log('error', 'MobbexHelper > processOrder | Error Loading Cart On Order Process', $_REQUEST);
 
             return false;
         }
@@ -1185,7 +1189,7 @@ class MobbexHelper
         
         // Validate that order looks good
         if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
-            self::log('Error Creating/Loading Order On Order Process', $cart->id, true);
+            $logger->log('error', 'MobbexHelper > processOrder | Error Creating/Loading Order On Order Process', ['cart_id' => $cart->id]);
             self::restoreCart($cart); 
 
             return false;
@@ -1215,7 +1219,7 @@ class MobbexHelper
         $logger = new \Mobbex\Logger();
 
         if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
-            return $logger->debug('error', 'Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
+            return $logger->log('error', 'MobbexHelper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
 
         \Context::getContext()->cookie->id_cart = $result['cart']->id;
         $context = \Context::getContext();

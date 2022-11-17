@@ -120,7 +120,7 @@ class MobbexTask extends \ObjectModel
         $result = \MobbexHelper::executeHook($this->name, false, ...json_decode($this->args, true));
         
         if (!$result) {
-            $this->logger->debug('Error Execution Task #' . $this->id, $this->name . ' ', $this->args);
+            $this->logger->log('error', "Error Execution Task #".$this->id.$this->name, $this->args);
             return false;
         }
 

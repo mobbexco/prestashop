@@ -18,7 +18,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
     {
         // We don't do anything if the module has been disabled by the merchant
         if ($this->module->active == false)
-            $this->logger->debug('error', 'Sources update on module inactive.', $_REQUEST, true);
+            $this->logger->log('fatal', 'sources > postProcess | Sources update on module inactive.', $_REQUEST);
         
         if(Tools::getValue('hash') !== md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']))
             return;

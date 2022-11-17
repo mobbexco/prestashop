@@ -15,7 +15,7 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
     {
         // We don't do anything if the module has been disabled
         if ($this->module->active == false)
-            $this->logger->debug('Payment Controller Call On Module Inactive', $_REQUEST, true);
+            $this->logger->log('fatal', 'payment > postProcess | Payment Controller Call On Module Inactive', $_REQUEST);
 
         if (Tools::getValue('action') == 'process')
             die(json_encode($this->process()));

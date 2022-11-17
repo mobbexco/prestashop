@@ -20,7 +20,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     {
         // We don't do anything if the module has been disabled by the merchant
         if ($this->module->active == false)
-            $this->logegr->debug('error', 'Notification On Module Inactive', $_REQUEST, true);
+            $this->logger->log('fatal', 'notification > postProcess | Notification On Module Inactive', $_REQUEST);
 
         $this->orderUpdate = new \Mobbex\OrderUpdate;
 
@@ -99,7 +99,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $postData = isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' ? json_decode(file_get_contents('php://input'), true) : $_POST;
 
         if (!$cartId || !isset($postData['data']))
-            $this->logger->debug('error', 'Invalid Webhook Data', $_REQUEST, true);
+            $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
         // Get Order and transaction data
         $order = MobbexHelper::getOrderByCartId($cartId, true);

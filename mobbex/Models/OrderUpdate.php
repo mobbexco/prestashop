@@ -44,7 +44,7 @@ class OrderUpdate
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
-            $this->logger->debug('error', 'OrderUpdate | Error Updating Order Payment on Webhook Process: ', [ 'Message: ' => $e->getMessage(), 'order id:' => $order->id]);
+            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', [ 'data ' => $e->getMessage(), 'order id' => $order->id]);
         }
     }
 
@@ -64,7 +64,7 @@ class OrderUpdate
 
         foreach ($tasks as $task) {
             if (!$task->delete()) {
-                $this->logger->debug('error', 'Error removing order expiration task on Webhook', $order->id);
+                $this->logger->log('error', 'OrderUpdate > removeExpirationTask | Error removing order expiration task on Webhook', ['order_id' => $order->id]);
                 return false;
             }
         }

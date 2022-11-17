@@ -7,27 +7,26 @@ if (!defined('_PS_VERSION_'))
 
 class Logger
 {
-
     public function __construct()
     {
         $this->config = new \Mobbex\Config();
     }
 
     /**
-     * Add log to PrestaShop log table. Log errors & debug data if debug mode is active
+     * Add log to PrestaShop log table.
+     * Mode debug: Log data if debug mode is active
+     * Mode error: Always log data.
+     * Mode fatal: Always log data & stop code execution.
      * 
-     * @param string $mode Modes: 'error'|'debug'
+     * @param string $mode debug | error | fatal    
      * @param string $message
      * @param array $data
      * @param bool $die
      */
-    public function debug($mode, $message, $data = [], $die = false)
+    public function log($mode, $message, $data = [])
     {
-        if (!$this->config->settings['debug_mode'] && $mode === 'debug')
-            return;
-
         \PrestaShopLogger::addLog(
-            "Mobbex $mode: $message" . json_encode($data),
+            "Mobbex $mode: $message " . json_encode($data),
             $mode === 'error' ? 3 : 1,
             null,
             'Mobbex',
@@ -35,7 +34,7 @@ class Logger
             true
         );
 
-        if ($die)
+        if ($mode === 'fatal')
             die($message);
     }
 }
