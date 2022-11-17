@@ -20,6 +20,25 @@ $widgetStyles ='
     background-color: #6f00ff;
 }';
 
+/**
+ * Module Configuration Input Form.
+ * 
+ * Input example:
+ * {
+ *  'type'     => string | input type <required>,
+ *  'label'    => string | input label <required>,
+ *  'name'     => string | input database name <required>,
+ *  'key'      => string | snake case key to get config <required>,
+ *  'default'  => mixed  | input default value <required>,
+ *  'required' => bool   | if input is required, <optional>,
+ *  'tab'      => string | name of the input father class <required>,
+ *  'values'   => array  | array with options, only for select inputs <optional>,
+ *  'desc'     => string | input description <optional>,
+ *  'is_bool'  => bool   | if input is bool <optional>,
+ *  'class'    => string | input class <optional>,
+ * }
+ * 
+ */
 $form = [
     'form' => [
         'tabs' => [
@@ -607,7 +626,7 @@ $form = [
                 'desc'     => 'Select the status for approved orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_APPROVED',
                 'key'      => 'order_status_approved',
-                'default'  => 'PS_OS_PAYMENT',
+                'default'  => \Configuration::get('PS_OS_PAYMENT'),
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
@@ -622,7 +641,7 @@ $form = [
                 'desc'     => 'Select the status for approved orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_FAILED',
                 'key'      => 'order_status_failed',
-                'default'  => 'PS_OS_ERROR',
+                'default'  => \Configuration::get('PS_OS_ERROR'),
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
@@ -637,7 +656,7 @@ $form = [
                 'desc'     => 'Select the status for rejected orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_REJECTED',
                 'key'      => 'order_status_rejected',
-                'default'  => 'PS_OS_ERROR',
+                'default'  => \Configuration::get('PS_OS_ERROR'),
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
@@ -652,7 +671,7 @@ $form = [
                 'desc'     => 'Select the status for refunded orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_REFUNDED',
                 'key'      => 'order_status_refunded',
-                'default'  => 'PS_OS_REFUND',
+                'default'  => \Configuration::get('PS_OS_REFUND'),
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
