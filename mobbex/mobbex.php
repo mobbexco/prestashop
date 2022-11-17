@@ -98,7 +98,7 @@ class Mobbex extends PaymentModule
 
             return false;
         }
-
+        
         //install Tables
         $this->createTables();
 

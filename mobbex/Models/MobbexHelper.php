@@ -326,7 +326,7 @@ class MobbexHelper
 
     public static function convertCountryCode($code)
     {
-        $countries = include dirname(__FILE__) . '/utils/country-codes.php' ?: [];
+        $countries = include __DIR__ . '/../utils/country-codes.php' ?: [];
 
         return isset($countries[$code]) ? $countries[$code] : null;
     }
