@@ -98,8 +98,10 @@ class OrderUpdate
         $diff = (float) $cart->getOrderTotal() - $amount;
 
         try {
-        if ($diff > 0)
-            $this->addCartDiscount($cart, $diff);
+            if ($diff > 0)
+                $this->addCartDiscount($cart, $diff);
+            else if ($diff < 0)
+                $this->addCartCost($cart, abs($diff)) && \Cart::resetStaticCache();
 
             $cart->save();
         } catch (\Exception $e) {
@@ -134,5 +136,45 @@ class OrderUpdate
 
         // Save cart rule to db and return
         return $cartRule->add() && $cart->addCartRule($cartRule->id);
+    }
+
+    /**
+     * Try to add a cost to cart using custom product.
+     * 
+     * @param \Cart $cart
+     * @param float|string $amount
+     * 
+     * @return bool|null Save result. Null if product is not configured.
+     */
+    public function addCartCost($cart, $amount)
+    {
+        $productId = \Product::getIdByReference('mobbex-cost');
+
+        // Exit if product not exists or it was already added
+        if (!$productId)
+            return;
+
+        $specificPrice = new \SpecificPrice;
+        $specificPrice->hydrate([
+            'id_product'           => $productId,
+            'id_customer'          => $cart->id_customer,
+            'id_cart'              => $cart->id,
+            'id_shop'              => $cart->id_shop,
+            'id_currency'          => $cart->id_currency,
+            'id_country'           => \Context::getContext()->country->id,
+            'id_group'             => 0,
+            'from'                 => date('Y-m-d 00:00:00'),
+            'to'                   => date('Y-m-d 23:59:59'),
+            'from_quantity'        => 1,
+            'price'                => $amount,
+            'reduction_type'       => 'amount',
+            'reduction_tax'        => 1,
+            'reduction'            => 0,
+        ]);
+
+        // Save specific price of product to db and return
+        return $specificPrice->add() && (
+            !empty($cart->getProductQuantity($productId)['quantity']) ?: $cart->updateQty(1, $productId)
+        ); 
     }
 }
