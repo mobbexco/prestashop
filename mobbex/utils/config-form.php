@@ -106,7 +106,7 @@ $form = [
                 'key'      => 'mobbex_title',
                 'default'  => '',
                 'required' => false,
-                'desc'     => 'In chase of multiple payment sources, only "Debit/Credit card" method label will be $this->(replaced.',
+                'desc'     => 'In chase of multiple payment sources, only "Debit/Credit card" method label will be replaced.',
                 'tab'      => 'tab_appearence',
             ],
             [
@@ -460,7 +460,7 @@ $form = [
                 'desc'     => 'The order will be created just before starting the payment instead of when receiving the webhook.',
                 'name'     => 'MOBBEX_ORDER_FIRST',
                 'key'      => 'order_first',
-                'default'  => true,
+                'default'  => false,
                 'is_bool'  => true,
                 'required' => false,
                 'tab'      => 'tab_orders',
