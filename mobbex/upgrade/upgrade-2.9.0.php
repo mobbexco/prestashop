@@ -8,6 +8,6 @@ function upgrade_module_2_9_0(Mobbex $module)
     Configuration::updateValue($module->config->settings['order_status_failed'],   \Configuration::get('PS_OS_ERROR'));
     Configuration::updateValue($module->config->settings['order_status_refunded'], \Configuration::get('PS_OS_REFUND'));
     Configuration::updateValue($module->config->settings['order_status_rejected'], \Configuration::get('PS_OS_ERROR'));
-
-    return $module->createTables() && $module->unregisterHooks() && $module->registerHooks() && $module->addExtensionHooks();
+    $registrar = new \Mobbex\Registrar();
+    return $module->createTables() && $registrar->unregisterHooks($module) && $registrar->registerHooks($module) && $registrar->addExtensionHooks();
 }

@@ -4,5 +4,6 @@ defined('_PS_VERSION_') || exit;
 
 function upgrade_module_3_0_0(Mobbex $module)
 {
-    return $module->createTables() && $module->unregisterHooks() && $module->registerHooks() && $module->addExtensionHooks();
+    $registrar = new \Mobbex\Registrar();
+    return $module->createTables() && $registrar->unregisterHooks($module) && $registrar->registerHooks($module) && $registrar->addExtensionHooks();
 }

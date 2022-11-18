@@ -34,7 +34,7 @@ class Config
     public function getConfigForm($extensionOptions = true)
     {
         $form = require __DIR__ . '/../utils/config-form.php';
-        return $extensionOptions ? \MobbexHelper::executeHook('displayMobbexConfiguration', true, $form) : $form;
+        return $extensionOptions ? \Mobbex\Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
 
     /**

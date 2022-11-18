@@ -111,7 +111,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Only parent webhook can modify the order
         if ($data['parent']) {
             // Aditional webhook process
-            MobbexHelper::executeHook('actionMobbexWebhook', false, $data, $cartId);
+            \Mobbex\Registrar::executeHook('actionMobbexWebhook', false, $data, $cartId);
 
             // If Order exists
             if ($order) {

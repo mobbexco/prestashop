@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_'))
 require_once dirname(__FILE__) . '/Models/Exception.php';
 require_once dirname(__FILE__) . '/Models/Config.php';
 require_once dirname(__FILE__) . '/Models/Logger.php';
+require_once dirname(__FILE__) . '/Models/Registrar.php';
 require_once dirname(__FILE__) . '/Models/Model.php';
 require_once dirname(__FILE__) . '/Models/Task.php';
 require_once dirname(__FILE__) . '/Models/Api.php';
@@ -39,6 +40,9 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\Logger */
     public $logger;
 
+    /** @var \Mobbex\Registrar */
+    public $registrar;
+
     /**
      * Constructor
      */
@@ -61,8 +65,9 @@ class Mobbex extends PaymentModule
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
         //Mobbex Classes 
-        $this->config = new \Mobbex\Config();
-        $this->logger = new \Mobbex\Logger();
+        $this->config    = new \Mobbex\Config();
+        $this->logger    = new \Mobbex\Logger();
+        $this->registrar = new \Mobbex\Registrar();
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
@@ -102,7 +107,7 @@ class Mobbex extends PaymentModule
         //install Tables
         $this->createTables();
 
-        return parent::install() && $this->unregisterHooks() && $this->registerHooks() && $this->addExtensionHooks();
+        return parent::install() && $this->registrar->unregisterHooks($this) && $this->registrar->registerHooks($this) && $this->registrar->addExtensionHooks();
     }
 
     /**
@@ -118,6 +123,8 @@ class Mobbex extends PaymentModule
         // Delete module config if option is sent
         if (isset($_COOKIE['mbbx_remove_config']) && $_COOKIE['mbbx_remove_config'] === 'true')
             $this->config->deleteSettings();
+
+        $this->registrar->unregisterHooks($this);
 
         return parent::uninstall();
     }
@@ -172,127 +179,6 @@ class Mobbex extends PaymentModule
         
         $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/create.sql'));
             return $db->execute($sql);
-    }
-
-    /**
-     * Register module hooks dependig on prestashop version.
-     * 
-     * @return bool Result of the registration
-     */
-    public function registerHooks()
-    {
-        $hooks = [
-            'displayAdminProductsExtra',
-            'actionAdminProductsControllerSaveBefore',
-            'displayBackOfficeCategory',
-            'categoryAddition',
-            'categoryUpdate',
-            'displayPDFInvoice',
-            'displayBackOfficeHeader',
-            'paymentReturn',
-            'actionOrderReturn',
-            'displayAdminOrder',
-            'actionMobbexExpireOrder',
-        ];
-
-        $ps16Hooks = [
-            'payment',
-            'header',
-            'displayMobileHeader',
-            'displayProductButtons',
-            'displayCustomerAccountForm',
-            'actionCustomerAccountAdd',
-            'displayShoppingCartFooter',
-        ];
-
-        $ps17Hooks = [
-            'paymentOptions',
-            'displayHeader',
-            'additionalCustomerFormFields',
-            'actionObjectCustomerUpdateAfter',
-            'actionObjectCustomerAddAfter',
-            'displayProductPriceBlock',
-            'displayExpressCheckout',
-        ];
-
-        // Merge current version hooks with common hooks
-        $hooks = array_merge($hooks, _PS_VERSION_ > '1.7' ? $ps17Hooks : $ps16Hooks);
-
-        foreach ($hooks as $hookName) {
-            if (!$this->registerHook($hookName))
-                return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Unregister all current module hooks.
-     * 
-     * @return bool Result.
-     */
-    public function unregisterHooks()
-    {
-        // Get hooks used by module
-        $hooks = Db::getInstance()->executeS(
-            'SELECT DISTINCT(`id_hook`) FROM `' . _DB_PREFIX_ . 'hook_module` WHERE `id_module` = ' . $this->id
-        ) ?: [];
-
-        foreach ($hooks as $hook) {
-            if (!$this->unregisterHook($hook['id_hook']) || !$this->unregisterExceptions($hook['id_hook']))
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Create own hooks to extend features in external modules.
-     * 
-     * @return bool Result of addition.
-     */
-    public function addExtensionHooks()
-    {
-        $hooks = [
-            'actionMobbexCheckoutRequest' => [
-                'title'       => 'Create checkout request',
-                'description' => 'Modify checkout request posted data'
-            ],
-            'actionMobbexProcessPayment' => [
-                'title'       => 'Process payment data',
-                'description' => 'Add custom payment data response before display payment options'
-            ],
-            'displayMobbexConfiguration' => [
-                'title'       => 'Modify mobbex configuration form',
-                'description' => 'Modify main mobbex configuration form data'
-            ],
-            'displayMobbexProductSettings' => [
-                'title'       => 'Product admin additionals fields',
-                'description' => 'Display additional fields in mobbex configuration tab of product'
-            ],
-            'displayMobbexCategorySettings' => [
-                'title'       => 'Category admin additionals fields',
-                'description' => 'Display additional fields in mobbex configuration tab of category'
-            ],
-            'displayMobbexOrderWidget' => [
-                'title'       => 'Mobbex order widget aditional info',
-                'description' => 'Display additional info in Mobbex order widget'
-            ]
-        ];
-
-        foreach ($hooks as $name => $data) {
-            if (!Hook::getIdByName($name)) {
-                $hook              = new Hook();
-                $hook->name        = $name;
-                $hook->title       = $data['title'];
-                $hook->description = $data['description'];
-
-                if (!$hook->add())
-                    return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -369,7 +255,6 @@ class Mobbex extends PaymentModule
         foreach ($this->config->getSettings('name') as $key => $value)
             Configuration::updateValue($key, Tools::getValue($key));
     }
-
 
     /**
      * Try to update the module.
