@@ -7,7 +7,7 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '3.2.3';
+    const MODULE_VERSION = '3.2.2';
     const PS16           = '1.6';
     const PS17           = '1.7';
 
@@ -48,7 +48,7 @@ class Config
         $settings = [];
 
         foreach ($this->getConfigForm()['form']['input'] as $input)
-            $settings[$input[$key]]  = \Configuration::getIdByName($input['name']) ? $input['default'] : \Configuration::get($input['name']);
+            $settings[$input[$key]]  = \Configuration::getIdByName($input['name']) ? \Configuration::get($input['name']) : $input['default'];
 
         return $settings;
     }
