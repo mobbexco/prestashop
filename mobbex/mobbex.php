@@ -97,6 +97,10 @@ class Mobbex extends PaymentModule
         //install Tables
         $this->createTables();
 
+        // Try to create finnacial cost product
+        if (!\Product::getIdByReference('mobbex-cost'))
+            $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
+
         return parent::install() && $this->unregisterHooks() && $this->registerHooks() && $this->addExtensionHooks();
     }
 
@@ -963,5 +967,31 @@ class Mobbex extends PaymentModule
             $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
 
         return true;
+    }
+
+    /**
+     * Create a hidden product.
+     * 
+     * @param string $reference String to identify and get product after.
+     * @param string $name The name of product.
+     * 
+     * @return bool Save result.
+     */
+    public function createHiddenProduct($reference, $name)
+    {
+        $product = new \Product(null, false, \Configuration::get('PS_LANG_DEFAULT'));
+        $product->hydrate([
+            'reference'           => $reference,
+            'name'                => $name,
+            'quantity'            => 9999999,
+            'is_virtual'          => false,
+            'indexed'             => 0,
+            'visibility'          => 'none',
+            'id_category_default' => \Configuration::get('PS_HOME_CATEGORY'),
+            'link_rewrite'        => $reference,
+        ]);
+
+        // Save to db and return
+        return $product->save() && $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'));
     }
 }
