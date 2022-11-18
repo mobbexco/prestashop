@@ -81,4 +81,54 @@ class OrderUpdate
 
         return $tasks->getResults() ?: [];
     }
+
+    /**
+     * Update cart totals adding discounts or fees maked on checkout.
+     * 
+     * @param \Cart|int $cart Cart instance or him id.
+     * @param float|string $amount The amount paid on Mobbex.
+     */
+    public function updateCartTotal($cart, $amount)
+    {
+        // Instance cart if needed
+        if (is_numeric($cart))
+            $cart = new \Cart($cart);
+
+        // Calculate amount diff
+        $diff = (float) $cart->getOrderTotal() - $amount;
+
+        if ($diff > 0)
+            $this->addCartDiscount($cart, $diff);
+
+        $cart->save();
+    }
+
+    /**
+     * Add a discount to cart using cart rules.
+     * 
+     * @param \Cart $cart
+     * @param float|string $amount
+     * 
+     * @return bool Save result.
+     */
+    public function addCartDiscount($cart, $amount)
+    {
+        $cartRule = new \CartRule;
+        $cartRule->hydrate([
+            'name'               => array_fill_keys(\Language::getIds(), 'Descuento financiero'),
+            'id_customer'        => $cart->id_customer,
+            'date_from'          => date('Y-m-d 00:00:00'),
+            'date_to'            => date('Y-m-d 23:59:59'),
+            'quantity'           => 1,
+            'quantity_per_user'  => 1,
+            'priority'           => 1,
+            'partial_use'        => 1,
+            'reduction_amount'   => $amount,
+            'reduction_tax'      => 1,
+            'reduction_currency' => 1,
+        ]);
+
+        // Save cart rule to db and return
+        return $cartRule->add() && $cart->addCartRule($cartRule->id);
+    }
 }
