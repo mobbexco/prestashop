@@ -97,10 +97,14 @@ class OrderUpdate
         // Calculate amount diff
         $diff = (float) $cart->getOrderTotal() - $amount;
 
+        try {
         if ($diff > 0)
             $this->addCartDiscount($cart, $diff);
 
-        $cart->save();
+            $cart->save();
+        } catch (\Exception $e) {
+            \MobbexHelper::log('Error updating cart total on Webhook', [$cart->id, $amount, $e->getMessage()], true);
+        }
     }
 
     /**
@@ -115,10 +119,10 @@ class OrderUpdate
     {
         $cartRule = new \CartRule;
         $cartRule->hydrate([
-            'name'               => array_fill_keys(\Language::getIds(), 'Descuento financiero'),
             'id_customer'        => $cart->id_customer,
             'date_from'          => date('Y-m-d 00:00:00'),
             'date_to'            => date('Y-m-d 23:59:59'),
+            'name'               => array_fill_keys(\Language::getIds(), 'Descuento financiero'),
             'quantity'           => 1,
             'quantity_per_user'  => 1,
             'priority'           => 1,
