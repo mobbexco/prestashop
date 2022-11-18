@@ -4,6 +4,12 @@ defined('_PS_VERSION_') || exit;
 
 class MobbexPaymentModuleFrontController extends ModuleFrontController
 {
+    public function __construct()
+    {
+        parent::__construct();
+        $this->config = new \Mobbex\Config();
+    }
+    
     public function postProcess()
     {
         // We don't do anything if the module has been disabled
@@ -30,7 +36,7 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
 
         return [
             'data'  => MobbexHelper::getPaymentData() ?: null,
-            'order' => Configuration::get(MobbexHelper::K_ORDER_FIRST) ? MobbexHelper::processOrder($this->module) : true,
+            'order' => $this->config->settings['order_first'] ? MobbexHelper::processOrder($this->module) : true,
         ];
     }
 

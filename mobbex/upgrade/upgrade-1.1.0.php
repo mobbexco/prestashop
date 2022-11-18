@@ -10,7 +10,7 @@ if (!defined('_PS_VERSION_')) {
  */
 function upgrade_module_1_1_0($module)
 {
-    $module->_createTable();
+    $module->createTables();
 
     return true;
 }
