@@ -78,6 +78,8 @@ class MobbexTask extends \ObjectModel
         $this->interval = $interval;
         $this->period   = $period;
         $this->limit    = $limit;
+        
+        //Mobbex classes
         $this->logger   = new \Mobbex\Logger();
 
         parent::__construct($id);
