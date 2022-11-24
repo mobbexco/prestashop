@@ -1,6 +1,8 @@
 <?php
 
-class MobbexHelper
+namespace Mobbex\PS\Checkout\Models;
+
+class Helper
 {
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
@@ -76,19 +78,19 @@ class MobbexHelper
 
     public static function getUrl($path)
     {
-        return Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
+        return \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
     }
 
     public static function getModuleUrl($controller, $action = '', $path = '')
     {
-        return MobbexHelper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
+        return \Mobbex\PS\Checkout\Models\Helper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
     }
 
     public static function getPlatform()
     {
         return array(
             "name" => "prestashop",
-            "version" => \Mobbex\Config::MODULE_VERSION,
+            "version" => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
             "platform_version" => _PS_VERSION_,
         );
     }
@@ -98,29 +100,29 @@ class MobbexHelper
         return array(
             'cache-control: no-cache',
             'content-type: application/json',
-            'x-access-token: ' . Configuration::get(MobbexHelper::K_ACCESS_TOKEN),
-            'x-api-key: ' . Configuration::get(MobbexHelper::K_API_KEY),
-            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \Mobbex\Config::MODULE_VERSION,
+            'x-access-token: ' . \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ACCESS_TOKEN),
+            'x-api-key: ' . \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_API_KEY),
+            'x-ecommerce-agent: PrestaShop/' . _PS_VERSION_ . ' Plugin/' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
         );
     }
 
     public static function getOptions()
     {
-        $custom_logo = Configuration::get(MobbexHelper::K_THEME_LOGO);
+        $custom_logo = \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_THEME_LOGO);
 
         // If store's logo option is disabled, use the one configured in mobbex
         $default_logo = null;
-        if (!empty(Configuration::get(MobbexHelper::K_THEME_SHOP_LOGO))) {
-            $default_logo = Tools::getShopDomainSsl(true, true) . _PS_IMG_ . Configuration::get('PS_LOGO');
+        if (!empty(\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_THEME_SHOP_LOGO))) {
+            $default_logo = \Tools::getShopDomainSsl(true, true) . _PS_IMG_ . \Configuration::get('PS_LOGO');
         }
 
-        $theme_background = Configuration::get(MobbexHelper::K_THEME_BACKGROUND);
-        $theme_primary = Configuration::get(MobbexHelper::K_THEME_PRIMARY);
+        $theme_background = \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_THEME_BACKGROUND);
+        $theme_primary = \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_THEME_PRIMARY);
 
         $theme = array(
-            "type" => Configuration::get(MobbexHelper::K_THEME) ?: MobbexHelper::K_DEF_THEME,
+            "type" => \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_THEME) ?: \Mobbex\PS\Checkout\Models\Helper::K_DEF_THEME,
             "header" => [
-                "name" => Configuration::get('PS_SHOP_NAME'),
+                "name" => \Configuration::get('PS_SHOP_NAME'),
                 "logo" => !empty($custom_logo) ? $custom_logo : $default_logo,
             ],
             'background' => !empty($theme_background) ? $theme_background : null,
@@ -130,15 +132,15 @@ class MobbexHelper
         );
 
         $options = array(
-            'button' => (Configuration::get(MobbexHelper::K_EMBED) == true),
-            'domain' => Context::getContext()->shop->domain,
+            'button' => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_EMBED) == true),
+            'domain' => \Context::getContext()->shop->domain,
             "theme" => $theme,
             // Will redirect automatically on Successful Payment Result
             "redirect" => [
                 "success" => true,
                 "failure" => false,
             ],
-            "platform" => MobbexHelper::getPlatform(),
+            "platform" => \Mobbex\PS\Checkout\Models\Helper::getPlatform(),
         );
 
         return $options;
@@ -152,7 +154,7 @@ class MobbexHelper
     public static function createCheckout($module, $cart, $customer)
     {
         $curl = curl_init();
-        $logger = new \Mobbex\Logger();
+        $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
         // Get items
         $items = array();
@@ -160,21 +162,21 @@ class MobbexHelper
 
         foreach ($products as $product) {
 
-            $image = Image::getCover($product['id_product']);
+            $image = \Image::getCover($product['id_product']);
 
-            $prd = new Product($product['id_product']);
+            $prd = new \Product($product['id_product']);
             if ($prd->hasAttributes() && !empty($product['id_product_attribute'])) {
-                $images = $prd->getCombinationImages(Context::getContext()->language->id);
+                $images = $prd->getCombinationImages(\Context::getContext()->language->id);
                 $image = !empty($images[$product['id_product_attribute']][0]) ? $images[$product['id_product_attribute']][0] : $image;
             }
 
-            $link = new Link;
+            $link = new \Link;
             $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
 
-            if(MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
+            if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
                 $items[] = [
                     'type'      => 'subscription',
-                    'reference' => MobbexCustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
+                    'reference' => \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
                 ];
             } else {
                 $items[] = [
@@ -182,7 +184,7 @@ class MobbexHelper
                     "description" => $product['name'],
                     "quantity"    => $product['cart_quantity'],
                     "total"       => round($product['price_wt'], 2),
-                    "entity"      => Configuration::get(MobbexHelper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
+                    "entity"      => \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
                 ];
             }
 
@@ -191,39 +193,39 @@ class MobbexHelper
         $shippingTotal = self::getShippingCost($cart);
 
         if ($shippingTotal) {
-            $carrier = new Carrier($cart->id_carrier);
+            $carrier = new \Carrier($cart->id_carrier);
 
             $items[] = [
                 'total'       => $shippingTotal,
                 'description' => $carrier->name . ' (envío)',
-                'image'       => file_exists(_PS_SHIP_IMG_DIR_ . $cart->id_carrier . '.jpg') ? Tools::getShopDomainSsl(true, true) . _THEME_SHIP_DIR_ . $cart->id_carrier . '.jpg' : null,
+                'image'       => file_exists(_PS_SHIP_IMG_DIR_ . $cart->id_carrier . '.jpg') ? \Tools::getShopDomainSsl(true, true) . _THEME_SHIP_DIR_ . $cart->id_carrier . '.jpg' : null,
                 'quantity'    => 1,
             ];
         }
 
         // Create data
         $data = array(
-            'reference'    => MobbexHelper::getReference($cart),
+            'reference'    => \Mobbex\PS\Checkout\Models\Helper::getReference($cart),
             'currency'     => 'ARS',
             'description'  => 'Carrito #' . $cart->id,
-            'test'         => (Configuration::get(MobbexHelper::K_TEST_MODE) == true),
-            'return_url'   => MobbexHelper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
-            'webhook'      => MobbexHelper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'test'         => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_TEST_MODE) == true),
+            'return_url'   => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+            'webhook'      => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
             'items'        => $items,
-            'installments' => MobbexHelper::getInstallments(array_column($products, 'id_product')),
+            'installments' => \Mobbex\PS\Checkout\Models\Helper::getInstallments(array_column($products, 'id_product')),
             'addresses'    => self::getAddresses($cart),
-            'options'      => MobbexHelper::getOptions(),
-            'total'        => (float) $cart->getOrderTotal(true, Cart::BOTH),
+            'options'      => \Mobbex\PS\Checkout\Models\Helper::getOptions(),
+            'total'        => (float) $cart->getOrderTotal(true, \Cart::BOTH),
             'customer'     => self::getCustomer($cart),
             'timeout'      => 5,
             'intent'       => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
-            'wallet'       => (Configuration::get(MobbexHelper::K_WALLET) && Context::getContext()->customer->isLogged()),
-            'multicard'    => (Configuration::get(MobbexHelper::K_MULTICARD) == true),
-            'multivendor'  => Configuration::get(MobbexHelper::K_MULTIVENDOR),
-            'merchants'    => MobbexHelper::getMerchants($items),
+            'wallet'       => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_WALLET) && \Context::getContext()->customer->isLogged()),
+            'multicard'    => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTICARD) == true),
+            'multivendor'  => \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR),
+            'merchants'    => \Mobbex\PS\Checkout\Models\Helper::getMerchants($items),
         );
 
-        $data = \Mobbex\Registrar::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
+        $data = \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
 
         if (!$data)
             return;
@@ -240,7 +242,7 @@ class MobbexHelper
             CURLOPT_HTTPHEADER => self::getHeaders(),
         ));
 
-        $logger->log('debug', 'MobbexHelper > createCheckout | Creating Checkout', $data);
+        $logger->log('debug', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Creating Checkout', $data);
 
         $response = curl_exec($curl);
         $err      = curl_error($curl);
@@ -248,7 +250,7 @@ class MobbexHelper
         curl_close($curl);
 
         if ($err) {
-            $logger->log('error', 'MobbexHelper > createCheckout | Checkout Creation Error', $err);
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Checkout Creation Error', $err);
         } else {
             $res = json_decode($response, true);
 
@@ -266,27 +268,27 @@ class MobbexHelper
      */
     public static function getPaymentData()
     {
-        $cart = Context::getContext()->cart;
-        $customer = Context::getContext()->customer;
+        $cart = \Context::getContext()->cart;
+        $customer = \Context::getContext()->customer;
 
         if (!$cart->id)
             return;
 
-        return \Mobbex\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: MobbexHelper::createCheckout(null, $cart, $customer);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: \Mobbex\PS\Checkout\Models\Helper::createCheckout(null, $cart, $customer);
     }
 
     /**
      * Get customer data formatted for checkout.
      * 
-     * @param Cart $cart
+     * @param \Cart $cart
      *
      * @return array
      */
     public static function getCustomer($cart)
     {
         // Get address and customer data from context
-        $address  = new Address($cart->id_address_delivery);
-        $customer = Context::getContext()->customer;
+        $address  = new \Address($cart->id_address_delivery);
+        $customer = \Context::getContext()->customer;
 
         $firstName = empty($address->firstname) || $address->firstname == '.' ? $customer->firstname : $address->firstname;
         $lastName  = empty($address->lastname) || $address->lastname == '.' ? $customer->lastname : $address->lastname;
@@ -295,7 +297,7 @@ class MobbexHelper
             'name'           => "$firstName $lastName",
             'email'          => $customer->email,
             'phone'          => $address->phone_mobile ?: $address->phone,
-            'identification' => $customer->id ? MobbexHelper::getDni($customer->id) : null,
+            'identification' => $customer->id ? \Mobbex\PS\Checkout\Models\Helper::getDni($customer->id) : null,
             'uid'            => $customer->id,
         ];
     }
@@ -305,9 +307,9 @@ class MobbexHelper
         $address = [];
         foreach (['shipping' => 'id_address_delivery', 'billing' => 'id_address_invoice'] as $type => $value) {
 
-            $address = new Address($cart->$value);
-            $country = new Country($address->id_country);
-            $state   = new State($address->id_state);
+            $address = new \Address($cart->$value);
+            $country = new \Country($address->id_country);
+            $state   = new \State($address->id_state);
 
             $addresses[] = [
                 'type'         => $type,
@@ -362,11 +364,11 @@ class MobbexHelper
     public static function getTransactionData($res)
     {
         $data = [
-            'parent'             => MobbexHelper::isParentWebhook($res['payment']['operation']['type']),
+            'parent'             => \Mobbex\PS\Checkout\Models\Helper::isParentWebhook($res['payment']['operation']['type']),
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
             'status'             => (int) $res['payment']['status']['code'],
-            'order_status'       => (int) Configuration::get(MobbexHelper::K_OS_PENDING),
+            'order_status'       => (int) \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_OS_PENDING),
             'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
             'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
             'source_type'        => !empty($res['payment']['source']['type']) ? $res['payment']['source']['type'] : 'Mobbex',
@@ -393,15 +395,15 @@ class MobbexHelper
         $state = self::getState($data['status']);
 
         if ($state == 'onhold') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_OS_WAITING);
+            $data['order_status'] = (int) \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_OS_WAITING);
         } else if ($state == 'approved') {
-            $data['order_status'] =  (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_APPROVED) ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
+            $data['order_status'] =  (int) (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_APPROVED) ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
         } else if ($state == 'failed') {
-            $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_FAILED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
+            $data['order_status'] = (int) (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_FAILED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         } else if ($state == 'refunded') {
-            $data['order_status'] = (int) Configuration::get(MobbexHelper::K_ORDER_STATUS_REFUNDED ?: \Configuration::get('PS_OS_' . 'REFUND'));
+            $data['order_status'] = (int) \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_REFUNDED ?: \Configuration::get('PS_OS_' . 'REFUND'));
         } else if ($state == 'rejected') {
-            $data['order_status'] = (int) (Configuration::get(MobbexHelper::K_ORDER_STATUS_REJECTED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
+            $data['order_status'] = (int) (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_REJECTED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
 
         return $data;
@@ -417,7 +419,7 @@ class MobbexHelper
     public static function isParentWebhook($operationType)
     {
         if ($operationType === "payment.v2") {
-            if (Configuration::get(MobbexHelper::K_MULTICARD) || Configuration::get(MobbexHelper::K_MULTIVENDOR))
+            if (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTICARD) || \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR))
                 return false;
         }
 
@@ -482,7 +484,7 @@ class MobbexHelper
                     'entity_uid'  => $transaction->entity_uid,
                     'entity_name' => $transaction->entity_name,
                     'total'       => $transaction->total,
-                    'coupon'      => MobbexHelper::generateCoupon($transaction)
+                    'coupon'      => \Mobbex\PS\Checkout\Models\Helper::generateCoupon($transaction)
                 ];
             }
             
@@ -511,14 +513,14 @@ class MobbexHelper
 
     public static function getDni($customer_id)
     {
-        extract(MobbexHelper::getCustomDniColumn());
+        extract(\Mobbex\PS\Checkout\Models\Helper::getCustomDniColumn());
         // Check if dni column exists
-        $custom_dni = MobbexCustomFields::getCustomField($customer_id, 'customer', 'dni');
+        $custom_dni = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($customer_id, 'customer', 'dni');
         if($custom_dni){
             return $custom_dni;
         }else if(!empty($dniColumn)){
-            if(!empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
-            return DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
+            if(!empty(\DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(\DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))){
+            return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
             }
         }else{
             return;
@@ -537,9 +539,9 @@ class MobbexHelper
             'identifier' => 'customer_id',
         ];
 
-        if (Configuration::get(MobbexHelper::K_CUSTOM_DNI) != '') {
-            foreach (explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI)) as $key => $value) {
-                if($key === 0 && count(explode(':', Configuration::get(MobbexHelper::K_CUSTOM_DNI))) > 1){
+        if (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_CUSTOM_DNI) != '') {
+            foreach (explode(':', \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_CUSTOM_DNI)) as $key => $value) {
+                if($key === 0 && count(explode(':', \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_CUSTOM_DNI))) > 1){
                     $data['table'] = trim($value);
                 } else if($key === 1){
                     $data['identifier'] = trim($value);
@@ -602,9 +604,9 @@ class MobbexHelper
 
         // Save to db
         $shopId = \Context::getContext()->shop->id ?: null;
-        MobbexCustomFields::saveCustomField($shopId, 'shop', 'source_names', json_encode($names));
-        MobbexCustomFields::saveCustomField($shopId, 'shop', 'common_sources', json_encode($common));
-        MobbexCustomFields::saveCustomField($shopId, 'shop', 'advanced_sources', json_encode($advanced));
+        \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', 'source_names', json_encode($names));
+        \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', 'common_sources', json_encode($common));
+        \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', 'advanced_sources', json_encode($advanced));
 
         return compact('names', 'common', 'advanced');
     }
@@ -622,10 +624,10 @@ class MobbexHelper
 
         // Get plans from order products
         foreach ($products as $product) {
-            $id = $product instanceOf Product ? $product->id : $product;
+            $id = $product instanceOf \Product ? $product->id : $product;
 
-            $inactivePlans = array_merge($inactivePlans, MobbexHelper::getInactivePlans($id));
-            $activePlans   = array_merge($activePlans, MobbexHelper::getActivePlans($id));
+            $inactivePlans = array_merge($inactivePlans, \Mobbex\PS\Checkout\Models\Helper::getInactivePlans($id));
+            $activePlans   = array_merge($activePlans, \Mobbex\PS\Checkout\Models\Helper::getActivePlans($id));
         }
 
         // Add inactive (common) plans to installments
@@ -666,7 +668,7 @@ class MobbexHelper
     {
         $curl   = curl_init();
         $query  = self::getInstallmentsQuery($total, $installments);
-        $logger = new \Mobbex\Logger();
+        $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
         curl_setopt_array($curl, [
             CURLOPT_URL            => "https://api.mobbex.com/p/sources" . ($query ? "?$query" : ''),
@@ -684,12 +686,12 @@ class MobbexHelper
         curl_close($curl);
 
         if ($error)
-            $logger->log('error', "MobbexHelper > getSources | Sources Obtaining cURL Error $error", compact('total', 'installments'));
+            $logger->log('error', "\Mobbex\PS\Checkout\Models\Helper > getSources | Sources Obtaining cURL Error $error", compact('total', 'installments'));
 
         $result = json_decode($response, true);
 
         if (empty($result['result']))
-            $logger->log('error', 'MobbexHelper > getSources | Sources Obtaining Error', compact('total', 'installments', 'response'));
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > getSources | Sources Obtaining Error', compact('total', 'installments', 'response'));
 
         return isset($result['data']) ? $result['data'] : [];
     }
@@ -704,7 +706,7 @@ class MobbexHelper
     public static function getSourcesAdvanced($rule = 'externalMatch')
     {
         $curl   = curl_init();
-        $logger = new \Mobbex\Logger();
+        $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
         curl_setopt_array($curl, [
             CURLOPT_URL            => "https://api.mobbex.com/p/sources/rules/$rule/installments",
@@ -722,12 +724,12 @@ class MobbexHelper
         curl_close($curl);
 
         if ($error)
-            $logger->log('error', "MobbexHelper > getSourcesAdvanced | Advanced Sources Obtaining cURL Error $error", ['rule' => $rule]);
+            $logger->log('error', "\Mobbex\PS\Checkout\Models\Helper > getSourcesAdvanced | Advanced Sources Obtaining cURL Error $error", ['rule' => $rule]);
 
         $result = json_decode($response, true);
 
         if (empty($result['result']))
-            $logger->log('error', 'MobbexHelper > getSourcesAdvanced | Advanced Sources Obtaining Error', ['rule' => $rule]);
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > getSourcesAdvanced | Advanced Sources Obtaining Error', ['rule' => $rule]);
 
         return isset($result['data']) ? $result['data'] : [];
     }
@@ -743,14 +745,14 @@ class MobbexHelper
     {
         // Get id from request if it is not set
         if (!$productId)
-            $productId = Tools::getValue('id_product');
+            $productId = \Tools::getValue('id_product');
 
-        $product = new Product($productId);
+        $product = new \Product($productId);
 
-        $inactivePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'common_plans')) ?: [];
+        $inactivePlans = json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($productId, 'product', 'common_plans')) ?: [];
 
         foreach ($product->getCategories() as $categoryId)
-            $inactivePlans = array_merge($inactivePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'common_plans')) ?: []);
+            $inactivePlans = array_merge($inactivePlans, json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'common_plans')) ?: []);
 
         // Remove duplicated and return
         return array_unique($inactivePlans);
@@ -763,7 +765,7 @@ class MobbexHelper
      */
     public static function needUpgrade()
     {
-        return \Mobbex\Config::MODULE_VERSION > Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
+        return \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION > \Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
     }
 
     /**
@@ -774,12 +776,12 @@ class MobbexHelper
     public static function getUpgradeURL()
     {
         if (_PS_VERSION_ > '1.7') {
-            return Link::getUrlSmarty([
+            return \Link::getUrlSmarty([
                 'entity' => 'sf',
                 'route'  => 'admin_module_updates',
             ]);
         } else {
-            return Context::getContext()->link->getAdminLink('AdminModules') . '&' . http_build_query([
+            return \Context::getContext()->link->getAdminLink('AdminModules') . '&' . http_build_query([
                 'checkAndUpdate' => true,
                 'module_name'    => 'mobbex'
             ]);
@@ -797,15 +799,15 @@ class MobbexHelper
     {
         // Get id from request if it is not set
         if (!$productId)
-            $productId = Tools::getValue('id_product');
+            $productId = \Tools::getValue('id_product');
 
-        $product = new Product($productId);
+        $product = new \Product($productId);
 
         // Get plans from product and product categories
-        $activePlans = json_decode(MobbexCustomFields::getCustomField($productId, 'product', 'advanced_plans')) ?: [];
+        $activePlans = json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($productId, 'product', 'advanced_plans')) ?: [];
 
         foreach ($product->getCategories() as $categoryId)
-            $activePlans = array_merge($activePlans, json_decode(MobbexCustomFields::getCustomField($categoryId, 'category', 'advanced_plans')) ?: []);
+            $activePlans = array_merge($activePlans, json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'advanced_plans')) ?: []);
 
         // Remove duplicated and return
         return array_unique($activePlans);
@@ -819,7 +821,7 @@ class MobbexHelper
      *
      * @return bool
      * 
-     * @throws PrestaShopException
+     * @throws \PrestaShopException
      */
     public static function processRefund($total, $paymentId)
     {
@@ -843,7 +845,7 @@ class MobbexHelper
         curl_close($curl);
 
         if ($error)
-            throw new PrestaShopException("Mobbex Transaction Refund Curl Error: $error. Transaction #$paymentId");
+            throw new \PrestaShopException("Mobbex Transaction Refund Curl Error: $error. Transaction #$paymentId");
 
         $res = json_decode($response, true);
         return !empty($res['result']) ? $res['result'] : false;
@@ -853,7 +855,7 @@ class MobbexHelper
      * Return payment data from a cart, this additional information is for the invoice pdf
      * 
      * @param int $id_cart
-     * @return String
+     * @return string
      */
     public static function getInvoiceData($id_cart)
     {
@@ -861,7 +863,7 @@ class MobbexHelper
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
 
         // Get Transaction Data
-        $transactions = MobbexTransaction::getTransactions($id_cart);
+        $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($id_cart);
 
         // Check if data exists
         if (empty($transactionData) || !is_array($transactionData)) {
@@ -929,11 +931,11 @@ class MobbexHelper
      */
     public static function getOrderByCartId($cart_id, $instance = false)
     {
-        $order_id = (int) Db::getInstance()->getValue(
+        $order_id = (int) \Db::getInstance()->getValue(
             'SELECT `id_order`
             FROM `' . _DB_PREFIX_ . 'orders`
             WHERE `id_cart` = ' . (int) $cart_id .
-                Shop::addSqlRestriction(),
+                \Shop::addSqlRestriction(),
             false
         );
 
@@ -941,7 +943,7 @@ class MobbexHelper
         if (empty($order_id))
             return false;
 
-        return $instance ? new Order($order_id) : $order_id;
+        return $instance ? new \Order($order_id) : $order_id;
     }
 
     /**
@@ -969,16 +971,16 @@ class MobbexHelper
      * @param int|string $cartId
      * @param int|string $orderStatus
      * @param string $methodName
-     * @param PaymentModuleCore $module
+     * @param \PaymentModuleCore $module
      * @param bool $die
      * 
-     * @return Order|null
+     * @return \Order|null
      */
     public static function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
     {
         try {
-            $cart   = new Cart($cartId);
-            $logger = new \Mobbex\Logger();
+            $cart   = new \Cart($cartId);
+            $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
             // Validate order, remember to send secure key to avoid warning logs
             $module->validateOrder(
@@ -995,7 +997,7 @@ class MobbexHelper
 
             return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
-            $logger->log($die ? 'fatal' : 'error' , 'MobbexHelper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
+            $logger->log($die ? 'fatal' : 'error' , '\Mobbex\PS\Checkout\Models\Helper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
         }
     }
 
@@ -1006,19 +1008,19 @@ class MobbexHelper
      * @param string $type
      * @param bool $remote
      * @param bool $addVersion
-     * @param null|Controller $controller
+     * @param null|\Controller $controller
      */
     public static function addAsset($uri, $type = 'js', $remote = true, $addVersion = true, $controller = null)
     {
         if (!$controller)
-            $controller = Context::getContext()->controller;
+            $controller = \Context::getContext()->controller;
 
         if ($addVersion)
-            $uri .= '?ver=' . \Mobbex\Config::MODULE_VERSION;
+            $uri .= '?ver=' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
 
-        if (Configuration::get('MOBBEX_FORCE_ASSETS')) {
+        if (\Configuration::get('MOBBEX_FORCE_ASSETS')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
-        } else if (_PS_VERSION_ >= '1.7' && $controller instanceof FrontController) {
+        } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
             $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
@@ -1033,18 +1035,18 @@ class MobbexHelper
      */
     public static function isPaymentStep()
     {
-        $controller = Context::getContext()->controller;
+        $controller = \Context::getContext()->controller;
 
         if (_PS_VERSION_ < '1.7') {
             return $controller->step == $controller::STEP_PAYMENT;
         } else {
             // Make checkout process as accessible for prestashop backward compatibility
-            $reflection = new ReflectionProperty($controller, 'checkoutProcess');
+            $reflection = new \ReflectionProperty($controller, 'checkoutProcess');
             $reflection->setAccessible(true);
             $checkoutProcess = $reflection->getValue($controller);
 
             foreach ($checkoutProcess->getSteps() as $step) {
-                if ($step instanceof CheckoutPaymentStep && $step->isCurrent())
+                if ($step instanceof \CheckoutPaymentStep && $step->isCurrent())
                     return true;
             }
         }
@@ -1066,15 +1068,15 @@ class MobbexHelper
 
         // Try to get sources from db
         $sources = [
-            'names'    => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
-            'common'   => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
-            'advanced' => json_decode(MobbexCustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
+            'names'    => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
+            'common'   => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
+            'advanced' => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
         ];
 
         // Get current checked plans
         $values = [
-            'common'   => json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'common_plans'), true)   ?: [],
-            'advanced' => json_decode(MobbexCustomFields::getCustomField($id, $catalogType, 'advanced_plans'), true) ?: [],
+            'common'   => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, 'common_plans'), true)   ?: [],
+            'advanced' => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, 'advanced_plans'), true) ?: [],
         ];
 
         if (!$sources['common'] || !$sources['advanced'])
@@ -1086,20 +1088,20 @@ class MobbexHelper
     /**
      * Retrieve entity configured by product or parent categories.
      * 
-     * @param Product $product
+     * @param \Product $product
      * 
      * @return array
      */
     public static function getEntityFromProduct($product)
     {
-        $productEntity = MobbexCustomFields::getCustomField($product->id, 'product', 'entity');
+        $productEntity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product->id, 'product', 'entity');
 
         if ($productEntity)
             return $productEntity;
 
         // Try to get from their categories
         foreach ($product->getCategories() as $categoryId) {
-            $entity = MobbexCustomFields::getCustomField($categoryId, 'category', 'entity');
+            $entity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity');
 
             if ($entity)
                 return $entity;
@@ -1115,11 +1117,11 @@ class MobbexHelper
      */
     public static function processOrder($module)
     {
-        $cart   = Context::getContext()->cart;
-        $logger = new \Mobbex\Logger();
+        $cart   = \Context::getContext()->cart;
+        $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
-        if (!Validate::isLoadedObject($cart)) {
-            $logger->log('error', 'MobbexHelper > processOrder | Error Loading Cart On Order Process', $_REQUEST);
+        if (!\Validate::isLoadedObject($cart)) {
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > processOrder | Error Loading Cart On Order Process', $_REQUEST);
 
             return false;
         }
@@ -1139,7 +1141,7 @@ class MobbexHelper
 
             // Add order expiration task
             if (!self::needUpgrade()) {
-                $task = new MobbexTask(
+                $task = new \Mobbex\PS\Checkout\Models\Task(
                     null,
                     'actionMobbexExpireOrder',
                     \Configuration::get('MOBBEX_EXPIRATION_INTERVAL') ?: 3,
@@ -1152,18 +1154,18 @@ class MobbexHelper
         }
         
         // Validate that order looks good
-        if (!$order || !Validate::isLoadedObject($order) || !$order->total_paid) {
-            $logger->log('error', 'MobbexHelper > processOrder | Error Creating/Loading Order On Order Process', ['cart_id' => $cart->id]);
+        if (!$order || !\Validate::isLoadedObject($order) || !$order->total_paid) {
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > processOrder | Error Creating/Loading Order On Order Process', ['cart_id' => $cart->id]);
             self::restoreCart($cart); 
 
             return false;
         }
 
         //refund stock
-        if(!Configuration::get(MobbexHelper::K_PENDING_ORDER_DISCOUNT)){
+        if(!\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_PENDING_ORDER_DISCOUNT)){
             foreach ($order->getProductsDetail() as $product) {
-                if (!StockAvailable::dependsOnStock($product['product_id']))
-                    StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
+                if (!\StockAvailable::dependsOnStock($product['product_id']))
+                    \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
             }
         }
 
@@ -1180,10 +1182,10 @@ class MobbexHelper
     public static function restoreCart($cart)
     {
         $result = $cart->duplicate();
-        $logger = new \Mobbex\Logger();
+        $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
         if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
-            return $logger->log('error', 'MobbexHelper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
+            return $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
 
         \Context::getContext()->cookie->id_cart = $result['cart']->id;
         $context = \Context::getContext();
@@ -1197,7 +1199,7 @@ class MobbexHelper
     /**
      * Retrieve final shipping cost for the given cart.
      * 
-     * @param Cart $cart
+     * @param \Cart $cart
      * 
      * @return float|int 
      */
@@ -1214,7 +1216,7 @@ class MobbexHelper
     /**
      * Get rounded total from a Cart.
      * 
-     * @param int|Cart $cart
+     * @param int|\Cart $cart
      * 
      * @return float 
      */

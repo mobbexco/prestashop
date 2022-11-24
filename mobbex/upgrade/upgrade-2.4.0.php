@@ -15,11 +15,11 @@ function upgrade_module_2_4_0($module)
     foreach (Db::getInstance()->executeS($sql) as $field) {
         if ($field['data'] == 'yes') {
             // Save using new method
-            $commonPlans = json_decode(MobbexCustomFields::getCustomField($field['row_id'], $field['object'], 'common_plans')) ?: [];
+            $commonPlans = json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($field['row_id'], $field['object'], 'common_plans')) ?: [];
 
             if (!in_array($field['field_name'], $commonPlans)) {
                 $commonPlans[] = $field['field_name'];
-                MobbexCustomFields::saveCustomField($field['row_id'], $field['object'], 'common_plans', json_encode($commonPlans));
+                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($field['row_id'], $field['object'], 'common_plans', json_encode($commonPlans));
             }
         }
     }

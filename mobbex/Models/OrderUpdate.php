@@ -1,13 +1,13 @@
 <?php
 
-namespace Mobbex;
+namespace Mobbex\PS\Checkout\Models;
 
 class OrderUpdate
 {
     public function __construct()
     {
-        $this->config = new \Mobbex\Config();
-        $this->logger = new \Mobbex\Logger();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
     
     /**
@@ -24,7 +24,7 @@ class OrderUpdate
             $payments = $order->getOrderPaymentCollection() ?: [];
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment || \MobbexHelper::getState($data['status']) != 'approved')
+            if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
                 return false;
 
             $payment->order_reference = $order->reference;
@@ -57,7 +57,7 @@ class OrderUpdate
      */
     public function removeExpirationTasks($order)
     {
-        if (\MobbexHelper::needUpgrade())
+        if (\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
             return false;
 
         $tasks = $this->getExpirationTasks($order);
@@ -81,7 +81,7 @@ class OrderUpdate
      */
     public function getExpirationTasks($order)
     {
-        $tasks = new \PrestaShopCollection('MobbexTask');
+        $tasks = new \PrestaShopCollection('\Mobbex\PS\Checkout\Models\Task');
         $tasks->where('name', '=', 'actionMobbexExpireOrder');
         $tasks->where('args', '=', "[$order->id]");
 

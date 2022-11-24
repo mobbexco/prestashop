@@ -6,6 +6,6 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_2_6_1($module)
 {
-    $registrar = new \Mobbex\Registrar();
+    $registrar = new \Mobbex\PS\Checkout\Models\Registrar();
     return $registrar->registerHooks($module);
 }

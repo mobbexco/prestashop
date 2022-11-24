@@ -31,6 +31,6 @@ function upgrade_module_2_8_0(Mobbex $module)
     color: #ffffff;
     background-color: #6f00ff;
 }');
-    $registrar = new \Mobbex\Registrar();
+    $registrar = new \Mobbex\PS\Checkout\Models\Registrar();
     return $module->createTables() && $registrar->unregisterHooks($module) && $registrar->registerHooks($module) && $registrar->addExtensionHooks();
 }

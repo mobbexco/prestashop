@@ -1,6 +1,6 @@
 <?php
 
-namespace Mobbex;
+namespace Mobbex\PS\Checkout\Models;
 
 abstract class Model extends \ObjectModel
 {

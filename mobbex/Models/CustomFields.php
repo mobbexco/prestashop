@@ -1,6 +1,8 @@
 <?php
 
-class MobbexCustomFields extends ObjectModel
+namespace Mobbex\PS\Checkout\Models;
+
+class CustomFields extends \ObjectModel
 {
     public $row_id;
     public $object;
@@ -33,10 +35,10 @@ class MobbexCustomFields extends ObjectModel
     public static function saveCustomField($row_id, $object, $field_name, $data)
     {
         // If the field for that object already exists
-        $previousValue = MobbexCustomFields::getCustomField($row_id, $object, $field_name, 'id');
+        $previousValue = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($row_id, $object, $field_name, 'id');
 
         // Save custom field
-        $customField = new MobbexCustomFields($previousValue?:null);
+        $customField = new \Mobbex\PS\Checkout\Models\CustomFields($previousValue?:null);
 
         $customField->row_id = $row_id;
         $customField->object = $object;
@@ -59,9 +61,9 @@ class MobbexCustomFields extends ObjectModel
      */
     public static function getCustomField($row_id, $object, $field_name, $searched_column = 'data')
     {
-        $custom_field = new MobbexCustomFields();
+        $custom_field = new \Mobbex\PS\Checkout\Models\CustomFields();
 
-        $sql = new DbQuery();
+        $sql = new \DbQuery();
         $sql->select($searched_column);
         $sql->from('mobbex_custom_fields', 'f');
         $sql->where('f.row_id = ' . $row_id);
@@ -69,7 +71,7 @@ class MobbexCustomFields extends ObjectModel
         $sql->where("f.field_name = '$field_name'");
         $sql->limit(1);
 
-        $result = Db::getInstance()->executeS($sql);
+        $result = \Db::getInstance()->executeS($sql);
         return !empty($result[0][$searched_column]) ? $result[0][$searched_column] : false;
     }
 }
