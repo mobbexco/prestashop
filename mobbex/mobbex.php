@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_'))
 
 require_once dirname(__FILE__) . '/Models/Exception.php';
 require_once dirname(__FILE__) . '/Models/Config.php';
+require_once dirname(__FILE__) . '/Models/Logger.php';
 require_once dirname(__FILE__) . '/Models/Model.php';
 require_once dirname(__FILE__) . '/Models/Task.php';
 require_once dirname(__FILE__) . '/Models/Api.php';
@@ -34,6 +35,9 @@ class Mobbex extends PaymentModule
 
     /** @var \Mobbex\Config */
     public $config;
+
+    /** @var \Mobbex\Logger */
+    public $logger;
 
     /**
      * Constructor
@@ -58,6 +62,7 @@ class Mobbex extends PaymentModule
 
         //Mobbex Classes 
         $this->config = new \Mobbex\Config();
+        $this->logger = new \Mobbex\Logger();
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
@@ -346,7 +351,7 @@ class Mobbex extends PaymentModule
             if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
         } catch (\Exception $e) {
-            MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+            $this->logger->log('error', 'Mobbex > renderForm | Error Obtaining Update/Upgrade Messages', $e->getMessage());
         }
 
         $helper->tpl_vars = array(
@@ -522,7 +527,7 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        $this->context->smarty->assign([
+        $data = [
             'product_price'  => Product::convertAndFormatPrice($total),
             'sources'        => MobbexHelper::getSources($total, MobbexHelper::getInstallments($products)),
             'style_settings' => [
@@ -532,7 +537,11 @@ class Mobbex extends PaymentModule
                 'button_image'   => $this->config->settings['widget_logo'],
                 'plans_theme'    => $this->config->settings['theme'] ?: $this->config->default['theme'],
             ],
-        ]);
+        ];
+        
+        $this->logger->log('debug', 'Mobbex > displayPlansWidget | data:', $data);
+        
+        $this->context->smarty->assign($data);
 
         return $this->display(__FILE__, 'views/templates/finance-widget/' . ('local.tpl'));
     }
@@ -923,7 +932,7 @@ class Mobbex extends PaymentModule
                 if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
                     MobbexHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
             } catch (\Exception $e) {
-                MobbexHelper::log('Mobbex: Error Obtaining Update/Upgrade Messages' . $e->getMessage(), null, true);
+                $this->logger->log('error', 'Mobbex > hookDisplayBackOfficeHeader | Error Obtaining Update/Upgrade Messages', $e->getMessage());
             }
         }
     }
