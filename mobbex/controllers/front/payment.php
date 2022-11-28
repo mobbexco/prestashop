@@ -7,8 +7,8 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
     public function __construct()
     {
         parent::__construct();
-        $this->config = new \Mobbex\Config();
-        $this->logger = new \Mobbex\Logger();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
     
     public function postProcess()
@@ -36,8 +36,8 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
         $context->cookie->__set('last_cart', $context->cart->id);
 
         return [
-            'data'  => MobbexHelper::getPaymentData() ?: null,
-            'order' => $this->config->settings['order_first'] ? MobbexHelper::processOrder($this->module) : true,
+            'data'  => \Mobbex\PS\Checkout\Models\Helper::getPaymentData() ?: null,
+            'order' => $this->config->settings['order_first'] ? \Mobbex\PS\Checkout\Models\Helper::processOrder($this->module) : true,
         ];
     }
 

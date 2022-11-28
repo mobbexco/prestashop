@@ -1,6 +1,6 @@
 <?php
-
-class MobbexTask extends \ObjectModel
+namespace Mobbex\PS\Checkout\Models;
+class Task extends \ObjectModel
 {
     public $id;
     public $name;
@@ -80,7 +80,7 @@ class MobbexTask extends \ObjectModel
         $this->limit    = $limit;
         
         //Mobbex classes
-        $this->logger   = new \Mobbex\Logger();
+        $this->logger   = new \Mobbex\PS\Checkout\Models\Logger();
 
         parent::__construct($id);
     }
@@ -119,7 +119,7 @@ class MobbexTask extends \ObjectModel
      */
     public function execute()
     {
-        $result = \Mobbex\Registrar::executeHook($this->name, false, ...json_decode($this->args, true));
+        $result = \Mobbex\PS\Checkout\Models\Registrar::executeHook($this->name, false, ...json_decode($this->args, true));
         
         if (!$result) {
             $this->logger->log('error', "Error Execution Task #".$this->id.$this->name, $this->args);
@@ -153,7 +153,7 @@ class MobbexTask extends \ObjectModel
      */
     public static function getByName($name)
     {
-        $tasks = new \PrestaShopCollection('MobbexTask');
+        $tasks = new \PrestaShopCollection('\Mobbex\PS\Checkout\Models\Task');
         $tasks->where('name', '=', $name);
 
         return $tasks->getResults() ?: [];
@@ -162,11 +162,11 @@ class MobbexTask extends \ObjectModel
     /**
      * Get all current pending tasks from db.
      * 
-     * @return \MobbexTask[]
+     * @return \Mobbex\PS\Checkout\Models\Task[]
      */
     public static function getPendingTasks()
     {
-        $tasks = new \PrestaShopCollection('MobbexTask');
+        $tasks = new \PrestaShopCollection('\Mobbex\PS\Checkout\Models\Task');
         $tasks->sqlWhere("DATE(`next_execution`) <= '" . date('Y-m-d') . "'");
 
         return $tasks->getResults() ?: [];

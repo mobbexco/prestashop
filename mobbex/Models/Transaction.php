@@ -1,6 +1,7 @@
 <?php
+namespace Mobbex\PS\Checkout\Models;
 
-class MobbexTransaction extends ObjectModel
+class Transaction extends \ObjectModel
 {
     public $id;
     public $cart_id;
@@ -60,8 +61,8 @@ class MobbexTransaction extends ObjectModel
             'currency'           => array('type' => self::TYPE_STRING, 'required' => false),
             'risk_analysis'      => array('type' => self::TYPE_STRING, 'required' => false),
             'data'               => array('type' => self::TYPE_STRING, 'required' => false),
-            'created'               => array('type' => self::TYPE_STRING, 'required' => false),
-            'updated'               => array('type' => self::TYPE_STRING, 'required' => false),
+            'created'            => array('type' => self::TYPE_STRING, 'required' => false),
+            'updated'            => array('type' => self::TYPE_STRING, 'required' => false),
         ),
     );
 
@@ -70,7 +71,7 @@ class MobbexTransaction extends ObjectModel
      */
     public static function saveTransaction($cart_id, $data)
     {
-        $trx = new MobbexTransaction();
+        $trx = new \Mobbex\PS\Checkout\Models\Transaction();
 
         $trx->cart_id            = $cart_id;
         $trx->parent             = $data['parent']; 
@@ -103,7 +104,7 @@ class MobbexTransaction extends ObjectModel
     }
 
     /**
-     * Get the transactions from the db and returns an array of MobbexTransaction objects.
+     * Get the transactions from the db and returns an array of \Mobbex\PS\Checkout\Models\Transaction objects.
      * If param $parent is true return only the parent webhook
      * 
      * @param int $order_id
@@ -113,11 +114,11 @@ class MobbexTransaction extends ObjectModel
      */
     public static function getTransactions($cart_id)
     {
-        $data = Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ' ORDER BY id DESC');
+        $data = \Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ' ORDER BY id DESC');
         $transactions = [];
 
         foreach ($data as $value)
-            $transactions[] = new MobbexTransaction($value['id']);
+            $transactions[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
 
         return $transactions;
     }
@@ -127,10 +128,10 @@ class MobbexTransaction extends ObjectModel
      * 
      * @param int|string $cartId
      * 
-     * @return MobbexTransaction
+     * @return \Mobbex\PS\Checkout\Models\Transaction
      */
     public static function getParentTransaction($cartId)
     {
-        return new MobbexTransaction(Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1  ORDER BY id DESC')); 
+        return new \Mobbex\PS\Checkout\Models\Transaction(\Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1  ORDER BY id DESC')); 
     }
 }

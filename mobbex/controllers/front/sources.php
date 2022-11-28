@@ -10,8 +10,8 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
     public function __construct()
     {
         parent::__construct();
-        $this->config = new \Mobbex\Config();
-        $this->logger = new \Mobbex\Logger();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
     
     public function postProcess()
@@ -24,7 +24,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
             return;
 
         if(Tools::getValue('action') == 'update')
-            MobbexHelper::updateMobbexSources();
+            \Mobbex\PS\Checkout\Models\Helper::updateMobbexSources();
         
     }
 

@@ -13,38 +13,25 @@
 if (!defined('_PS_VERSION_'))
     exit;
 
-require_once dirname(__FILE__) . '/Models/Exception.php';
-require_once dirname(__FILE__) . '/Models/Config.php';
-require_once dirname(__FILE__) . '/Models/Logger.php';
-require_once dirname(__FILE__) . '/Models/Registrar.php';
-require_once dirname(__FILE__) . '/Observer/Observer.php';
-require_once dirname(__FILE__) . '/Models/Model.php';
-require_once dirname(__FILE__) . '/Models/Task.php';
-require_once dirname(__FILE__) . '/Models/Api.php';
-require_once dirname(__FILE__) . '/Models/Updater.php';
-require_once dirname(__FILE__) . '/Models/OrderUpdate.php';
-require_once dirname(__FILE__) . '/Models/MobbexHelper.php';
-require_once dirname(__FILE__) . '/Models/MobbexTransaction.php';
-require_once dirname(__FILE__) . '/Models/MobbexCustomFields.php';
-
+require_once __DIR__ . '/vendor/autoload.php';
 /**
  * Main class of the module
  */
 class Mobbex extends PaymentModule
 {
-    /** @var \Mobbex\Updater */
+    /** @var \Mobbex\PS\Checkout\Models\Updater */
     public $updater;
 
-    /** @var \Mobbex\Config */
+    /** @var \Mobbex\PS\Checkout\Models\Config */
     public $config;
 
-    /** @var \Mobbex\Logger */
+    /** @var \Mobbex\PS\Checkout\Models\Logger */
     public $logger;
 
-    /** @var \Mobbex\Registrar */
+    /** @var \Mobbex\PS\Checkout\Models\Registrar */
     public $registrar;
 
-    /** @var \Mobbex\Observer */
+    /** @var \Mobbex\PS\Checkout\Observers\Observer */
     public $observer;
 
     /**
@@ -54,7 +41,7 @@ class Mobbex extends PaymentModule
     {
         $this->name            = 'mobbex';
         $this->tab             = 'payments_gateways';
-        $this->version         = \Mobbex\Config::MODULE_VERSION;
+        $this->version         = \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
         $this->author          = 'Mobbex Co';
         $this->controllers     = ['notification', 'payment', 'task', 'sources'];
         $this->currencies      = true;
@@ -69,10 +56,10 @@ class Mobbex extends PaymentModule
         $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
         //Mobbex Classes 
-        $this->config    = new \Mobbex\Config();
-        $this->logger    = new \Mobbex\Logger();
-        $this->registrar = new \Mobbex\Registrar();
-        $this->observer  = new \Mobbex\Observer();
+        $this->config    = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
+        $this->registrar = new \Mobbex\PS\Checkout\Models\Registrar();
+        $this->observer  = new \Mobbex\PS\Checkout\Observers\Observer();
 
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
@@ -80,12 +67,12 @@ class Mobbex extends PaymentModule
             $this->createStates();
 
         // Only if you want to publish your module on the Addons Marketplace
-        $this->updater    = new \Mobbex\Updater();
+        $this->updater    = new \Mobbex\PS\Checkout\Models\Updater();
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
-        if (!defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !MobbexHelper::needUpgrade())
-            define('mobbexTasksExecuted', true) && MobbexTask::executePendingTasks();
+        if (!defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+            define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 
     public function __call($method, $arguments)
@@ -208,7 +195,7 @@ class Mobbex extends PaymentModule
 
         if (!empty($_GET['run_update'])) {
             $this->runUpdate();
-            Tools::redirectAdmin(MobbexHelper::getUpgradeURL());
+            Tools::redirectAdmin(\Mobbex\PS\Checkout\Models\Helper::getUpgradeURL());
         }
 
         $this->context->smarty->assign(array('module_dir' => $this->_path));
@@ -240,10 +227,10 @@ class Mobbex extends PaymentModule
         $form = $this->config->getConfigForm();
 
         try {
-            if (MobbexHelper::needUpgrade())
-                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . MobbexHelper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
+            if (\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . \Mobbex\PS\Checkout\Models\Helper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
 
-            if ($this->updater->hasUpdates(\Mobbex\Config::MODULE_VERSION))
+            if ($this->updater->hasUpdates(\Mobbex\PS\Checkout\Models\Config::MODULE_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
         } catch (\Exception $e) {
             $this->logger->log('error', 'Mobbex > renderForm | Error Obtaining Update/Upgrade Messages', $e->getMessage());
