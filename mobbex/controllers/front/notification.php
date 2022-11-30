@@ -9,6 +9,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     /** @var \Mobbex\OrderUpdate */
     public $orderUpdate;
 
+    /** @var \Mobbex\Config */
+    public $config;
+
+    /** @var \Mobbex\Logger */
+    public $logger;
+
     public function __construct()
     {
         parent::__construct();
