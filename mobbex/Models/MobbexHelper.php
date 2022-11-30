@@ -984,11 +984,11 @@ class MobbexHelper
                 false,
                 $cart->secure_key
             );
-
-            return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
             $logger->log($die ? 'fatal' : 'error' , 'MobbexHelper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
         }
+
+        return self::getOrderByCartId($cartId, true);
     }
 
     /**
