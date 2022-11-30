@@ -2,6 +2,7 @@
 
 class MobbexHelper
 {
+
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
     const K_TEST_MODE = 'MOBBEX_TEST_MODE';
@@ -552,15 +553,6 @@ class MobbexHelper
         return $data;
     }
 
-    public static function getPsVersion()
-    {
-        if (_PS_VERSION_ >= 1.7) {
-            return self::PS_17;
-        } else {
-            return self::PS_16;
-        }
-    }
-
     /**
      * Save sources in config data
      * 
@@ -992,11 +984,11 @@ class MobbexHelper
                 false,
                 $cart->secure_key
             );
-
-            return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
             $logger->log($die ? 'fatal' : 'error' , 'MobbexHelper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
         }
+
+        return self::getOrderByCartId($cartId, true);
     }
 
     /**
