@@ -129,6 +129,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $order->update();
                 
             } else {
+                // Update cart total
+                $this->orderUpdate->updateCartTotal($cartId, $data['total']);
+
                 // Create and validate Order
                 $order = MobbexHelper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
 
