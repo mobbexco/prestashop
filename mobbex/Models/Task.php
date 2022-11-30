@@ -117,7 +117,7 @@ class MobbexTask extends \ObjectModel
      */
     public function execute()
     {
-        $result = \MobbexHelper::executeHook($this->name, false, ...json_decode($this->args, true));
+        $result = \Mobbex\Registrar::executeHook($this->name, false, ...json_decode($this->args, true));
         
         if (!$result) {
             $this->logger->log('error', "Error Execution Task #".$this->id.$this->name, $this->args);
