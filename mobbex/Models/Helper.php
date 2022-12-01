@@ -185,7 +185,7 @@ class Helper
                     "description" => $product['name'],
                     "quantity"    => $product['cart_quantity'],
                     "total"       => round($product['price_wt'], 2),
-                    "entity"      => \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR) ? self::getEntityFromProduct($prd) : '',
+                    "entity"      => self::getProductEntity($prd),
                 ];
             }
 
@@ -1078,26 +1078,45 @@ class Helper
     }
 
     /**
-     * Retrieve entity configured by product or parent categories.
+     * Return entity assigned to a given product.
      * 
      * @param \Product $product
      * 
-     * @return array
+     * @return string
+     */
+    public static function getProductEntity($product)
+    {
+        $config = new \Mobbex\PS\Checkout\Models\Config();
+        
+        if(!$config->settings['multivendor'])
+            return '';
+
+        $entity = self::getEntityFromProduct($product) ?: \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionGetMobbexProductEntity', false, $product); 
+
+        return $entity ?: '';
+    }
+
+    /**
+     * Retrieve entity configured by product or parent categories or bool if not configured.
+     * 
+     * @param \Product $product
+     * 
+     * @return string|bool
      */
     public static function getEntityFromProduct($product)
     {
-        $productEntity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product->id, 'product', 'entity');
+        $entity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product->id, 'product', 'entity');
 
-        if ($productEntity)
-            return $productEntity;
+        if ($entity)
+            return $entity;
 
         // Try to get from their categories
-        foreach ($product->getCategories() as $categoryId) {
-            $entity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity');
-
-            if ($entity)
-                return $entity;
+        foreach ($product->getCategories() as $categoryId){
+            if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity'))
+                return \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity');
         }
+
+        return false;
     }
 
     /**
