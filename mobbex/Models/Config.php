@@ -7,7 +7,7 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '3.3.0';
+    const MODULE_VERSION = '3.3.1';
     const PS16           = '1.6';
     const PS17           = '1.7';
 
