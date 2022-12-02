@@ -4,6 +4,7 @@ namespace Mobbex\PS\Checkout\Models;
 
 class Helper
 {
+
     const K_API_KEY = 'MOBBEX_API_KEY';
     const K_ACCESS_TOKEN = 'MOBBEX_ACCESS_TOKEN';
     const K_TEST_MODE = 'MOBBEX_TEST_MODE';
@@ -554,15 +555,6 @@ class Helper
         return $data;
     }
 
-    public static function getPsVersion()
-    {
-        if (_PS_VERSION_ >= 1.7) {
-            return self::PS_17;
-        } else {
-            return self::PS_16;
-        }
-    }
-
     /**
      * Save sources in config data
      * 
@@ -994,11 +986,11 @@ class Helper
                 false,
                 $cart->secure_key
             );
-
-            return self::getOrderByCartId($cartId, true);
         } catch (\Exception $e) {
             $logger->log($die ? 'fatal' : 'error' , '\Mobbex\PS\Checkout\Models\Helper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
         }
+
+        return self::getOrderByCartId($cartId, true);
     }
 
     /**
