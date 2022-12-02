@@ -1,6 +1,6 @@
 <?php
 
-namespace Mobbex;
+namespace Mobbex\PS\Checkout\Models;
 
 if (!defined('_PS_VERSION_'))
     exit;
@@ -9,7 +9,7 @@ class Logger
 {
     public function __construct()
     {
-        $this->config = new \Mobbex\Config();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
     }
 
     /**
@@ -30,7 +30,7 @@ class Logger
             $mode === 'error' ? 3 : 1,
             null,
             'Mobbex',
-            str_replace('.', '', \Mobbex\Config::MODULE_VERSION),
+            str_replace('.', '', \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION),
             true
         );
 

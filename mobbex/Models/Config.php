@@ -1,6 +1,6 @@
 <?php
 
-namespace Mobbex;
+namespace Mobbex\PS\Checkout\Models;
 
 if (!defined('_PS_VERSION_'))
     exit;
@@ -34,7 +34,7 @@ class Config
     public function getConfigForm($extensionOptions = true)
     {
         $form = require __DIR__ . '/../utils/config-form.php';
-        return $extensionOptions ? \Mobbex\Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
+        return $extensionOptions ? \Mobbex\PS\Checkout\Models\Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace Mobbex;
+namespace Mobbex\PS\Checkout\Models;
 
 if (!defined('_PS_VERSION_'))
     exit;
@@ -160,7 +160,7 @@ class Registrar
 
             return $value;
         } catch (\Exception $e) {
-            $logger = new \Mobbex\Logger();
+            $logger = new \Mobbex\PS\Checkout\Models\Logger();
             $logger->log('error', 'Registrar > executeHook | Hook Error', $e->getMessage());
         }
     }
