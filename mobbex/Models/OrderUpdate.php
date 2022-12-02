@@ -111,7 +111,7 @@ class OrderUpdate
 
             $cart->save();
         } catch (\Exception $e) {
-            \MobbexHelper::log('Error updating cart total on Webhook', [$cart->id, $amount, $e->getMessage()], true);
+            $this->logger->log('error', 'Error updating cart total on Webhook', [$cart->id, $amount, $e->getMessage()]);
         }
     }
 
