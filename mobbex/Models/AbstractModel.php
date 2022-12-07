@@ -7,25 +7,6 @@ namespace Mobbex\PS\Checkout\Models;
  */
 class AbstractModel extends \ObjectModel
 {
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
-     * Saves current object to database (add or update)
-     *
-     * @param bool $null_values
-     * @param bool $auto_date
-     *
-     * @return bool Insertion result
-     * @throws \PrestaShopException
-     */
-    public function save($null_values = false, $auto_date = true)
-    {
-        return (int)$this->id > 0 ? $this->update($null_values) : $this->add($auto_date, $null_values);
-    }
-
     /**
      * Adds current object to the database.
      *

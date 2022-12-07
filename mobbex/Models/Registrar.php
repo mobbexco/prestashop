@@ -39,6 +39,7 @@ class Registrar
         'actionObjectCustomerAddAfter',
         'displayProductPriceBlock',
         'displayExpressCheckout',
+        'ActionAfterUpdateCategoryFormHandler',
     ];
 
     /**

@@ -158,6 +158,14 @@ class Observer
     }
 
     /**
+     * Executes when hook ActionCategoryUpdate is fired. (Used to update category options).
+     */
+    public function hookActionCategoryUpdate()
+    {
+        $this->hookActionAfterUpdateCategoryFormHandler();
+    }
+
+    /**
      * Executes when hook ActionAfterUpdateCategoryFormHandler is fired. (Used to update category options).
      */
     public function hookActionAfterUpdateCategoryFormHandler()
@@ -396,7 +404,7 @@ class Observer
     {
         $product = new \Product(\Tools::getValue('id_product'));
 
-        if ($this->config->settings['finance_product'] || !\Validate::isLoadedObject($product) || !$product->show_price)
+        if (!$this->config->settings['finance_product'] || !\Validate::isLoadedObject($product) || !$product->show_price)
             return;
 
         return $this->displayPlansWidget($product->getPrice(), [$product]);
@@ -432,8 +440,6 @@ class Observer
      */
     public function hookDisplayAdminProductsExtra($params)
     {
-        error_log('params: ' . "\n" . json_encode($params, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
-
         $id   = !empty($params['id_product']) ? $params['id_product'] : \Tools::getValue('id_product');
         return $this->displayCatalogOptions($id);
     }
@@ -492,13 +498,6 @@ class Observer
     private function display($template)
     {
         $template = _PS_MODULE_DIR_ . "mobbex/$template";
-
-        $this->smarty->createTemplate(
-            $template,
-            null,
-            \Context::getContext()->shop->theme->getName(),
-            $this->smarty
-        );
 
         return $this->smarty->fetch($template);
     }
@@ -571,6 +570,16 @@ class Observer
             'common_plans'   => [],
             'advanced_plans' => []
         ];
+
+        foreach ($_REQUEST as $key => $value) {
+            if (strpos($key, 'common_plan_') !== false && $value === 'no') {
+                // Add UID to common plans
+                $options['common_plans'][] = explode('common_plan_', $key)[1];
+            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes') {
+                // Add UID to advanced plans
+                $options['advanced_plans'][] = explode('advanced_plan_', $key)[1];
+            }
+        }
 
         if ($catalogType === 'product') {
             $options['subscription_enable'] = isset($_REQUEST['sub_enable']) ? $_REQUEST['sub_enable'] : 'no';
