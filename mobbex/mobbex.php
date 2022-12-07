@@ -108,7 +108,7 @@ class Mobbex extends PaymentModule
         $this->createTables();
 
         // Try to create finnacial cost product
-        if (!\Product::getIdByReference('mobbex-cost'))
+        if (!\Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost'))
             $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
 
         return parent::install() 
@@ -300,6 +300,8 @@ class Mobbex extends PaymentModule
         ]);
 
         // Save to db and return
-        return $product->save() && $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'));
+        return $product->save()
+            && $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'))
+            && \StockAvailable::setQuantity($product->id, null, 9999999);
     }
 }
