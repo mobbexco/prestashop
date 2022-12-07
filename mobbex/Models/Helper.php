@@ -1245,4 +1245,18 @@ class Helper
             method_exists($context, 'getComputingPrecision') ? $context->getComputingPrecision() : 2
         );
     }
+
+    /**
+     * Get a product id from him reference.
+     * 
+     * @param string $reference
+     * 
+     * @return int
+     */
+    public static function getProductIdByReference($reference)
+    {
+        return (int) \Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
+            "SELECT `id_product` FROM " . _DB_PREFIX_ . "product WHERE `reference` = '$reference'"
+        );
+    }
 }
