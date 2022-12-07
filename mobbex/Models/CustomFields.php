@@ -2,7 +2,7 @@
 
 namespace Mobbex\PS\Checkout\Models;
 
-class CustomFields extends \ObjectModel
+class customFields extends AbstractModel
 {
     public $row_id;
     public $object;

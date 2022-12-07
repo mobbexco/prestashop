@@ -1,7 +1,7 @@
 <?php
 namespace Mobbex\PS\Checkout\Models;
 
-class Transaction extends \ObjectModel
+class Transaction extends AbstractModel
 {
     public $id;
     public $cart_id;
