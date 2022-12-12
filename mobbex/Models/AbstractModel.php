@@ -22,7 +22,7 @@ class AbstractModel extends \ObjectModel
     {
 
         if(_PS_VERSION_ >= Config::PS17)
-            return parent::add();
+            return parent::add(...func_get_args());
 
         if (isset($this->id) && !$this->force_id) {
             unset($this->id);
@@ -118,7 +118,7 @@ class AbstractModel extends \ObjectModel
     public function update($null_values = false)
     {
         if (_PS_VERSION_ >= Config::PS17)
-            return parent::add();
+            return parent::update(...func_get_args());
 
         // @hook actionObject*UpdateBefore
         \Hook::exec('actionObjectUpdateBefore', array('object' => $this));
@@ -240,6 +240,55 @@ class AbstractModel extends \ObjectModel
         // @hook actionObject*UpdateAfter
         \Hook::exec('actionObjectUpdateAfter', array('object' => $this));
         \Hook::exec('actionObject' . $this->getFullyQualifiedName() . 'UpdateAfter', array('object' => $this));
+
+        return $result;
+    }
+
+    /**
+     * Deletes current object from database
+     *
+     * @return bool True if delete was successful
+     * @throws PrestaShopException
+     */
+    public function delete()
+    {
+        if (_PS_VERSION_ >= Config::PS17)
+            return parent::delete(...func_get_args());
+
+        // @hook actionObject*DeleteBefore
+        \Hook::exec('actionObjectDeleteBefore', array('object' => $this));
+        \Hook::exec('actionObject' . $this->getFullyQualifiedName() . 'DeleteBefore', array('object' => $this));
+
+        $this->clearCache();
+        $result = true;
+        // Remove association to multishop table
+        if (\Shop::isTableAssociated($this->def['table'])) {
+            $id_shop_list = \Shop::getContextListShopID();
+            if (count($this->id_shop_list)) {
+                $id_shop_list = $this->id_shop_list;
+            }
+
+            $result &= \Db::getInstance()->delete($this->def['table'] . '_shop', '`' . $this->def['primary'] . '`=' . (int)$this->id . ' AND id_shop IN (' . implode(', ', $id_shop_list) . ')');
+        }
+
+        // Database deletion
+        $has_multishop_entries = $this->hasMultishopEntries();
+        if ($result && !$has_multishop_entries) {
+            $result &= \Db::getInstance()->delete($this->def['table'], '`' . bqSQL($this->def['primary']) . '` = ' . (int)$this->id);
+        }
+
+        if (!$result) {
+            return false;
+        }
+
+        // Database deletion for multilingual fields related to the object
+        if (!empty($this->def['multilang']) && !$has_multishop_entries) {
+            $result &= \Db::getInstance()->delete($this->def['table'] . '_lang', '`' . bqSQL($this->def['primary']) . '` = ' . (int)$this->id);
+        }
+
+        // @hook actionObject*DeleteAfter
+        \Hook::exec('actionObjectDeleteAfter', array('object' => $this));
+        \Hook::exec('actionObject' . $this->getFullyQualifiedName() . 'DeleteAfter', array('object' => $this));
 
         return $result;
     }
