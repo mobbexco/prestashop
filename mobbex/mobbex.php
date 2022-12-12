@@ -276,7 +276,7 @@ class Mobbex extends PaymentModule
      */
     public function createHiddenProduct($reference, $name)
     {
-        $product = new \Product(null, false, \Configuration::get('PS_LANG_DEFAULT'));
+        $product = new \Product;
         $product->hydrate([
             'reference'           => $reference,
             'name'                => $name,
@@ -286,7 +286,7 @@ class Mobbex extends PaymentModule
             'visibility'          => 'none',
             'id_category_default' => \Configuration::get('PS_HOME_CATEGORY'),
             'link_rewrite'        => $reference,
-        ]);
+        ], \Configuration::get('PS_LANG_DEFAULT'));
 
         // Save to db and return
         return $product->save()
