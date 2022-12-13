@@ -97,8 +97,12 @@ class Mobbex extends PaymentModule
         $this->createTables();
 
         // Try to create finnacial cost product
-        if (!\Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost'))
-            $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
+        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
+
+        // Always update product quantity
+        if ($product->id)
+            \StockAvailable::setQuantity($product->id, null, 9999999);
 
         return parent::install() 
             && $this->registrar->unregisterHooks($this)
@@ -272,7 +276,7 @@ class Mobbex extends PaymentModule
      * @param string $reference String to identify and get product after.
      * @param string $name The name of product.
      * 
-     * @return bool Save result.
+     * @return \Product
      */
     public function createHiddenProduct($reference, $name)
     {
@@ -288,10 +292,11 @@ class Mobbex extends PaymentModule
             'link_rewrite'        => $reference,
         ], \Configuration::get('PS_LANG_DEFAULT'));
 
-        // Save to db and return
-        return $product->save()
-            && $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'))
-            && \StockAvailable::setQuantity($product->id, null, 9999999);
+        // Save to db
+        $product->save();
+        $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'));
+
+        return $product;
     }
 
     /** HOOKS **/
