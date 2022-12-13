@@ -2,7 +2,7 @@
 
 namespace Mobbex\PS\Checkout\Models;
 
-class CustomFields extends \ObjectModel
+class CustomFields extends AbstractModel
 {
     public $row_id;
     public $object;
@@ -14,7 +14,6 @@ class CustomFields extends \ObjectModel
         'primary' => 'id',
         'multilang' => false,
         'fields' => array(
-            'id' => array('type' => self::TYPE_INT, 'required' => false),
             'row_id' => array('type' => self::TYPE_INT, 'required' => false),
             'object' => array('type' => self::TYPE_STRING, 'required' => false),
             'field_name' => array('type' => self::TYPE_STRING, 'required' => false),
@@ -44,6 +43,7 @@ class CustomFields extends \ObjectModel
         $customField->object = $object;
         $customField->field_name = $field_name;
         $customField->data = $data;
+        $customField->update = !!$previousValue;
 
         $customField->save();
     }
@@ -61,8 +61,6 @@ class CustomFields extends \ObjectModel
      */
     public static function getCustomField($row_id, $object, $field_name, $searched_column = 'data')
     {
-        $custom_field = new \Mobbex\PS\Checkout\Models\CustomFields();
-
         $sql = new \DbQuery();
         $sql->select($searched_column);
         $sql->from('mobbex_custom_fields', 'f');

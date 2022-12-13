@@ -72,7 +72,7 @@ class Config
         return \Translate::getModuleTranslation(
             'mobbex',
             $string,
-            $source,
+            $source
         );
     }
 }
