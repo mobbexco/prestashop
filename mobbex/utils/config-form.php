@@ -38,6 +38,10 @@ $widgetStyles ='
  *  'class'    => string | input class <optional>,
  * }
  * 
+ * for 'type' => number is required  to set:
+ *      'type'         => 'html',
+ *      'html_content' => '<input type="number" name="inputName">' | attributes can be included here too,
+ * 
  */
 $form = [
     'form' => [
@@ -456,7 +460,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Oreder when Processing Payment', 'config-form'),
+                'label'    => $this->l( 'Order when Processing Payment', 'config-form'),
                 'desc'     => 'The order will be created just before starting the payment instead of when receiving the webhook.',
                 'name'     => 'MOBBEX_ORDER_FIRST',
                 'key'      => 'order_first',
@@ -619,6 +623,18 @@ $form = [
                         'label' => $this->l( 'Disabled', 'config-form'),
                     ],
                 ],
+            ],
+            [
+                'type'    => 'text',
+                'label'   => $this->l ( 'Timeout', 'config-form'),
+                'hint'    => 'Set the lifetime of the Mobbex checkout once generated',
+                'desc'    => 'Establece el tiempo de vida del checkout una vez generado',
+                'name'    => 'MOBBEX_TIMEOUT',
+                'key'     => 'timeout',
+                'tab'     => 'tab_advanced',
+                'default' => 5,
+                'col'      => 3,
+                'suffix'   => 'minutos',
             ],
             [
                 'type'     => 'select',
