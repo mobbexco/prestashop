@@ -84,7 +84,10 @@ class Helper
 
     public static function getModuleUrl($controller, $action = '', $path = '')
     {
-        return \Mobbex\PS\Checkout\Models\Helper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
+        if ($action == 'webhook' && \Configuration::get('MOBBEX_DEBUG'))
+            return \Mobbex\PS\Checkout\Models\Helper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path) . '&XDEBUG_SESSION_START=PHPSTORM';
+        else
+            return \Mobbex\PS\Checkout\Models\Helper::getUrl("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
     }
 
     public static function getPlatform()
