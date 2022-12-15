@@ -2,7 +2,7 @@
 
 defined('_PS_VERSION_') || exit;
 
-class \Mobbex\PS\Checkout\Models\TaskModuleFrontController extends ModuleFrontController
+class MobbexTaskModuleFrontController extends ModuleFrontController
 {
     public function __construct()
     {
@@ -16,6 +16,6 @@ class \Mobbex\PS\Checkout\Models\TaskModuleFrontController extends ModuleFrontCo
         if ($this->module->active == false || !\Configuration::get('MOBBEX_CRON_MODE') || \Mobbex\PS\Checkout\Models\Helper::needUpgrade())
             $this->logger->log('fatal', 'task > postProcess | Task Controller Call On Module or CRON Inactive', $_REQUEST);
 
-        die(\Mobbex\PS\Checkout\Models\Task:::executePendingTasks() ? 'Tasks executed successfully' : 'Error executing one or more tasks');
+        die(\Mobbex\PS\Checkout\Models\Task::executePendingTasks() ? 'Tasks executed successfully' : 'Error executing one or more tasks');
     }
 }
