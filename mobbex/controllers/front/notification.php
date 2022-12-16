@@ -12,6 +12,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     /** @var \Mobbex\PS\Checkout\Models\Config */
     public $config;
 
+    /** @var \Mobbex\PS\Checkout\Models\OrderHelper */
+    public $helper;
+
     /** @var \Mobbex\PS\Checkout\Models\Logger */
     public $logger;
 
@@ -19,6 +22,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     {
         parent::__construct();
         $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
 
@@ -52,7 +56,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $status         = Tools::getValue('status');
 
         $customer = new Customer($customer_id);
-        $order_id = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id);
+        $order_id = $this->helper->getOrderByCartId($cart_id);
 
         // If order was not created
         if (empty($order_id)) {
@@ -62,7 +66,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             while ($seconds > 0 && !$order_id) {
                 sleep(1);
                 $seconds--;
-                $order_id = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id);
+                $order_id = $this->helper->getOrderByCartId($cart_id);
             }
         }
 
@@ -77,7 +81,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'key'           => $customer->secure_key,
             ]));
         } else {
-            $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id, true);
+            $order = $this->helper->getOrderByCartId($cart_id, true);
 
             if($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
@@ -87,7 +91,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $order->update();
                 //Restore the cart
                 $cart = new Cart($cart_id);
-                \Mobbex\PS\Checkout\Models\Helper::restoreCart($cart); 
+                $this->helper->restoreCart($cart); 
             }
 
             // Go back to checkout
@@ -108,8 +112,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
         // Get Order and transaction data
-        $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cartId, true);
-        $data = \Mobbex\PS\Checkout\Models\Helper::getTransactionData($postData['data']);
+        $order = $this->helper->getOrderByCartId($cartId, true);
+        $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
         
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
@@ -139,7 +143,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $this->orderUpdate->updateCartTotal($cartId, $data['total']);
 
                 // Create and validate Order
-                $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
+                $order = $this->helper->createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
 
                 if ($order)
                     $this->orderUpdate->updateOrderPayment($order, $data);
@@ -168,7 +172,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
             \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
 
-        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->setttings['pending_discount']){
+        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
             foreach ($order->getProductsDetail() as $product) {
                 if(!StockAvailable::dependsOnStock($product['product_id']))
                     StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);

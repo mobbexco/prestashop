@@ -7,6 +7,7 @@ class OrderUpdate
     public function __construct()
     {
         $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
     
@@ -24,7 +25,7 @@ class OrderUpdate
             $payments = $order->getOrderPaymentCollection() ?: [];
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
+            if (!$payment || self::getState($data['status']) != 'approved')
                 return false;
 
             $payment->order_reference = $order->reference;
@@ -57,7 +58,7 @@ class OrderUpdate
      */
     public function removeExpirationTasks($order)
     {
-        if (\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+        if (Updater::needUpgrade())
             return false;
 
         $tasks = $this->getExpirationTasks($order);
@@ -154,7 +155,7 @@ class OrderUpdate
      */
     public function addCartCost($cart, $amount)
     {
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $productId = $this->helper->getProductIdByReference('mobbex-cost');
 
         // Exit if product not exists or it was already added
         if (!$productId)
@@ -182,5 +183,27 @@ class OrderUpdate
         return $specificPrice->add() && (
             !empty($cart->getProductQuantity($productId)['quantity']) ?: $cart->updateQty(1, $productId)
         ); 
+    }
+
+    /**
+     * Get payment state from Mobbex status code.
+     * 
+     * @param int|string $status
+     * 
+     * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
+     */
+    public static function getState($status)
+    {
+        if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+            return 'onhold';
+        } else if ($status == 4 || $status >= 200 && $status < 400) {
+            return 'approved';
+        } else if ($status == 602 || $status == 605) {
+            return 'refunded';
+        } else if ($status == 604) {
+            return 'rejected';
+        } else {
+            return 'failed';
+        }
     }
 }

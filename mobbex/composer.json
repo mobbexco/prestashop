@@ -14,5 +14,7 @@
             "email": "info@mobbex.com"
         }
     ],
-    "require": {}
+    "require": {
+        "mobbexco/php-plugins-sdk": "^1.0"
+    }
 }
