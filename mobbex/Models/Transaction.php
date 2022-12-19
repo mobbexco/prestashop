@@ -111,7 +111,7 @@ class Transaction extends AbstractModel
     public static function formatData($res)
     {
         $data = [
-            'parent'             => self::isParentWebhook($res['payment']['operation']['type']),
+            'parent'             => self::isParentWebhook($res['payment']['id']),
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
             'status'             => (int) $res['payment']['status']['code'],
@@ -152,7 +152,6 @@ class Transaction extends AbstractModel
         } else if ($state == 'rejected') {
             $data['order_status'] = (int) (\Configuration::get('MOBBEX_ORDER_STATUS_REJECTED') ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
-
         return $data;
     }
 
@@ -163,16 +162,9 @@ class Transaction extends AbstractModel
      * @return bool true|false
      * 
      */
-    public static function isParentWebhook($operationType)
+    public static function isParentWebhook($payment_id)
     {
-        $config = new Config();
-
-        if ($operationType === "payment.v2") {
-            if ($config->settings['multicard'] || $config->settings['multivendor'])
-                return false;
-        }
-
-        return true;
+        return strpos($payment_id, 'CHD-') !== 0;
     }
 
     /**
