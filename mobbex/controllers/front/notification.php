@@ -136,13 +136,16 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 
             } else {
                 // Update cart total
-                $this->orderUpdate->updateCartTotal($cartId, $data['total']);
+                $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
 
                 // Create and validate Order
                 $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
 
                 if ($order)
                     $this->orderUpdate->updateOrderPayment($order, $data);
+
+                if(is_object($cartRule))
+                    $cartRule->delete();
             }
         }
 
