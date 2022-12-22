@@ -133,10 +133,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 }
 
                 $order->update();
-                
             } else {
-                // Update cart total
-                $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
+                // If finance charge discuount is enable, update cart total
+                if ($this->config->settings['charge_discount'])
+                    $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
 
                 // Create and validate Order
                 $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
@@ -144,7 +144,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 if ($order)
                     $this->orderUpdate->updateOrderPayment($order, $data);
 
-                if(is_object($cartRule))
+                if (!empty($cartRule) && is_object($cartRule))
                     $cartRule->delete();
             }
         }
@@ -171,7 +171,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
             \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
 
-        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->setttings['pending_discount']){
+        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
             foreach ($order->getProductsDetail() as $product) {
                 if(!StockAvailable::dependsOnStock($product['product_id']))
                     StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);

@@ -375,6 +375,29 @@ $form = [
                 ],
             ],
             [
+                'type'     => 'switch',
+                'label'    => $this->l('Enable/disable finance charge discount', 'config-form'),
+                'name'     => 'MOBBEX_DISCOUNT',
+                'key'      => 'charge_discount',
+                'default'  => true,
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'values'   => [
+                    [
+                        'id' => 'active_on_discount',
+                        'value' => true,
+                        'label' => $this->l( 'Enable', 'config-form'),
+                    ],
+                    [
+                        'id' => 'active_off_discount',
+                        'value' => false,
+                        'label' => $this->l( 'Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+
+            [
                 'type'     => 'select',
                 'label'    => $this->l( 'Multivendor', 'config-form'),
                 'desc'     => 'Allow th use of multiple vendor (4 diferent entities supported)',
