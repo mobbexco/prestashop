@@ -25,7 +25,7 @@ class OrderUpdate
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
             if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
-                return false;
+                return $payment->save() && $order->update();
 
             $payment->order_reference = $order->reference;
             $payment->id_currency     = $order->id_currency;
@@ -105,7 +105,7 @@ class OrderUpdate
 
         try {
             if ($diff > 0)
-                $this->addCartDiscount($cart, $diff);
+                return $this->addCartDiscount($cart, $diff);
             else if ($diff < 0)
                 $this->addCartCost($cart, abs($diff)) && \Cart::resetStaticCache();
 
@@ -141,7 +141,9 @@ class OrderUpdate
         ]);
 
         // Save cart rule to db and return
-        return $cartRule->add() && $cart->addCartRule($cartRule->id);
+        $cartRule->add() && $cart->addCartRule($cartRule->id);
+        //Return the cart rule to delete it
+        return $cartRule; 
     }
 
     /**
