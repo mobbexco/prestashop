@@ -1,11 +1,8 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+defined('_PS_VERSION_') || exit;
 
-function upgrade_module_2_4_0($module)
-{
+function upgrade_module_2_4_0($module) {
     // Get all plans saved using previous method
     $sql = new DbQuery();
     $sql->select('*');
