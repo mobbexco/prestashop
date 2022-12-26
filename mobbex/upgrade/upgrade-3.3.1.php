@@ -12,7 +12,7 @@ defined('_PS_VERSION_') || exit;
  * @return bool Upgrade result.
  */
 function upgrade_module_3_3_1($module) {
-    return $module->createTables()
+    return $module->installer->createTables()
         && $module->registrar->unregisterHooks($module)
         && $module->registrar->registerHooks($module)
         && $module->registrar->addExtensionHooks();
