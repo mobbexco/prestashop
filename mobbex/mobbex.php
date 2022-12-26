@@ -63,11 +63,6 @@ class Mobbex extends PaymentModule
         $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
         $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
 
-        // On 1.7.5 ignores the creation and finishes on an Fatal Error
-        // Create the States if not exists because are really important
-        if ($this::isEnabled($this->name))
-            $this->installer->createStates($this->config->orderStatuses);
-
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
 
@@ -99,6 +94,7 @@ class Mobbex extends PaymentModule
 
         return parent::install()
             && $this->installer->createTables()
+            && $this->installer->createStates($this->config->orderStatuses)
             && $this->installer->createCostProduct()
             && $this->registrar->unregisterHooks($this)
             && $this->registrar->registerHooks($this)

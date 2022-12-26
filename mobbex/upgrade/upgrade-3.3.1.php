@@ -13,6 +13,8 @@ defined('_PS_VERSION_') || exit;
  */
 function upgrade_module_3_3_1($module) {
     return $module->installer->createTables()
+        && $module->installer->createStates($module->config->orderStatuses)
+        && $module->installer->createCostProduct()
         && $module->registrar->unregisterHooks($module)
         && $module->registrar->registerHooks($module)
         && $module->registrar->addExtensionHooks();
