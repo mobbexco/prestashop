@@ -31,6 +31,9 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Registrar */
     public $registrar;
 
+    /** @var \Mobbex\PS\Checkout\Models\Installer */
+    public $installer;
+
     /**
      * Constructor
      */
@@ -57,14 +60,10 @@ class Mobbex extends PaymentModule
         $this->config    = new \Mobbex\PS\Checkout\Models\Config();
         $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
         $this->registrar = new \Mobbex\PS\Checkout\Models\Registrar();
-
-        // On 1.7.5 ignores the creation and finishes on an Fatal Error
-        // Create the States if not exists because are really important
-        if ($this::isEnabled($this->name))
-            $this->createStates();
+        $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
+        $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
 
         // Only if you want to publish your module on the Addons Marketplace
-        $this->updater    = new \Mobbex\PS\Checkout\Models\Updater();
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
@@ -92,19 +91,11 @@ class Mobbex extends PaymentModule
 
             return false;
         }
-        
-        //install Tables
-        $this->createTables();
 
-        // Try to create finnacial cost product
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
-        $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
-
-        // Always update product quantity
-        if ($product->id)
-            \StockAvailable::setQuantity($product->id, null, 9999999);
-
-        return parent::install() 
+        return parent::install()
+            && $this->installer->createTables()
+            && $this->installer->createStates($this->config->orderStatuses)
+            && $this->installer->createCostProduct()
             && $this->registrar->unregisterHooks($this)
             && $this->registrar->registerHooks($this)
             && $this->registrar->addExtensionHooks();
@@ -127,58 +118,6 @@ class Mobbex extends PaymentModule
         $this->registrar->unregisterHooks($this);
 
         return parent::uninstall();
-    }
-
-    public function createStates()
-    {
-        foreach ($this->config->orderStatuses as $key => $value) {
-            if (
-                !\Configuration::hasKey($value['name'])
-                || empty(\Configuration::get($value['name']))
-                || !\Validate::isLoadedObject(new \OrderState(\Configuration::get($value['name'])))
-            ) {
-                $order_state = new OrderState();
-                $order_state->name = array();
-
-                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
-                foreach (\Language::getLanguages() as $language)
-                    $order_state->name[$language['id_lang']] = $this->l($value['label']);
-
-                $order_state->send_email  = $value['send_email'];
-                $order_state->color       = $value['color'];
-                $order_state->module_name = $this->name;
-
-                $order_state->hidden = $order_state->delivery = $order_state->logable = $order_state->invoice = false;
-
-                // Add to database
-                $order_state->add();
-                \Configuration::updateValue($value['name'], (int) $order_state->id);
-        }
-        }
-    }
-
-    public function createTables()
-    {
-        // Get install query from sql file
-        $db = \DB::getInstance();
-        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
-
-        // If mobbex transaction table exists
-        if ($db->numRows()) {
-            // Check if table has already been modified
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-                return true;
-
-            // If it was modified but id has not auto_increment property, add to column
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
-                return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
-
-            $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/alter.sql'));
-                return $db->execute($sql);
-        }
-        
-        $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/create.sql'));
-            return $db->execute($sql);
     }
 
     /**
@@ -268,35 +207,6 @@ class Mobbex extends PaymentModule
         } catch (\PrestaShopException $e) {
             PrestaShopLogger::addLog('Mobbex Update Error: ' . $e->getMessage(), 3, null, 'Mobbex', null, true, null);
         }
-    }
-
-    /**
-     * Create a hidden product.
-     * 
-     * @param string $reference String to identify and get product after.
-     * @param string $name The name of product.
-     * 
-     * @return \Product
-     */
-    public function createHiddenProduct($reference, $name)
-    {
-        $product = new \Product;
-        $product->hydrate([
-            'reference'           => $reference,
-            'name'                => $name,
-            'quantity'            => 9999999,
-            'is_virtual'          => false,
-            'indexed'             => 0,
-            'visibility'          => 'none',
-            'id_category_default' => \Configuration::get('PS_HOME_CATEGORY'),
-            'link_rewrite'        => $reference,
-        ], \Configuration::get('PS_LANG_DEFAULT'));
-
-        // Save to db
-        $product->save();
-        $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'));
-
-        return $product;
     }
 
     /** HOOKS **/
