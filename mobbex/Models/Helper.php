@@ -317,7 +317,7 @@ class Helper
                 'type'         => $type,
                 'country'      => self::convertCountryCode($country->iso_code),
                 'street'       => trim(preg_replace('/(\D{0})+(\d*)+$/', '', trim((string)$address->address1))),
-                'streetNumber' => str_replace(preg_replace('/(\D{0})+(\d*)+$/', '', trim($address->address1)), '', trim($address->address1)),
+                'streetNumber' => str_replace(preg_replace('/(\D{0})+(\d*)+$/', '', trim((string)$address->address1)), '', trim((string)$address->address1)),
                 'streetNotes'  => !empty($address->address2) ? $address->address2 : '',
                 'zipCode'      => !empty($address->postcode) ? $address->postcode : '',
                 'city'         => !empty($address->city) ? $address->city : '',
