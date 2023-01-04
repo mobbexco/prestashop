@@ -223,7 +223,7 @@ class Mobbex extends PaymentModule
             return;
 
         $options = [];
-        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData();
+        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData(false);
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -562,7 +562,7 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData();
+        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData(false);
 
         // Make sure the assets are loaded correctly
         $this->hookDisplayHeader(true);
