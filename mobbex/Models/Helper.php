@@ -155,7 +155,7 @@ class Helper
         return 'ps_order_cart_' . $cart->id;
     }
 
-    public static function createCheckout($module, $cart, $customer)
+    public static function createCheckout($cart, $customer, $webhooks)
     {
         $curl = curl_init();
         $logger = new \Mobbex\PS\Checkout\Models\Logger();
@@ -227,6 +227,7 @@ class Helper
             'multicard'    => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTICARD) == true),
             'multivendor'  => \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR),
             'merchants'    => \Mobbex\PS\Checkout\Models\Helper::getMerchants($items),
+            'webhooksType' => $webhooks ? null : 'none'
         );
 
         $data = \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexCheckoutRequest', true, $data, $products);
@@ -254,7 +255,7 @@ class Helper
         curl_close($curl);
 
         if ($err) {
-            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Checkout Creation Error', $err);
+            $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Checkout Creation cURL Error', $err);
         } else {
             $res = json_decode($response, true);
 
@@ -267,10 +268,12 @@ class Helper
 
     /**
      * Get the payment data
+     * 
+     * @param bool $webhooks Switch checkout webhooks send.
      *
      * @return array|null
      */
-    public static function getPaymentData()
+    public static function getPaymentData($webhooks = true)
     {
         $cart = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
@@ -278,7 +281,7 @@ class Helper
         if (!$cart->id)
             return;
 
-        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: \Mobbex\PS\Checkout\Models\Helper::createCheckout(null, $cart, $customer);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: \Mobbex\PS\Checkout\Models\Helper::createCheckout($cart, $customer, $webhooks);
     }
 
     /**
