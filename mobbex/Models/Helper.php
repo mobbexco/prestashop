@@ -1202,7 +1202,7 @@ class Helper
         $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
         if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
-            return $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
+            return $logger->log('error', '\Mobbex\PS\Checkout\Models\Helper > restoreCart | Error Restoring Cart', ['cart id' => isset($cart->id) ? $cart->id : 0]);
 
         \Context::getContext()->cookie->id_cart = $result['cart']->id;
         $context = \Context::getContext();
