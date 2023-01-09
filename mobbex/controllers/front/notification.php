@@ -37,9 +37,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get current action
         $action = Tools::getValue('action');
 
-        if ($action == 'return') {
+        if ($action === 'return') {
             return $this->callback();
-        } else if ($action == 'webhook') {
+        } else if ($action === 'webhook') {
             return $this->webhook();
         }
     }
@@ -114,6 +114,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get Order and transaction data
         $order = $this->helper->getOrderByCartId($cartId, true);
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
+            
         
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
@@ -135,23 +136,23 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                     $this->orderUpdate->removeExpirationTasks($order);
                     $this->orderUpdate->updateOrderPayment($order, $data);
                 }
-
+                error_log('order status: ' . "\n" . json_encode($data['order_status'], JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
+                
                 $order->update();
                 
             } else {
                 // Update cart total
                 $this->orderUpdate->updateCartTotal($cartId, $data['total']);
-
+                
                 // Create and validate Order
                 $order = $this->helper->createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
-
+                
                 if ($order)
-                    $this->orderUpdate->updateOrderPayment($order, $data);
+                $this->orderUpdate->updateOrderPayment($order, $data);
             }
+            error_log('$order: ' . "\n" . json_encode($order, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         }
-
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
-        
     }
 
     /**

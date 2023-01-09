@@ -16,10 +16,11 @@ class Config
 
     //Add Mobbex Order Statuses
     public $orderStatuses = [
-        'mobbex_status_approved' => ['name' => 'MOBBEX_OS_APPROVED', 'label' => 'Transaction in Process', 'color' => '#5bff67', 'send_email' => true],
-        'mobbex_status_pending'  => ['name' => 'MOBBEX_OS_PENDING', 'label'  => 'Pending', 'color' => '#FEFF64', 'send_email' => false],
-        'mobbex_status_waiting'  => ['name' => 'MOBBEX_OS_WAITING', 'label'  => 'Waiting', 'color' => '#FEFF64', 'send_email' => false],
-        'mobbex_status_rejected' => ['name' => 'MOBBEX_OS_REJECTED','label'  => 'Rejected Payment', 'color' => '#8F0621', 'send_email' => false],
+        'mobbex_status_approved'   => ['name' => 'MOBBEX_OS_APPROVED', 'label' => 'Transaction in Process', 'color' => '#5bff67', 'send_email' => true],
+        'mobbex_status_pending'    => ['name' => 'MOBBEX_OS_PENDING', 'label'  => 'Pending', 'color' => '#FEFF64', 'send_email' => false],
+        'mobbex_status_waiting'    => ['name' => 'MOBBEX_OS_WAITING', 'label'  => 'Waiting', 'color' => '#FEFF64', 'send_email' => false],
+        'mobbex_status_rejected'   => ['name' => 'MOBBEX_OS_REJECTED','label'  => 'Rejected Payment', 'color' => '#8F0621', 'send_email' => false],
+        'mobbex_status_authorized' => ['name' => 'MOBBEX_OS_AUTHORIZED','label'  => 'Authorized', 'color' => '#FEFF64', 'send_email' => false],
     ];
 
     public function __construct()

@@ -85,7 +85,7 @@ class Transaction extends AbstractModel
      * Get the transactions from the db and returns an array of \Mobbex\PS\Checkout\Models\Transaction objects.
      * If param $parent is true, it returns only the parent webhook
      * 
-     * @param int $order_id
+     * @param int $cart_id
      * @param bool $parent 
      * 
      * @return array|object
@@ -143,6 +143,8 @@ class Transaction extends AbstractModel
 
         if ($state == 'onhold') {
             $data['order_status'] = (int) \Configuration::get('MOBBEX_OS_WAITING');
+        } else if ($state == 'authorized') {
+            $data['order_status'] =  (int) (\Configuration::get('MOBBEX_ORDER_STATUS_AUTHORIZED') ?: \Configuration::get('MOBBEX_OS_' . 'AUTHORIZED'));
         } else if ($state == 'approved') {
             $data['order_status'] =  (int) (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
         } else if ($state == 'failed') {
@@ -153,6 +155,7 @@ class Transaction extends AbstractModel
             $data['order_status'] = (int) (\Configuration::get('MOBBEX_ORDER_STATUS_REJECTED') ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
 
+        error_log('Log Message: ' . "\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         return $data;
     }
 

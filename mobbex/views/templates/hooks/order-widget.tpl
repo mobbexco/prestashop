@@ -99,7 +99,10 @@
             {hook h="displayMobbexOrderWidget" id="$id"}
 
         </table>
-
+ 
+        {if $capture}
+             <a id= "mobbex-capture-button-link" href="{$captureUrl}" ><button id="mobbex-capture-button">CAPTURE</button></a>
+        {/if}
     </div>
 
     {literal}
@@ -145,6 +148,28 @@
                 border-bottom: 1px solid #6f00ff;
                 margin-bottom: 20px;
             }
+
+           #mobbex-capture-button-link {
+                display: flex;
+                flex-direction: column;
+                text-decoration: none;
+            }
+            #mobbex-capture-button {
+                display: flex;
+                background-color: #6f00ff;
+                border-color: #6100e0;
+                text-decoration: inherit;
+                border-radius: 5px;
+                color: #f8f8f8;
+                flex-direction: column;
+                align-items: center;
+                margin: 0 50px;
+            }
+            #mobbex-capture-button:hover {
+                background-color: #6100e0;
+                color:#f8f8f8;
+            }
+
         </style>
     {/literal}
 

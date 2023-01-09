@@ -47,7 +47,7 @@ class Mobbex extends PaymentModule
         $this->tab             = 'payments_gateways';
         $this->version         = \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
         $this->author          = 'Mobbex Co';
-        $this->controllers     = ['notification', 'payment', 'task', 'sources'];
+        $this->controllers     = ['notification', 'payment', 'task', 'sources', 'capture'];
         $this->currencies      = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap       = true;
@@ -793,11 +793,10 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminOrder($params)
     {
-
         $order        = new \Order($params['id_order']);
         $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
-
+        
         if (!$trx)
             return;
 
@@ -815,6 +814,7 @@ class Mobbex extends PaymentModule
                 'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions)
             ]
         );
+        $trx->status == '3' ? $this->addCaptureButton($params) : '';
 
         return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
     }
@@ -971,5 +971,22 @@ class Mobbex extends PaymentModule
             ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
 
         return $option;
+    }
+
+    /**
+     * Create a capture button
+     * @param array $params
+     */
+    public function addCaptureButton($params)
+    {
+        $url     = urlencode($_SERVER['REQUEST_URI']);
+        $hash    = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
+
+        $this->smarty->assign(
+            [
+                'capture'    => true,
+                'captureUrl' =>  $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$url"),
+            ]
+        );
     }
 }

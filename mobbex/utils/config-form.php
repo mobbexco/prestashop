@@ -528,6 +528,30 @@ $form = [
                 ],
             ],
             [
+                'type'     => 'switch',
+                'label'    => $this->l( 'Enable / Disable 2-step Payment Mode', 'config-form'),
+                'hint'     => 'Payment.2steps asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido.',
+                'desc'     => 'Once activated, orders will have authorized status',
+                'name'     => 'MOBBEX_PAYMENT_MODE',
+                'key'      => 'payment_mode',
+                'default'  => 'payment.v2',
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'values'   => [
+                    [
+                        'id'    => 'payment.2-step',
+                        'value' => 'payment.2-step',
+                        'label' => $this->l( 'Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'payment.v2',
+                        'value' => 'payment.v2',
+                        'label' => $this->l( 'Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'text',
                 'label'    => $this->l( 'Cancelar pedidos pendientes luego de', 'config-form'),
                 'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
@@ -643,6 +667,21 @@ $form = [
                 'name'     => 'MOBBEX_ORDER_STATUS_APPROVED',
                 'key'      => 'order_status_approved',
                 'default'  => \Configuration::get('PS_OS_PAYMENT'),
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'options'  => [
+                    'query' => \OrderState::getOrderStates(\Context::getContext()->language->id) ?: [],
+                    'id'    => 'id_order_state',
+                    'name'  => 'name'
+                ]
+            ],
+            [
+                'type'     => 'select',
+                'label'    => $this->l( 'Order Status Authorized', 'config-form'),
+                'desc'     => 'Select the status for authorized orders.',
+                'name'     => 'MOBBEX_ORDER_STATUS_AUTHORIZED',
+                'key'      => 'order_status_authorized',
+                'default'  => \Configuration::get('MOBBEX_OS_PAYMENT'),
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'options'  => [
