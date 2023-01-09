@@ -660,6 +660,28 @@ $form = [
                 'suffix'   => 'minutos',
             ],
             [
+                'type'    => 'switch',
+                'label'   => $this->l('Procesar Reintentos de Webhooks', 'config-form'),
+                'hint'    => 'Los reintentos de webhooks se procesarán y modificarán al pedido. Si se desactiva sólo se guardarán en la base de datos.',
+                'name'    => 'MOBBEX_PROCESS_WEBHOOK_RETRIES',
+                'key'     => 'process_webhook_retries',
+                'tab'     => 'tab_advanced',
+                'default' => true,
+                'is_bool' => true,
+                'values'  => [
+                    [
+                        'id'    => 'active_on_process_webhook_retries',
+                        'value' => true,
+                        'label' => $this->l('Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'active_off_process_webhook_retries',
+                        'value' => false,
+                        'label' => $this->l('Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'select',
                 'label'    => $this->l( 'Order Status Approved', 'config-form'),
                 'desc'     => 'Select the status for approved orders.',

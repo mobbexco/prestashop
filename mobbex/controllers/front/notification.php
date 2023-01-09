@@ -107,14 +107,19 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!$cartId || !isset($postData['data']))
             $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
-        // Get Order and transaction data
+        // Get cart and order
+        $cart  = new \Cart($cartId);
         $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cartId, true);
-        $data = \Mobbex\PS\Checkout\Models\Helper::getTransactionData($postData['data']);
-        
-        // Save webhook data
-        \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
-        // Only parent webhook can modify the order
+        // Format data and save trx to db
+        $data = \Mobbex\PS\Checkout\Models\Helper::getTransactionData($postData['data']);
+        $trx  = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+
+        // Check if it is a retry webhook and if process is allowed
+        if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())
+            die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
+
+        // Only process if it is a parent webhook
         if ($data['parent']) {
             // Aditional webhook process
             \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, json_decode($data['data'], true), $cartId);
