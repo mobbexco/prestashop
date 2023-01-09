@@ -81,7 +81,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
             if($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
-                $this->updateStock($order, Configuration::get('PS_OS_CANCELED'));
+                $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
                 $order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
                 $order->update();
@@ -131,7 +131,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
                 // Update order status only if it was not updated recently
                 if ($order->getCurrentState() != $data['order_status']) {
-                    $this->updateStock($order, $data['order_status']);
+                    $this->orderUpdate->updateStock($order, $data['order_status']);
                     $order->setCurrentState($data['order_status']);
                     $this->orderUpdate->removeExpirationTasks($order);
                     $this->orderUpdate->updateOrderPayment($order, $data);
@@ -157,41 +157,4 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
         
     }
-
-    /**
-     * Update the stock of the product by discounting or refunding as the case may be.
-     * @param Order $order
-     * @param string $status
-     */
-    public function updateStock($order, $status)
-    {
-        $refund_status = [
-            Configuration::get('PS_OS_ERROR'), 
-            Configuration::get('PS_OS_CANCELLED'), 
-            Configuration::get('MOBBEX_OS_REJECTED'), 
-            Configuration::get('MOBBEX_OS_WAITING'), 
-            Configuration::get('MOBBEX_OS_PENDING')
-        ];
-
-        if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
-            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
-
-        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
-            foreach ($order->getProductsDetail() as $product) {
-                if(!StockAvailable::dependsOnStock($product['product_id']))
-                    StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
-            }
-        }
-
-        if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
-            if($status === Configuration::get('MOBBEX_OS_REJECTED') || $status === Configuration::get('MOBBEX_OS_WAITING')){
-                foreach ($order->getProductsDetail() as $product) {
-                    if(!StockAvailable::dependsOnStock($product['product_id']))
-                        StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
-                }
-                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
-            }
-        }
-    }
-
 }
