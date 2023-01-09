@@ -101,6 +101,8 @@ class Transaction extends AbstractModel
         $trx->updated            = $data['updated'];
 
         $trx->save();
+
+        return $trx;
     }
 
     /**
@@ -133,5 +135,17 @@ class Transaction extends AbstractModel
     public static function getParentTransaction($cartId)
     {
         return new \Mobbex\PS\Checkout\Models\Transaction(\Db::getInstance()->getValue('SELECT id FROM ' . _DB_PREFIX_ . 'mobbex_transaction WHERE cart_id = ' . $cartId . ' and parent = 1  ORDER BY id DESC')); 
+    }
+
+    /**
+     * Check if the current transaction is a retry.
+     * 
+     * @return bool
+     */
+    public function isRetry()
+    {
+        return (bool) \Db::getInstance()->getValue(
+            "SELECT id FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE payment_id = $this->payment_id AND status_code = $this->status_code AND id != $this->id ORDER BY id DESC"
+        ); 
     }
 }
