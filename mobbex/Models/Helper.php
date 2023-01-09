@@ -390,6 +390,7 @@ class Helper
             'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
             'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '',
             'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '',
+            'checkout_total'     => isset($res['checkout']['total']) ? $res['checkout']['total'] : 0,
             'total'              => isset($res['payment']['total']) ? $res['payment']['total'] : '',
             'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '',
             'risk_analysis'      => isset($res['payment']['riskAnalysis']['level']) ? $res['payment']['riskAnalysis']['level'] : '',

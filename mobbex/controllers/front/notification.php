@@ -121,7 +121,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // Only process if it is a parent webhook
         if ($data['parent']) {
-            $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cartId, $data, $trx);
+            $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cart, $data, $trx);
 
             // Aditional webhook process
             \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $postData['data'], $cartId);
@@ -158,18 +158,38 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     /**
      * Create an order from a cart and transaction.
      * 
-     * @param int $cartId
+     * @param \Cart $cart
      * @param array $data Formatted webhook data.
      * @param \MobbexTransaction $trx
      */
-    public function createOrder($cartId, $data, $trx)
+    public function createOrder($cart, $data, $trx)
     {
+        // Exit if it is a expired operation
+        if ($trx->status_code == 401)
+            return;
+
+        // Exit if order first mode is enabled
+        if ($this->config->settings['order_first'])
+            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Trying to create order on webhook with order first mode', [
+                'cart'        => $cart->id,
+                'transaction' => $trx->id,
+            ]);
+
+        // Exit if cart was modified
+        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5)
+            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Difference found between cart and checkout totals', [
+                'cart'          => $cart->id,
+                'transaction'   => $trx->id,
+                'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
+                'checkoutTotal' => $data['checkout_total'],
+            ]);
+
         // If finance charge discuount is enable, update cart total
         if ($this->config->settings['charge_discount'])
-            $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
+            $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
+        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cart->id, $trx->status, $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);
