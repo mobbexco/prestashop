@@ -16,7 +16,7 @@ class OrderUpdate
      * @param \Order $order
      * @param array $data Transaction data.
      * 
-     * @return bool Result of update.
+     * @return bool|null Result of update. Null if not applicable.
      */
     public function updateOrderPayment($order, $data)
     {
@@ -25,7 +25,11 @@ class OrderUpdate
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
             if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
-                return $payment->save() && $order->update();
+                return;
+
+            // First, decode jsons to use data safely
+            $sourceExpiration = json_decode($data['source_expiration'], true); // chemes
+            $cardHolder       = json_decode($data['cardholder'], true);
 
             $payment->order_reference = $order->reference;
             $payment->id_currency     = $order->id_currency;
@@ -34,8 +38,8 @@ class OrderUpdate
             $payment->payment_method  = $data['source_name'];
             $payment->transaction_id  = $data['payment_id'] ?: null;
             $payment->card_number     = $data['source_number'] ?: null;
-            $payment->card_expiration = $data['source_expiration'] ? implode('/', json_decode($data['source_expiration'], true)) : null;
-            $payment->card_holder     = $data['cardholder'] ? json_decode($data['cardholder'], true)['name'] : null;
+            $payment->card_expiration = $sourceExpiration ? implode('/', $sourceExpiration) : null;
+            $payment->card_holder     = isset($cardHolder['name']) ? $cardHolder['name'] : null;
             $payment->card_brand      = $data['source_type'];
 
             // If is new payment, update order real paid
@@ -44,8 +48,10 @@ class OrderUpdate
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
-            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', [ 'data ' => $e->getMessage(), 'order id' => $order->id]);
+            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', ['msg' => $e->getMessage(), 'order_id' => $order->id]);
         }
+
+        return false;
     }
 
     /**
