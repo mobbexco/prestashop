@@ -121,40 +121,60 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // Only process if it is a parent webhook
         if ($data['parent']) {
+            $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cartId, $data, $trx);
+
             // Aditional webhook process
-            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, json_decode($data['data'], true), $cartId);
-
-            // If Order exists
-            if ($order) {
-                if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
-                    $order->payment = $data['source_name'];
-
-                // Update order status only if it was not updated recently
-                if ($order->getCurrentState() != $data['order_status']) {
-                    $this->orderUpdate->updateStock($order, $data['order_status']);
-                    $order->setCurrentState($data['order_status']);
-                    $this->orderUpdate->removeExpirationTasks($order);
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-                }
-
-                $order->update();
-            } else {
-                // If finance charge discuount is enable, update cart total
-                if ($this->config->settings['charge_discount'])
-                    $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
-
-                // Create and validate Order
-                $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
-
-                if ($order)
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-
-                if (!empty($cartRule) && is_object($cartRule))
-                    $cartRule->delete();
-            }
+            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $postData['data'], $cartId);
         }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
-        
+    }
+
+    /**
+     * Update order data using a parent transaction.
+     * 
+     * @param \Order $order
+     * @param array $data Formatted webhook data.
+     * @param \MobbexTransaction $trx
+     * 
+     * @return mixed Update result.
+     */
+    public function updateOrder($order, $data, $trx)
+    {
+        if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
+            $order->payment = $data['source_name'];
+
+        // Update order status only if it was not updated recently
+        if ($order->getCurrentState() != $data['order_status']) {
+            $this->orderUpdate->updateStock($order, $data['order_status']);
+            $order->setCurrentState($data['order_status']);
+            $this->orderUpdate->removeExpirationTasks($order);
+            $this->orderUpdate->updateOrderPayment($order, $data);
+        }
+
+        $order->update();
+    }
+
+    /**
+     * Create an order from a cart and transaction.
+     * 
+     * @param int $cartId
+     * @param array $data Formatted webhook data.
+     * @param \MobbexTransaction $trx
+     */
+    public function createOrder($cartId, $data, $trx)
+    {
+        // If finance charge discuount is enable, update cart total
+        if ($this->config->settings['charge_discount'])
+            $cartRule = $this->orderUpdate->updateCartTotal($cartId, $data['total']);
+
+        // Create and validate Order
+        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
+
+        if ($order)
+            $this->orderUpdate->updateOrderPayment($order, $data);
+
+        if (!empty($cartRule) && is_object($cartRule))
+            $cartRule->delete();
     }
 }
