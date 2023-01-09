@@ -371,10 +371,10 @@ class Helper
     public static function getTransactionData($res)
     {
         $data = [
-            'parent'             => \Mobbex\PS\Checkout\Models\Helper::isParentWebhook($res['payment']['operation']['type']),
+            'parent'             => isset($res['payment']['id']) ? self::isParentWebhook($res['payment']['id']) : false,
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
-            'status'             => (int) $res['payment']['status']['code'],
+            'status'             => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] :0,
             'order_status'       => (int) \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_OS_PENDING),
             'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
             'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
@@ -417,20 +417,15 @@ class Helper
     }
 
     /**
-     * Receives the webhook "opartion type" and return true if the webhook is parent and false if not
+     * Check if webhook is parent type using him payment id.
      * 
-     * @param string $operationType
-     * @return bool true|false
+     * @param string $paymentId
      * 
+     * @return bool
      */
-    public static function isParentWebhook($operationType)
+    public static function isParentWebhook($paymentId)
     {
-        if ($operationType === "payment.v2") {
-            if (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTICARD) || \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTIVENDOR))
-                return false;
-        }
-
-        return true;
+        return strpos($paymentId, 'CHD-') !== 0;
     }
 
     /**
