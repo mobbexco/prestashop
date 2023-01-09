@@ -106,6 +106,10 @@ class OrderUpdate
         if (is_numeric($cart))
             $cart = new \Cart($cart);
 
+        // Exit if amount is invalid
+        if (!$amount)
+            return;
+
         // Calculate amount diff
         $diff = (float) $cart->getOrderTotal() - $amount;
 
