@@ -106,6 +106,10 @@ class OrderUpdate
         if (is_numeric($cart))
             $cart = new \Cart($cart);
 
+        // Exit if amount is invalid
+        if (!$amount)
+            return;
+
         // Calculate amount diff
         $diff = (float) $cart->getOrderTotal() - $amount;
 
@@ -190,5 +194,42 @@ class OrderUpdate
         return $specificPrice->add() && (
             !empty($cart->getProductQuantity($productId)['quantity']) ?: $cart->updateQty(1, $productId)
         ); 
+    }
+
+    /**
+     * Update order status from webhook data.
+     * 
+     * @param OrderInterface $order
+     * @param int|string $data
+     */
+    public function updateStock($order, $status)
+    {
+        $refund_status = [
+            \Configuration::get('PS_OS_ERROR'), 
+            \Configuration::get('PS_OS_CANCELLED'), 
+            \Configuration::get('MOBBEX_OS_REJECTED'), 
+            \Configuration::get('MOBBEX_OS_WAITING'), 
+            \Configuration::get('MOBBEX_OS_PENDING')
+        ];
+
+        if(in_array($order->getCurrentState(), $refund_status) || $status === \Configuration::get('PS_OS_CANCELLED') || $status === \Configuration::get('PS_OS_ERROR'))
+            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+
+        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
+            foreach ($order->getProductsDetail() as $product) {
+                if(!\StockAvailable::dependsOnStock($product['product_id']))
+                    \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
+            }
+        }
+
+        if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
+            if($status === \Configuration::get('MOBBEX_OS_REJECTED') || $status === \Configuration::get('MOBBEX_OS_WAITING')){
+                foreach ($order->getProductsDetail() as $product) {
+                    if(!\StockAvailable::dependsOnStock($product['product_id']))
+                        \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
+                }
+                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+            }
+        }
     }
 }
