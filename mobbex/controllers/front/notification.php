@@ -54,8 +54,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $customer = new Customer($customer_id);
         $order_id = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id);
 
-        // If order was not created
-        if (empty($order_id)) {
+        // If order was not created and is creable on webhook
+        if (empty($order_id) && $status != 401) {
             $seconds = $this->config->settings['redirect_time'] ?: 10;
 
             // Wait for webhook
@@ -79,7 +79,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } else {
             $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id, true);
 
-            if($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
+            if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
                 $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
