@@ -141,18 +141,31 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
      */
     public function updateOrder($order, $data, $trx)
     {
+        // Exit if it is a expired operation and the order has already been paid
+        if ($trx->status_code == 401 && $order->hasBeenPaid())
+            return;
+
+        // Notify if is updating an order created by other module
+        if (!$order->module != 'mobbex')
+            $this->logger->log('debug', 'notification > updateOrder | Updating an order created by other module', [
+                'module'      => $order->module,
+                'order'       => $order->id,
+                'transaction' => $trx->id,
+            ]);
+
         if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
             $order->payment = $data['source_name'];
 
         // Update order status only if it was not updated recently
-        if ($order->getCurrentState() != $data['order_status']) {
-            $this->orderUpdate->updateStock($order, $data['order_status']);
-            $order->setCurrentState($data['order_status']);
-            $this->orderUpdate->removeExpirationTasks($order);
-            $this->orderUpdate->updateOrderPayment($order, $data);
-        }
+        if ($order->getCurrentState() == $data['order_status'])
+            return $order->update();
 
-        $order->update();
+        $this->orderUpdate->updateStock($order, $data['order_status']);
+        $order->setCurrentState($data['order_status']);
+        $this->orderUpdate->removeExpirationTasks($order);
+        $this->orderUpdate->updateOrderPayment($order, $data);
+
+        return $order->update();
     }
 
     /**
