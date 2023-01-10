@@ -406,6 +406,8 @@ class Helper
             $data['order_status'] = (int) \Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_OS_WAITING);
         } else if ($state == 'approved') {
             $data['order_status'] =  (int) (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_APPROVED) ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
+        } else if ($state == 'expired') {
+            $data['order_status'] = (int) \Configuration::get('MOBBEX_OS_EXPIRED');
         } else if ($state == 'failed') {
             $data['order_status'] = (int) (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_ORDER_STATUS_FAILED) ?: \Configuration::get('PS_OS_' . 'ERROR'));
         } else if ($state == 'refunded') {
@@ -905,6 +907,8 @@ class Helper
             return 'onhold';
         } else if ($status == 4 || $status >= 200 && $status < 400) {
             return 'approved';
+        } else if ($status == 401) {
+            return 'expired';
         } else if ($status == 602 || $status == 605) {
             return 'refunded';
         } else if ($status == 604) {
