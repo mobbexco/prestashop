@@ -106,12 +106,18 @@ class OrderUpdate
         if (is_numeric($cart))
             $cart = new \Cart($cart);
 
+        $cartTotal = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+
         // Exit if amount is invalid
-        if (!$amount)
-            return;
+        if (!$amount || !$cartTotal)
+            return $this->logger->log('error', 'OrderUpdate > updateCartTotal | Invalid amounts updating cart total', [
+                'cart'      => $cart->id,
+                'cartTotal' => $cartTotal,
+                'totalPaid' => $amount,
+            ]);
 
         // Calculate amount diff
-        $diff = (float) $cart->getOrderTotal() - $amount;
+        $diff = $cartTotal - $amount;
 
         try {
             if ($diff > 0)
