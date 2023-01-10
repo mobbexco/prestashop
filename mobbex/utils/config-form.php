@@ -530,7 +530,7 @@ $form = [
             [
                 'type'     => 'switch',
                 'label'    => $this->l( 'Enable / Disable 2-step Payment Mode', 'config-form'),
-                'hint'     => 'Payment.2steps asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido.',
+                'hint'     => 'El modo de pago en dos pasos asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido.',
                 'desc'     => 'Once activated, orders will have authorized status',
                 'name'     => 'MOBBEX_PAYMENT_MODE',
                 'key'      => 'payment_mode',
@@ -541,12 +541,12 @@ $form = [
                 'values'   => [
                     [
                         'id'    => 'payment.2-step',
-                        'value' => 'payment.2-step',
+                        'value' => true,
                         'label' => $this->l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'payment.v2',
-                        'value' => 'payment.v2',
+                        'value' => false,
                         'label' => $this->l( 'Disabled', 'config-form'),
                     ],
                 ],
