@@ -406,13 +406,12 @@ class Mobbex extends PaymentModule
 
     public function hookActionEmailSendBefore($params)
     {
-
         if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
             $order = new \Order($params['templateVars']['id_order']);
 
             // If current order state is not approved, block mail sending
             if ($order->getCurrentState() != \Configuration::get('PS_OS_PAYMENT'))
-            return false;
+                return false;
         }
     }
 
