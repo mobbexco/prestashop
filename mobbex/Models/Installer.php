@@ -28,9 +28,19 @@ class Installer
             $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/alter.sql'));
                 return $db->execute($sql);
         }
-        
-        $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/create.sql'));
-            return $db->execute($sql);
+
+        foreach (['customfields', 'task', 'transaction'] as $table) {
+            $query = str_replace(
+                ['DB_PREFIX_', 'ENGINE_TYPE'],
+                [_DB_PREFIX_, _MYSQL_ENGINE_],
+                file_get_contents(dirname(__FILE__) . "/../sql/$table.sql")
+            );
+
+            if (!$db->execute($query))
+                return false;
+        }
+
+        return true;
     }
 
     /**
