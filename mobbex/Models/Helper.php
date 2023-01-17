@@ -187,7 +187,7 @@ class Helper
                     "image"       => 'https://' . $imagePath,
                     "description" => $product['name'],
                     "quantity"    => $product['cart_quantity'],
-                    "total"       => round($product['price_wt'], 2),
+                    "total"       => round($product['total_wt'], 2),
                     "entity"      => self::getProductEntity($prd),
                 ];
             }
