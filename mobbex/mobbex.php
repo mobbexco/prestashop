@@ -67,7 +67,7 @@ class Mobbex extends PaymentModule
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
-        if (!defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
             define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 

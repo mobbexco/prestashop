@@ -40,6 +40,7 @@ class Registrar
         'displayProductPriceBlock',
         'displayExpressCheckout',
         'ActionAfterUpdateCategoryFormHandler',
+        'actionEmailSendBefore',
     ];
 
     /**
