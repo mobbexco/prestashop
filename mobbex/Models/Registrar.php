@@ -11,8 +11,6 @@ class Registrar
         'displayAdminProductsExtra',
         'actionAdminProductsControllerSaveBefore',
         'displayBackOfficeCategory',
-        'categoryAddition',
-        'categoryUpdate',
         'displayPDFInvoice',
         'displayBackOfficeHeader',
         'paymentReturn',
@@ -24,6 +22,8 @@ class Registrar
     public $ps16Hooks = [
         'payment',
         'header',
+        'categoryUpdate',
+        'categoryAddition',
         'displayMobileHeader',
         'displayProductButtons',
         'displayCustomerAccountForm',
@@ -39,6 +39,7 @@ class Registrar
         'actionObjectCustomerAddAfter',
         'displayProductPriceBlock',
         'displayExpressCheckout',
+        'ActionAfterCreateCategoryFormHandler',
         'ActionAfterUpdateCategoryFormHandler',
         'actionEmailSendBefore',
     ];

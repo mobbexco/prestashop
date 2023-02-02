@@ -352,20 +352,44 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Executes when hook ActionCategoryUpdate is fired. (Used to update category options).
+     * Update category options (ps 1.6 only).
      */
-    public function hookActionCategoryUpdate()
+    public function hookActionCategoryAdd($params)
     {
-        $this->hookActionAfterUpdateCategoryFormHandler();
+        $this->hookActionCategoryUpdate($params);
+    }
+
+    /**
+     * Update category options (ps 1.6 only).
+     */
+    public function hookActionCategoryUpdate($params)
+    {
+        $this->saveCatalogOptions(
+            isset($params['category']->id) ? $params['category']->id :  \Tools::getValue('id_category'),
+            'category'
+        );
+    }
+
+    /**
+     * Executes when hook ActionAfterCreateCategoryFormHandler is fired. (Used to update category options).
+     */
+    public function hookActionAfterCreateCategoryFormHandler($params)
+    {
+        $this->saveCatalogOptions(
+            !empty($params['id']) ? $params['id'] : \Tools::getValue('id_category'),
+            'category'
+        );
     }
 
     /**
      * Executes when hook ActionAfterUpdateCategoryFormHandler is fired. (Used to update category options).
      */
-    public function hookActionAfterUpdateCategoryFormHandler()
+    public function hookActionAfterUpdateCategoryFormHandler($params)
     {
-        $id = !empty($params['request']) ? $params['request']->get('categoryId') : \Tools::getValue('id_category');
-        $this->saveCatalogOptions($id, 'category');
+        $this->saveCatalogOptions(
+            !empty($params['id']) ? $params['id'] : \Tools::getValue('id_category'),
+            'category'
+        );
     }
 
     /**
