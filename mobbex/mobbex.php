@@ -483,7 +483,7 @@ class Mobbex extends PaymentModule
             \Mobbex\PS\Checkout\Models\Helper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if ($this->config->settings['embed'])
-            \Mobbex\PS\Checkout\Models\Helper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js');
+            \Mobbex\PS\Checkout\Models\Helper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.23.js');
         }
     }
 
