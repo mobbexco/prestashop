@@ -177,8 +177,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
      */
     public function createOrder($cart, $data, $trx)
     {
-        // Exit if it is a expired operation
-        if ($trx->status_code == 401)
+        // Create only if payment was approved or holded
+        if (!in_array(\Mobbex\PS\Checkout\Models\Helper::getState($trx->status_code), ['approved', 'onhold']))
             return;
 
         // Exit if order first mode is enabled
