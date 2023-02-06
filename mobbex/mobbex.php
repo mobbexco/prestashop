@@ -262,13 +262,15 @@ class Mobbex extends PaymentModule
 
         // Get wallet cards
         foreach ($cards as $key => $card) {
-            $options[] = $this->createPaymentOption(
-                $card['name'],
-                null,
-                $card['source']['card']['product']['logo'],
-                'module:mobbex/views/templates/front/card-form.tpl',
-                compact('card', 'key')
-            );
+            if($card['installments']) {
+                $options[] = $this->createPaymentOption(
+                    $card['name'],
+                    null,
+                    $card['source']['card']['product']['logo'],
+                    'module:mobbex/views/templates/front/card-form.tpl',
+                    compact('card', 'key')
+                );
+            }
         }
 
         $this->logger->log('debug', 'Observer > hookPaymentOptions', $options);
