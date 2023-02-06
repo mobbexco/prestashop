@@ -312,6 +312,7 @@ class Helper
     public static function getAddresses($cart)
     {
         $address = [];
+
         foreach (['shipping' => 'id_address_delivery', 'billing' => 'id_address_invoice'] as $type => $value) {
 
             $address = new \Address($cart->$value);
@@ -321,8 +322,8 @@ class Helper
             $addresses[] = [
                 'type'         => $type,
                 'country'      => self::convertCountryCode($country->iso_code),
-                'street'       => trim(preg_replace('/(\D{0})+(\d*)+$/', '', trim($address->address1))),
-                'streetNumber' => str_replace(preg_replace('/(\D{0})+(\d*)+$/', '', trim($address->address1)), '', trim($address->address1)),
+                'street'       => trim(preg_replace('/(\D{0})+(\d*)+$/', '', trim((string)$address->address1))),
+                'streetNumber' => str_replace(preg_replace('/(\D{0})+(\d*)+$/', '', trim((string)$address->address1)), '', trim((string)$address->address1)),
                 'streetNotes'  => !empty($address->address2) ? $address->address2 : '',
                 'zipCode'      => !empty($address->postcode) ? $address->postcode : '',
                 'city'         => !empty($address->city) ? $address->city : '',
