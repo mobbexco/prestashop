@@ -367,7 +367,7 @@ class Mobbex extends PaymentModule
     public function hookActionCategoryUpdate($params)
     {
         $this->saveCatalogOptions(
-            isset($params['category']->id) ? $params['category']->id :  \Tools::getValue('id_category'),
+            isset($params['category']->id) ? $params['category']->id : \Tools::getValue('id_category'),
             'category'
         );
     }
