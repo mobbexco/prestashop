@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 3.5.0
+ * @version 3.5.1
  * @see     PaymentModuleCore
  */
 
@@ -367,7 +367,7 @@ class Mobbex extends PaymentModule
     public function hookActionCategoryUpdate($params)
     {
         $this->saveCatalogOptions(
-            isset($params['category']->id) ? $params['category']->id :  \Tools::getValue('id_category'),
+            isset($params['category']->id) ? $params['category']->id : \Tools::getValue('id_category'),
             'category'
         );
     }
