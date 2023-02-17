@@ -96,7 +96,6 @@ class Transaction extends AbstractModel
     public static function getTransactions($cart_id, $parent = false)
     {
         $data = \Db::getInstance()->executes('SELECT * FROM ' . _DB_PREFIX_ . 'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ($parent ? ' and parent = 1' : '') . ' ORDER BY id DESC');
-        $transactions = [];
 
         foreach ($data as $value)
             $transactions[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
@@ -181,88 +180,97 @@ class Transaction extends AbstractModel
     /**
      * Return the list of sources from the weebhook and filter them
      * 
-     * @param object $transactions
+     * @param object $parent
+     * @param array  $childs
      * @return array $sources
      * 
      */
-    public static function getTransactionsSources($transactions)
+    public static function getTransactionsSources($parent, $childs)
     {
-        $sources = [];
-
-        if ($transactions->source_name == 'multicard') :
-            foreach ($transactions as $transaction) :
-                if (!$transaction->source_type) :
-                    $sources = self::formatChilds($transactions);
-                else :
-                    $sources[] = [
-                        'source_type'      => $transaction->source_type,
-                        'source_name'      => $transaction->source_name,
-                        'source_number'    => $transaction->source_number,
-                        'installment_name' => $transaction->installment_name,
-                        'total'            => $transaction->total,
-                    ];
-                endif;
-            endforeach;
-        else :
+        if ($parent->source_name == 'multicard' && !empty($childs))
+            foreach ($childs as $child)
+                $sources[] = [
+                    'source_type'      => $child->source_type,
+                    'source_name'      => $child->source_name,
+                    'source_number'    => $child->source_number,
+                    'installment_name' => $child->installment_name,
+                    'total'            => $child->total,
+                ];
+        else
             $sources[] = [
-                'source_type'      => $transactions->source_type,
-                'source_name'      => $transactions->source_name,
-                'source_number'    => $transactions->source_number,
-                'installment_name' => $transactions->installment_name,
-                'total'            => $transactions->total,
+                'source_type'      => $parent->source_type,
+                'source_name'      => $parent->source_name,
+                'source_number'    => $parent->source_number,
+                'installment_name' => $parent->installment_name,
+                'total'            => $parent->total,
             ];
-        endif;
         return $sources;
     }
 
     /**
      * Return the list of entities from the weebhook and filter them.
      * 
-     * @param object $transactions
+     * @param object $parent
+     * @param array  $childs
      * @return array $entities
      * 
      */
-    public static function getTransactionsEntities($transactions)
+    public static function getTransactionsEntities($parent, $childs)
     {
-        $entities = [];
-
-        if ($transactions->source_name != 'multicard') :
-            foreach ($transactions as $transaction) :
-                if (!$transaction->entity_uid) :
-                    $entities = self::formatChilds($transactions);
-                else :
-                    foreach ($transactions as $transaction) :
-                        $entities[] = [
-                            'entity_uid'  => $transaction->entity_uid,
-                            'entity_name' => $transaction->entity_name,
-                        ];
-                    endforeach;
-                endif;
-            endforeach;
-        else :
+        if ($parent->source_name != 'multicard' && !empty($childs))
+            foreach ($childs as $child)
+                $entities[] = [
+                    'entity_uid'  => $child->entity_uid,
+                    'entity_name' => $child->entity_name,
+                ];
+        else
             $entities[] = [
-                'entity_uid'  => $transactions->entity_uid,
-                'entity_name' => $transactions->entity_name,
+                'entity_uid'  => $parent->entity_uid,
+                'entity_name' => $parent->entity_name,
             ];
-        endif;
         return $entities;
     }
 
     /**
-     * Formats childs data
+     * Get childs data from webhook and create an array of transactions
      * 
-     * @param  object $parent
-     * @return array $entities
+     * @return array $childs
      * 
      */
-    public static function formatChilds($parent)
+    public function getChilds()
     {
-        $childs = json_decode($parent->childs, true);
+        if (!empty($this->childs)) :
+            foreach (json_decode($this->childs, true) as $childData)
+                return $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
+        else :
+            return $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadChildTransactions();
+        endif;
+    }
 
-        foreach ($childs as $child) {
-            $entities[] = self::formatData($child);
-        }
-        return $entities;
+    /**
+     * Create a new transaction with childs data from childs node
+     * 
+     * @param  array  $childData
+     * @return object $this
+     * 
+     */
+    public function loadFromWebhookData($childData)
+    {
+        $formatedData = self::formatData($childData);
+
+        foreach ($formatedData as $key => $value)
+            $this->$key = $value;
+        return $this;
+    }
+
+    /**
+     * Create a new transaction with childs data from webhook childs transactions
+     * 
+     */
+    public function loadChildTransactions()
+    {
+        $trx = new \PrestaShopCollection('\Mobbex\PS\Checkout\Models\Transaction');
+        return $trx->sqlWhere("`parent` = '0' AND `cart_id` ='" . $this->id . "'") ? $trx->getResults() : [];
     }
 
     /**

@@ -796,10 +796,11 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminOrder($params)
     {
+        $order  = new \Order($params['id_order']);
 
-        $order        = new \Order($params['id_order']);
-        $parent       = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-        $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
+        //Get transaction data
+        $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
+        $childs = !empty($parent->getChilds()) ? $parent->getChilds() : [] ;
 
         if (!$parent)
             return;
@@ -814,8 +815,8 @@ class Mobbex extends PaymentModule
                     'total'          => $parent->total,
                     'status_message' => $parent->status_message,
                 ],
-                'sources'  => !empty($parent->childs) ? \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent) : \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions),
-                'entities' => !empty($parent->childs) ? \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent) : \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions),
+                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
+                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
                 'coupon'   => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
             ]
         );
