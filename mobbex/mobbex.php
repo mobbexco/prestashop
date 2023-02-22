@@ -800,7 +800,7 @@ class Mobbex extends PaymentModule
 
         //Get transaction data
         $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-        $childs = !empty($parent->getChilds()) ? $parent->getChilds() : [] ;
+        $childs = !empty($parent->childs) ? $parent->getChilds() : $parent->loadChildTransactions();
 
         if (!$parent)
             return;

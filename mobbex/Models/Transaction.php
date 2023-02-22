@@ -239,12 +239,10 @@ class Transaction extends AbstractModel
      */
     public function getChilds()
     {
-        if (!empty($this->childs)) :
+        if (!empty($this->childs))
             foreach (json_decode($this->childs, true) as $childData)
-                return $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
-        else :
-            return $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadChildTransactions();
-        endif;
+                $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
+        return $childs;
     }
 
     /**
