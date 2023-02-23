@@ -158,13 +158,13 @@ class Transaction extends AbstractModel
     /**
      * Receives the webhook "opartion type" and return true if the webhook is parent and false if not
      * 
-     * @param string $operationType
+     * @param string $paymentId
      * @return bool true|false
      * 
      */
-    public static function isParentWebhook($payment_id)
+    public static function isParentWebhook($paymentId)
     {
-        return strpos($payment_id, 'CHD-') !== 0;
+        return strpos($paymentId, 'CHD-') !== 0;
     }
 
     /**
