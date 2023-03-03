@@ -209,7 +209,7 @@ class Helper
 
         // Create data
         $data = array(
-            'reference'    => \Mobbex\PS\Checkout\Models\Helper::getReference($cart) . 'asd898ads00',
+            'reference'    => \Mobbex\PS\Checkout\Models\Helper::getReference($cart),
             'currency'     => 'ARS',
             'description'  => 'Carrito #' . $cart->id,
             'test'         => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_TEST_MODE) == true),
