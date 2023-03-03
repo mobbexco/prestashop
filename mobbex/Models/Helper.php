@@ -209,7 +209,7 @@ class Helper
 
         // Create data
         $data = array(
-            'reference'    => \Mobbex\PS\Checkout\Models\Helper::getReference($cart),
+            'reference'    => \Mobbex\PS\Checkout\Models\Helper::getReference($cart) . 'asd898ads00',
             'currency'     => 'ARS',
             'description'  => 'Carrito #' . $cart->id,
             'test'         => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_TEST_MODE) == true),
@@ -221,7 +221,7 @@ class Helper
             'options'      => \Mobbex\PS\Checkout\Models\Helper::getOptions(),
             'total'        => (float) $cart->getOrderTotal(true, \Cart::BOTH),
             'customer'     => self::getCustomer($cart),
-            'timeout'      => (\Configuration::get('MOBBEX_TIMEOUT')),
+            'timeout'      => (\Configuration::get('MOBBEX_TIMEOUT')) ? (int)(\Configuration::get('MOBBEX_TIMEOUT')) : 5,
             'intent'       => defined('MOBBEX_CHECKOUT_INTENT') ? MOBBEX_CHECKOUT_INTENT : null,
             'wallet'       => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_WALLET) && \Context::getContext()->customer->isLogged()),
             'multicard'    => (\Configuration::get(\Mobbex\PS\Checkout\Models\Helper::K_MULTICARD) == true),
