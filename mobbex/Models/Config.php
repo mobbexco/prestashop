@@ -42,13 +42,14 @@ class Config
      * Get the Mobbex module settigns from config form array.
      *
      * @param string $key specifies the key used in the array that method returns
+     * @param bool $extensionOptions allow to extend options with a hook
      * @return array $settings 
      */
-    public function getSettings($key = 'key')
+    public function getSettings($key = 'key', $extensionOptions = false)
     {
         $settings = [];
 
-        foreach ($this->getConfigForm()['form']['input'] as $input)
+        foreach ($this->getConfigForm($extensionOptions)['form']['input'] as $input)
             $settings[$input[$key]]  = \Configuration::getIdByName($input['name']) ? \Configuration::get($input['name']) : $input['default'];
 
         return $settings;
@@ -59,7 +60,7 @@ class Config
      */
     public function deleteSettings()
     {
-        foreach ($this->getConfigForm()['form']['input'] as $setting)
+        foreach ($this->getConfigForm(false)['form']['input'] as $setting)
             \Configuration::deleteByName($setting['name']);
     }
 
