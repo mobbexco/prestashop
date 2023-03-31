@@ -626,26 +626,13 @@ $form = [
                 'suffix'   => 'segundos',
             ],
             [
-                'type'    => 'switch',
-                'label'   => $this->l ( 'Force asset load', 'config-form'),
-                'hint'    => 'Directly print the elements that link the plugin assets, bypassing the PrestaShop method.',
+                'type'    => 'text',
+                'label'   => $this->l ( 'Force asset load in', 'config-form'),
+                'hint'    => 'Directly print the elements that link the plugin assets in the specified view, bypassing the PrestaShop method.',
                 'name'    => 'MOBBEX_FORCE_ASSETS',
                 'key'     => 'force_assets',
                 'tab'     => 'tab_advanced',
-                'default' => false,
-                'is_bool' => true,
-                'values'  => [
-                    [
-                        'id'    => 'active_on_force_assets',
-                        'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
-                    ],
-                    [
-                        'id'    => 'active_off_force_assets',
-                        'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
-                    ],
-                ],
+                'default' => '',
             ],
             [
                 'type'    => 'text',
