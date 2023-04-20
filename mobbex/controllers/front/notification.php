@@ -106,6 +106,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     {
         // Get cart id
         $cartId   = Tools::getValue('id_cart');
+
+        // Get request data
         $postData = isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' ? json_decode(file_get_contents('php://input'), true) : $_POST;
 
         if (!$cartId || !isset($postData['data']))
@@ -113,8 +115,15 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // Get Order and transaction data
         $order = $this->helper->getOrderByCartId($cartId, true);
+        // Get token value from query param name
+        $token = Tools::getValue('mbbx_token');
+        // Get formated data from $post
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
         
+        // Verify token
+        if (!\Mobbex\Repository::validateToken($token))
+            throw new \Exception("Invalid Token: $token", 1);
+
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
