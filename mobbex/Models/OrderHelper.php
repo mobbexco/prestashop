@@ -18,6 +18,10 @@ class OrderHelper
     public static function getModuleUrl($controller, $action = '', $path = '')
     {
         $url = ("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
+        //Add xdebug param to webhook
+        if ($action == 'webhook' && \Configuration::get('MOBBEX_DEBUG'))
+            $url .= '&XDEBUG_SESSION_START=PHPSTORM';
+            
         return self::getUrl($url);
     }
 
@@ -158,7 +162,7 @@ class OrderHelper
         if (!$cart->id)
             return;
 
-        return Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout(null, $cart, $customer);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout(null, $cart, $customer);
     }
 
     /**
@@ -227,6 +231,7 @@ class OrderHelper
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
                 $this->getCustomer($cart),
                 $this->getAddresses($cart),
+                'all',
                 'mobbexProcessPayment'
             );
         } catch (\Mobbex\Exception $e) {
