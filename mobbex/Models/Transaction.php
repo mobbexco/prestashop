@@ -79,6 +79,8 @@ class Transaction extends AbstractModel
             $trx->$key = $value;
 
         $trx->save();
+
+        return $trx;
     }
 
     /**
@@ -257,5 +259,17 @@ class Transaction extends AbstractModel
     {
         $coupon = "https://mobbex.com/console/" . $transaction->entity_uid . "/operations/?oid=" . $transaction->payment_id;
         return $coupon;
+    }
+
+    /**
+     * Check if the current transaction is a retry.
+     * 
+     * @return bool
+     */
+    public function isRetry()
+    {
+        return (bool) \Db::getInstance()->getValue(
+            "SELECT id FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE `payment_id` = '$this->payment_id' AND `status_code` = '$this->status_code' AND `id` != '$this->id' ORDER BY id DESC"
+        ); 
     }
 }

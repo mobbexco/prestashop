@@ -7,9 +7,12 @@ if (!defined('_PS_VERSION_'))
 
 class Logger
 {
+    /** @var \Mobbex\PS\Checkout\Models\Config */
+    public $config;
+
     public function __construct()
     {
-        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config;
     }
 
     /**
@@ -25,6 +28,9 @@ class Logger
      */
     public function log($mode, $message, $data = [])
     {
+        if (!$this->config->settings['debug_mode'] && $mode === 'debug')
+            return;
+
         \PrestaShopLogger::addLog(
             "Mobbex $mode: $message " . json_encode($data),
             $mode === 'error' ? 3 : 1,

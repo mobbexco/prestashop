@@ -58,8 +58,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $customer = new Customer($customer_id);
         $order_id = $this->helper->getOrderByCartId($cart_id);
 
-        // If order was not created
-        if (empty($order_id)) {
+        // If order was not created and is creable on webhook
+        if (empty($order_id) && $status != 401) {
             $seconds = $this->config->settings['redirect_time'] ?: 10;
 
             // Wait for webhook
@@ -83,9 +83,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } else {
             $order = $this->helper->getOrderByCartId($cart_id, true);
 
-            if($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
+            if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
-                $this->updateStock($order, Configuration::get('PS_OS_CANCELED'));
+                $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
                 $order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
                 $order->update();
@@ -118,76 +118,99 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
-        // Only parent webhook can modify the order
+        // Check if it is a retry webhook and if process is allowed
+        if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())
+            die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
+
+        // Only process if it is a parent webhook
         if ($data['parent']) {
+            $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cart, $data, $trx);
+
             // Aditional webhook process
-            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, json_decode($data['data'], true), $cartId);
-
-            // If Order exists
-            if ($order) {
-                if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
-                    $order->payment = $data['source_name'];
-
-                // Update order status only if it was not updated recently
-                if ($order->getCurrentState() != $data['order_status']) {
-                    $this->updateStock($order, $data['order_status']);
-                    $order->setCurrentState($data['order_status']);
-                    $this->orderUpdate->removeExpirationTasks($order);
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-                }
-
-                $order->update();
-                
-            } else {
-                // Update cart total
-                $this->orderUpdate->updateCartTotal($cartId, $data['total']);
-
-                // Create and validate Order
-                $order = $this->helper->createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
-
-                if ($order)
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-            }
+            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $postData['data'], $cartId);
         }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
-        
     }
 
     /**
-     * Update the stock of the product by discounting or refunding as the case may be.
-     * @param Order $order
-     * @param string $status
+     * Update order data using a parent transaction.
+     * 
+     * @param \Order $order
+     * @param array $data Formatted webhook data.
+     * @param \MobbexTransaction $trx
+     * 
+     * @return mixed Update result.
      */
-    public function updateStock($order, $status)
+    public function updateOrder($order, $data, $trx)
     {
-        $refund_status = [
-            Configuration::get('PS_OS_ERROR'), 
-            Configuration::get('PS_OS_CANCELLED'), 
-            Configuration::get('MOBBEX_OS_REJECTED'), 
-            Configuration::get('MOBBEX_OS_WAITING'), 
-            Configuration::get('MOBBEX_OS_PENDING')
-        ];
+        // Exit if it is a expired operation and the order has already been paid
+        if ($trx->status_code == 401 && $order->hasBeenPaid())
+            return;
 
-        if(in_array($order->getCurrentState(), $refund_status) || $status === Configuration::get('PS_OS_CANCELLED') || $status === Configuration::get('PS_OS_ERROR'))
-            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+        // Notify if is updating an order created by other module
+        if (!$order->module != 'mobbex')
+            $this->logger->log('debug', 'notification > updateOrder | Updating an order created by other module', [
+                'module'      => $order->module,
+                'order'       => $order->id,
+                'transaction' => $trx->id,
+            ]);
 
-        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
-            foreach ($order->getProductsDetail() as $product) {
-                if(!StockAvailable::dependsOnStock($product['product_id']))
-                    StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
-            }
-        }
+        if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
+            $order->payment = $data['source_name'];
 
-        if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
-            if($status === Configuration::get('MOBBEX_OS_REJECTED') || $status === Configuration::get('MOBBEX_OS_WAITING')){
-                foreach ($order->getProductsDetail() as $product) {
-                    if(!StockAvailable::dependsOnStock($product['product_id']))
-                        StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
-                }
-                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
-            }
-        }
+        // Update order status only if it was not updated recently
+        if ($order->getCurrentState() == $data['order_status'])
+            return $order->update();
+
+        $this->orderUpdate->updateStock($order, $data['order_status']);
+        $order->setCurrentState($data['order_status']);
+        $this->orderUpdate->removeExpirationTasks($order);
+        $this->orderUpdate->updateOrderPayment($order, $data);
+
+        return $order->update();
     }
 
+    /**
+     * Create an order from a cart and transaction.
+     * 
+     * @param \Cart $cart
+     * @param array $data Formatted webhook data.
+     * @param \MobbexTransaction $trx
+     */
+    public function createOrder($cart, $data, $trx)
+    {
+        // Create only if payment was approved or holded
+        if (!in_array(\Mobbex\PS\Checkout\Models\Helper::getState($trx->status_code), ['approved', 'onhold']))
+            return;
+
+        // Exit if order first mode is enabled
+        if ($this->config->settings['order_first'])
+            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Trying to create order on webhook with order first mode', [
+                'cart'        => $cart->id,
+                'transaction' => $trx->id,
+            ]);
+
+        // Exit if cart was modified
+        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5)
+            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Difference found between cart and checkout totals', [
+                'cart'          => $cart->id,
+                'transaction'   => $trx->id,
+                'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
+                'checkoutTotal' => $data['checkout_total'],
+            ]);
+
+        // If finance charge discuount is enable, update cart total
+        if ($this->config->settings['charge_discount'])
+            $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
+
+        // Create and validate Order
+        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cart->id, $trx->status, $trx->source_name, $this->module, false);
+
+        if ($order)
+            $this->orderUpdate->updateOrderPayment($order, $data);
+
+        if (!empty($cartRule) && is_object($cartRule))
+            $cartRule->delete();
+    }
 }

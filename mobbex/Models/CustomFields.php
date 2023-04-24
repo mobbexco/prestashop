@@ -64,7 +64,7 @@ class CustomFields extends AbstractModel
         $sql = new \DbQuery();
         $sql->select($searched_column);
         $sql->from('mobbex_custom_fields', 'f');
-        $sql->where('f.row_id = ' . $row_id);
+        $sql->where('f.row_id = ' . (int) $row_id);
         $sql->where("f.object = '$object'");
         $sql->where("f.field_name = '$field_name'");
         $sql->limit(1);
