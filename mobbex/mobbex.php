@@ -153,7 +153,8 @@ class Mobbex extends PaymentModule
                 'sdk'        => class_exists('\Composer\InstalledVersions') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
             ],
             $this->config->settings,
-            [$this->registrar, 'executeHook']
+            [$this->registrar, 'executeHook'],
+            [$this->logger, 'log']
         );
 
         // Init api conector
