@@ -910,7 +910,7 @@ class Helper
             return 'approved';
         } else if ($status == 401) {
             return 'expired';
-        } else if ($status == 602 || $status == 605) {
+        } else if ($status == 601 || $status == 602 || $status == 605) {
             return 'refunded';
         } else if ($status == 604) {
             return 'rejected';
