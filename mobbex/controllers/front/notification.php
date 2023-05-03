@@ -112,11 +112,14 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
         // Get Order and transaction data
+        $cart  = new \Cart($cartId);
         $order = $this->helper->getOrderByCartId($cartId, true);
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
         
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        //Get transaction
+        $trx = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($cartId, true);
 
         // Check if it is a retry webhook and if process is allowed
         if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())
@@ -127,7 +130,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cart, $data, $trx);
 
             // Aditional webhook process
-            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $postData['data'], $cartId);
+            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $trx->data, $cartId);
         }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
@@ -181,7 +184,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function createOrder($cart, $data, $trx)
     {
         // Create only if payment was approved or holded
-        if (!in_array(\Mobbex\PS\Checkout\Models\Helper::getState($trx->status_code), ['approved', 'onhold']))
+        if (!in_array(\Mobbex\PS\Checkout\Models\Transaction::getState($trx->status_code), ['approved', 'onhold']))
             return;
 
         // Exit if order first mode is enabled
@@ -205,7 +208,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cart->id, $trx->status, $trx->source_name, $this->module, false);
+        $order = $this->helper->createOrder($cart->id, $data['order_status'], $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);

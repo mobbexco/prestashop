@@ -68,6 +68,8 @@ class Mobbex extends PaymentModule
         $this->registrar = new \Mobbex\PS\Checkout\Models\Registrar();
         $this->helper    = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
+        $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
+        $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
         
         //Init php sdk
         $this->initSdk();
@@ -75,16 +77,13 @@ class Mobbex extends PaymentModule
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
         if ($this::isEnabled($this->name))
-            $this->createStates();
-            
-        $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
-        $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
+            $this->installer->createStates($this->config->orderStatuses);
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
-        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 
@@ -110,12 +109,12 @@ class Mobbex extends PaymentModule
         }
 
         return parent::install()
-        && $this->installer->createTables()
-        && $this->installer->createStates($this->config->orderStatuses)
-        && $this->installer->createCostProduct()
-        && $this->registrar->unregisterHooks($this)
-        && $this->registrar->registerHooks($this)
-        && $this->registrar->addExtensionHooks();
+            && $this->installer->createTables()
+            && $this->installer->createStates($this->config->orderStatuses)
+            && $this->installer->createCostProduct()
+            && $this->registrar->unregisterHooks($this)
+            && $this->registrar->registerHooks($this)
+            && $this->registrar->addExtensionHooks();
     }
 
     /**
@@ -146,11 +145,11 @@ class Mobbex extends PaymentModule
         \Mobbex\Platform::init(
             'Prestashop'._PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
-            \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__,
+            \Tools::getShopDomainSsl(true, true),
             [
                 'Prestashop' => _PS_VERSION_,
                 'webpay'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
-                'sdk'        => class_exists('\Composer\InstalledVersions') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
+                'sdk'        => class_exists('\Composer\InstalledVersions') && \Composer\InstalledVersions::isInstalled('mobbexco/php-plugins-sdk') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
             ],
             $this->config->settings,
             [$this->registrar, 'executeHook']
@@ -263,7 +262,7 @@ class Mobbex extends PaymentModule
             return;
 
         $options = [];
-        $checkoutData = $this->helper->getPaymentData();
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -639,7 +638,7 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        $checkoutData = $this->helper->getPaymentData();
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Make sure the assets are loaded correctly
         $this->hookDisplayHeader(true);
@@ -801,7 +800,7 @@ class Mobbex extends PaymentModule
     {
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
-        extract($this->config->getProductPlans([$id]));
+        extract($this->config->getProductPlans([$id], $catalogType, true));
 
         $options  = [
             'id'             => $id,

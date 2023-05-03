@@ -25,7 +25,7 @@ class OrderUpdate
             $payments = $order->getOrderPaymentCollection() ?: [];
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
+            if (!$payment || \Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) != 'approved')
                 return;
 
             // First, decode jsons to use data safely
@@ -64,7 +64,7 @@ class OrderUpdate
      */
     public function removeExpirationTasks($order)
     {
-        if (Updater::needUpgrade())
+        if (\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             return false;
 
         $tasks = $this->getExpirationTasks($order);

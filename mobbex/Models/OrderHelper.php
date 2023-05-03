@@ -6,8 +6,8 @@ class OrderHelper
 {
     public function __construct()
     {
-        $this->config = new Config();
-        $this->logger = new Logger();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
 
     public static function getUrl($path)
@@ -91,7 +91,7 @@ class OrderHelper
             );
 
             // Add order expiration task
-            if (!Updater::needUpgrade()) {
+            if (!\Mobbex\PS\Checkout\Models\Updater::needUpgrade()) {
                 $task = new Task(
                     null,
                     'actionMobbexExpireOrder',
@@ -151,10 +151,10 @@ class OrderHelper
 
     /**
      * Get the payment data
-     *
+     * @param bool $webhooks
      * @return array|null
      */
-    public function getPaymentData()
+    public function getPaymentData($webhooks = true)
     {
         $cart = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
@@ -162,13 +162,13 @@ class OrderHelper
         if (!$cart->id)
             return;
 
-        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout(null, $cart, $customer);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout($cart, $customer, $webhooks);
     }
 
     /**
      * Creates Mobbex Checkout
      */
-    public function createCheckout($module, $cart, $customer)
+    public function createCheckout($cart, $customer, $webhooks)
     {
         // Get items
         $items    = array();
@@ -231,7 +231,7 @@ class OrderHelper
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
                 $this->getCustomer($cart),
                 $this->getAddresses($cart),
-                'all',
+                $webhooks ? null : 'none',
                 'mobbexProcessPayment'
             );
         } catch (\Mobbex\Exception $e) {
