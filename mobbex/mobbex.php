@@ -70,6 +70,7 @@ class Mobbex extends PaymentModule
         $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
         $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
         $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
+        $this->cache     = new \Mobbex\PS\Checkout\Models\Cache();
         
         //Init php sdk
         $this->initSdk();
@@ -154,6 +155,8 @@ class Mobbex extends PaymentModule
             $this->config->settings,
             [$this->registrar, 'executeHook']
         );
+
+        \Mobbex\Platform::loadModels($this->cache);
 
         // Init api conector
         \Mobbex\Api::init();
@@ -798,6 +801,7 @@ class Mobbex extends PaymentModule
      */
     private function displayCatalogOptions($id, $catalogType = 'product')
     {
+        error_log('todo ok?: ' . "\n" . json_encode('see', JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
         extract($this->config->getProductPlans([$id], $catalogType, true));
