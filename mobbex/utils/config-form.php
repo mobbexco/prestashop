@@ -255,6 +255,16 @@ $form = [
                 'desc'     => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l( 'Site Id', 'config-form'),
+                'name'     => 'MOBBEX_SITE_ID',
+                'key'      => 'site_id',
+                'default'  => '',
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'desc'     => "Si utiliza las mismas credenciales en otro sitio complete este campo con un identificador que permita diferenciar las referencias de sus operaciones. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia que se utiliza al crear el checkout.",
+            ],
+            [
                 'type'     => 'switch',
                 'label'    => $this->l( 'Finance Widget in Product Page', 'config-form'),
                 'desc'     => 'Show Finance Widget in Product Page.',
