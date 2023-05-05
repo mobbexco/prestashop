@@ -406,7 +406,6 @@ $form = [
                     ],
                 ],
             ],
-
             [
                 'type'     => 'select',
                 'label'    => $this->l( 'Multivendor', 'config-form'),
