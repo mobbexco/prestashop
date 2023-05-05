@@ -7,6 +7,7 @@ class OrderUpdate
     public function __construct()
     {
         $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
     
@@ -24,7 +25,7 @@ class OrderUpdate
             $payments = $order->getOrderPaymentCollection() ?: [];
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment || \Mobbex\PS\Checkout\Models\Helper::getState($data['status']) != 'approved')
+            if (!$payment || \Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) != 'approved')
                 return;
 
             // First, decode jsons to use data safely
@@ -63,7 +64,7 @@ class OrderUpdate
      */
     public function removeExpirationTasks($order)
     {
-        if (\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+        if (\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             return false;
 
         $tasks = $this->getExpirationTasks($order);
@@ -172,7 +173,7 @@ class OrderUpdate
      */
     public function addCartCost($cart, $amount)
     {
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $productId = $this->helper->getProductIdByReference('mobbex-cost');
 
         // Exit if product not exists or it was already added
         if (!$productId)

@@ -12,6 +12,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     /** @var \Mobbex\PS\Checkout\Models\Config */
     public $config;
 
+    /** @var \Mobbex\PS\Checkout\Models\OrderHelper */
+    public $helper;
+
     /** @var \Mobbex\PS\Checkout\Models\Logger */
     public $logger;
 
@@ -19,6 +22,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     {
         parent::__construct();
         $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
 
@@ -52,7 +56,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $status         = Tools::getValue('status');
 
         $customer = new Customer($customer_id);
-        $order_id = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id);
+        $order_id = $this->helper->getOrderByCartId($cart_id);
 
         // If order was not created and is creable on webhook
         if (empty($order_id) && $status != 401) {
@@ -62,7 +66,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             while ($seconds > 0 && !$order_id) {
                 sleep(1);
                 $seconds--;
-                $order_id = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id);
+                $order_id = $this->helper->getOrderByCartId($cart_id);
             }
         }
 
@@ -77,7 +81,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'key'           => $customer->secure_key,
             ]));
         } else {
-            $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cart_id, true);
+            $order = $this->helper->getOrderByCartId($cart_id, true);
 
             if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
                 //update stock
@@ -87,7 +91,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $order->update();
                 //Restore the cart
                 $cart = new Cart($cart_id);
-                \Mobbex\PS\Checkout\Models\Helper::restoreCart($cart); 
+                $this->helper->restoreCart($cart); 
             }
 
             // Go back to checkout
@@ -107,13 +111,13 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!$cartId || !isset($postData['data']))
             $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
-        // Get cart and order
+        // Get Order and transaction data
         $cart  = new \Cart($cartId);
-        $order = \Mobbex\PS\Checkout\Models\Helper::getOrderByCartId($cartId, true);
+        $order = $this->helper->getOrderByCartId($cartId, true);
+        $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
 
-        // Format data and save trx to db
-        $data = \Mobbex\PS\Checkout\Models\Helper::getTransactionData($postData['data']);
-        $trx  = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        // Save webhook data
+        $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
         // Check if it is a retry webhook and if process is allowed
         if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())
@@ -124,7 +128,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cart, $data, $trx);
 
             // Aditional webhook process
-            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $postData['data'], $cartId);
+            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $trx->data, $cartId);
         }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
@@ -178,7 +182,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function createOrder($cart, $data, $trx)
     {
         // Create only if payment was approved or holded
-        if (!in_array(\Mobbex\PS\Checkout\Models\Helper::getState($trx->status_code), ['approved', 'onhold']))
+        if (!in_array(\Mobbex\PS\Checkout\Models\Transaction::getState($trx->status_code), ['approved', 'onhold']))
             return;
 
         // Exit if order first mode is enabled
@@ -202,7 +206,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = \Mobbex\PS\Checkout\Models\Helper::createOrder($cart->id, $trx->status, $trx->source_name, $this->module, false);
+        $order = $this->helper->createOrder($cart->id, $data['order_status'], $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);
