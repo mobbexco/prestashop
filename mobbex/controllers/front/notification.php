@@ -115,11 +115,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $cart  = new \Cart($cartId);
         $order = $this->helper->getOrderByCartId($cartId, true);
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
-        
+
         // Save webhook data
-        \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
-        //Get transaction
-        $trx = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($cartId, true);
+        $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
         // Check if it is a retry webhook and if process is allowed
         if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())

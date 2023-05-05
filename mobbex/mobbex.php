@@ -35,9 +35,6 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Logger */
     public $logger;
 
-    /** @var \Mobbex\PS\Checkout\Observers\Sdk */
-    public $sdk;
-
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
 
@@ -341,7 +338,7 @@ class Mobbex extends PaymentModule
             }
 
             return $result;
-        } catch (\Mobbex\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->log('error', 'mobbex > hookActionOrderReturn |', $e->getMessage());
             return false;
         }

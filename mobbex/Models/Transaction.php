@@ -120,7 +120,7 @@ class Transaction extends AbstractModel
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
             'status_code'        => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',
-            'status'             => isset($res['payment']['status']['resultCode']) ? (int) $res['payment']['status']['resultCode'] : '',
+            'status'             => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',
             'order_status'       => (int) \Configuration::get('MOBBEX_OS_PENDING'),
             'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
             'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
