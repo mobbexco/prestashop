@@ -37,9 +37,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get current action
         $action = Tools::getValue('action');
 
-        if ($action === 'return') {
+        if ($action == 'return') {
             return $this->callback();
-        } else if ($action === 'webhook') {
+        } else if ($action == 'webhook') {
             return $this->webhook();
         }
     }

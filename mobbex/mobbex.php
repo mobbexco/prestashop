@@ -796,10 +796,13 @@ class Mobbex extends PaymentModule
         $order        = new \Order($params['id_order']);
         $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
+        $url          = urlencode($_SERVER['REQUEST_URI']);
+        $hash         = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         
         if (!$trx)
             return;
 
+        // Add payment information data and try to create a capture button
         $this->smarty->assign(
             [
                 'id' => $trx->payment_id,
@@ -810,11 +813,12 @@ class Mobbex extends PaymentModule
                     'total'          => $trx->total,
                     'status_message' => $trx->status_message,
                 ],
-                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions),
-                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions)
+                'sources'    => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions),
+                'entities'   => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions),
+                'capture'    => $trx->status == '3' ? true : false ,
+                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$url"),
             ]
         );
-        $trx->status == '3' ? $this->addCaptureButton($params) : '';
 
         return $this->display(__FILE__, 'views/templates/hooks/order-widget.tpl');
     }
@@ -971,22 +975,5 @@ class Mobbex extends PaymentModule
             ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
 
         return $option;
-    }
-
-    /**
-     * Create a capture button
-     * @param array $params
-     */
-    public function addCaptureButton($params)
-    {
-        $url     = urlencode($_SERVER['REQUEST_URI']);
-        $hash    = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
-
-        $this->smarty->assign(
-            [
-                'capture'    => true,
-                'captureUrl' =>  $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$url"),
-            ]
-        );
     }
 }
