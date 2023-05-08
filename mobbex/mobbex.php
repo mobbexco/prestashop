@@ -746,6 +746,7 @@ class Mobbex extends PaymentModule
         $this->smarty->assign(
             [
                 'id' => $trx->payment_id,
+                'cart_id'  => $params['id_order'],
                 'data' => [
                     'payment_id'     => $trx->payment_id,
                     'risk_analysis'  => $trx->risk_analysis,
