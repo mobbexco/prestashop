@@ -6,8 +6,8 @@ if (!defined('_PS_VERSION_')) {
 
  class MobbexCaptureModuleFrontController extends ModuleFrontController
 {      
-    /** @var \Mobbex\PS\Checkout\Models\OrderHelper */
-    public $helper;
+    /** @var \Mobbex\PS\Checkout\Models\Logger */
+    public $logger;
 
     /** @var \Mobbex\PS\Checkout\Models\Config */
     public $config;
@@ -16,7 +16,6 @@ if (!defined('_PS_VERSION_')) {
     {
         parent::__construct();
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
-        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->config = new \Mobbex\PS\Checkout\Models\Config();
     }
 
