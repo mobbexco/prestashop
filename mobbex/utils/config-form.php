@@ -255,6 +255,16 @@ $form = [
                 'desc'     => "Ingrese este identificador sólo si se es parte de un programa de reventas. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia de Pago para identificar su venta.",
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l( 'Site Id', 'config-form'),
+                'name'     => 'MOBBEX_SITE_ID',
+                'key'      => 'site_id',
+                'default'  => '',
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'desc'     => "Si utiliza las mismas credenciales en otro sitio complete este campo con un identificador que permita diferenciar las referencias de sus operaciones. El identificador NO debe tener espacios, solo letras, números o guiones. El identificador se agregará a la referencia que se utiliza al crear el checkout.",
+            ],
+            [
                 'type'     => 'switch',
                 'label'    => $this->l( 'Finance Widget in Product Page', 'config-form'),
                 'desc'     => 'Show Finance Widget in Product Page.',
@@ -396,7 +406,6 @@ $form = [
                     ],
                 ],
             ],
-
             [
                 'type'     => 'select',
                 'label'    => $this->l( 'Multivendor', 'config-form'),
@@ -592,7 +601,7 @@ $form = [
                 'type'     => 'switch',
                 'label'    => $this->l( 'Utilizar Cron para tareas programadas', 'config-form'),
                 'hint'     => 'Mejora el rendimiento del sitio separando la ejecución de las tareas programadas del módulo. Recuerde configurar el Cron Job del lado del servidor.',
-                'desc'     => 'Una vez activada, configure su servidor para que ejecute el siguiente comando diariamente: <code>curl -s ' . \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('task') . '</code>',
+                'desc'     => 'Una vez activada, configure su servidor para que ejecute el siguiente comando diariamente: <code>curl -s ' . \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('task') . '</code>',
                 'name'     => 'MOBBEX_CRON_MODE',
                 'key'      => 'cron_mode',
                 'default'  => false,

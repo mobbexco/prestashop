@@ -24,7 +24,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
             return;
 
         if(Tools::getValue('action') == 'update')
-            \Mobbex\PS\Checkout\Models\Helper::updateMobbexSources();
+            $this->config->updateMobbexSources();
         
     }
 
