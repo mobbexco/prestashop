@@ -96,7 +96,7 @@
 
             {/foreach}
 
-            {hook h="displayMobbexOrderWidget" id="$id"}
+            {hook h="displayMobbexOrderWidget" id="$id" cart_id="$cart_id"}
 
         </table>
 

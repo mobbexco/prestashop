@@ -14,22 +14,26 @@ if (!defined('_PS_VERSION_'))
     exit;
 
 require_once __DIR__ . '/vendor/autoload.php';
+
 /**
  * Main class of the module
  */
 class Mobbex extends PaymentModule
 {
-    /** @var \Mobbex\PS\Checkout\Models\Updater */
-    public $updater;
-
     /** @var \Mobbex\PS\Checkout\Models\Config */
     public $config;
 
-    /** @var \Mobbex\PS\Checkout\Models\Logger */
-    public $logger;
-
+    /** @var \Mobbex\PS\Checkout\Models\Updater */
+    public $updater;
+    
     /** @var \Mobbex\PS\Checkout\Models\Registrar */
     public $registrar;
+    
+    /** @var \Mobbex\PS\Checkout\Models\OrderHelper */
+    public $helper;
+
+    /** @var \Mobbex\PS\Checkout\Models\Logger */
+    public $logger;
 
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
@@ -58,16 +62,25 @@ class Mobbex extends PaymentModule
 
         //Mobbex Classes 
         $this->config    = new \Mobbex\PS\Checkout\Models\Config();
-        $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
         $this->registrar = new \Mobbex\PS\Checkout\Models\Registrar();
+        $this->helper    = new \Mobbex\PS\Checkout\Models\OrderHelper();
+        $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
         $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
         $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
+        
+        //Init php sdk
+        $this->initSdk();
+
+        // On 1.7.5 ignores the creation and finishes on an Fatal Error
+        // Create the States if not exists because are really important
+        if ($this::isEnabled($this->name))
+            $this->installer->createStates($this->config->orderStatuses);
 
         // Only if you want to publish your module on the Addons Marketplace
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
-        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
+        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 
@@ -121,6 +134,29 @@ class Mobbex extends PaymentModule
     }
 
     /**
+     * Init the PHP Sdk and configure it with module & plataform data.
+     */
+    public function initSdk()
+    {
+        // Set platform information
+        \Mobbex\Platform::init(
+            'Prestashop'._PS_VERSION_,
+            \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
+            \Tools::getShopDomainSsl(true, true),
+            [
+                'Prestashop' => _PS_VERSION_,
+                'webpay'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
+                'sdk'        => class_exists('\Composer\InstalledVersions') && \Composer\InstalledVersions::isInstalled('mobbexco/php-plugins-sdk') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
+            ],
+            $this->config->settings,
+            [$this->registrar, 'executeHook']
+        );
+
+        // Init api conector
+        \Mobbex\Api::init();
+    }
+
+    /**
      * Entry point to the module configuration page
      *
      * @see Module::getContent()
@@ -134,7 +170,7 @@ class Mobbex extends PaymentModule
 
         if (!empty($_GET['run_update'])) {
             $this->runUpdate();
-            Tools::redirectAdmin(\Mobbex\PS\Checkout\Models\Helper::getUpgradeURL());
+            Tools::redirectAdmin(\Mobbex\PS\Checkout\Models\Updater::getUpgradeURL());
         }
 
         $this->context->smarty->assign(array('module_dir' => $this->_path));
@@ -166,8 +202,8 @@ class Mobbex extends PaymentModule
         $form = $this->config->getConfigForm();
 
         try {
-            if (\Mobbex\PS\Checkout\Models\Helper::needUpgrade())
-                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . \Mobbex\PS\Checkout\Models\Helper::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
+            if (\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
+                $form['form']['warning'] = 'Actualice la base de datos desde <a href="' . \Mobbex\PS\Checkout\Models\Updater::getUpgradeURL() . '">aquí</a> para que el módulo funcione correctamente.';
 
             if ($this->updater->hasUpdates(\Mobbex\PS\Checkout\Models\Config::MODULE_VERSION))
                 $form['form']['description'] = "¡Nueva actualización disponible! Haga <a href='$_SERVER[REQUEST_URI]&run_update=1'>clic aquí</a> para actualizar a la versión " . $this->updater->latestRelease['tag_name'];
@@ -219,22 +255,22 @@ class Mobbex extends PaymentModule
      */
     public function hookPaymentOptions($params)
     {
-        if (!$this->active || !$this->checkCurrency($params['cart']) || !\Mobbex\PS\Checkout\Models\Helper::isPaymentStep())
+        if (!$this->active || !$this->checkCurrency($params['cart']) || !$this->helper->isPaymentStep())
             return;
 
         $options = [];
-        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData(false);
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
-        \Mobbex\PS\Checkout\Models\Helper::addJavascriptData([
-            'paymentUrl'  => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('payment', 'process'),
-            'errorUrl'    => \Mobbex\PS\Checkout\Models\Helper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+        \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
+            'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
+            'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) $this->config->settings['embed'],
             'data'        => $checkoutData,
-            'return'      => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
+            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
         ]);
 
         // Get payment methods from checkout
@@ -244,11 +280,11 @@ class Mobbex extends PaymentModule
                 $this->config->settings['mobbex_description'],
                 \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
             );
         } else {
             foreach ($methods as $method) {
-                $checkoutUrl = \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
+                $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
 
                 $options[] = $this->createPaymentOption(
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') && $this->config->settings['mobbex_title'] ? $this->config->settings['mobbex_title'] : $method['subgroup_title'],
@@ -284,18 +320,30 @@ class Mobbex extends PaymentModule
 
         if ($order->module != 'mobbex')
         return true;
+        
+        $trans  = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
 
-        // Process refund
-        $trans  = \Mobbex\PS\Checkout\Models\Transaction::getParentTransaction($order->id_cart);
-        $result = \Mobbex\PS\Checkout\Models\Helper::processRefund($order->getTotalPaid(), $trans['payment_id']);
+        try {
+            // Process refund
+            $result = \Mobbex\Api::request([
+                'uri'    => 'https://api.mobbex.com/p/operations/' . $trans['payment_id'] . '/refund',
+                'method' => 'POST',
+                'body'   => ['total' => $order->getTotalPaid()],
+            ]);
 
-        // Update order status
-        if ($result) {
-            $order->setCurrentState((int) \Configuration::get('PS_OS_REFUND'));
-            $order->save();
+            // Update order status
+            if ($result) {
+                $order->setCurrentState((int) \Configuration::get('PS_OS_REFUND'));
+                $order->save();
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            $this->logger->log('error', 'mobbex > hookActionOrderReturn |', $e->getMessage());
+            return false;
         }
 
-        return $result;
+
     }
 
     /**
@@ -312,7 +360,7 @@ class Mobbex extends PaymentModule
 
         $dni_field['customer_dni'] = (new \FormField)
             ->setName('customer_dni')
-            ->setValue(isset($customer->id) ? \Mobbex\PS\Checkout\Models\Helper::getDni($customer->id) : '')
+            ->setValue(isset($customer->id) ? $this->helper->getDni($customer->id) : '')
             ->setType('text')
             ->setRequired(true)
             ->setLabel($this->l('DNI'));
@@ -406,16 +454,16 @@ class Mobbex extends PaymentModule
 
         // Module Manager page
         if ($currentPage == 'AdminModulesManage')
-        \Mobbex\PS\Checkout\Models\Helper::addAsset("$mediaPath/views/js/uninstall-options.js");
+        $this->helper->addAsset("$mediaPath/views/js/uninstall-options.js");
 
         // Configuration page
         if ($currentPage == 'AdminModules' && \Tools::getValue('configure') == 'mobbex') {
-            \Mobbex\PS\Checkout\Models\Helper::addAsset("$mediaPath/views/js/mobbex-config.js");
+            $this->helper->addAsset("$mediaPath/views/js/mobbex-config.js");
 
             try {
                 // If plugin has updates, add update data to javascript
                 if ($this->updater->hasUpdates(\Mobbex\PS\Checkout\Models\Config::MODULE_VERSION))
-                    \Mobbex\PS\Checkout\Models\Helper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
+                    \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData(['updateVersion' => $this->updater->latestRelease['tag_name']]);
             } catch (\Exception $e) {
                 $this->logger->log('fatal', 'Observer > hookDisplayBackOfficeHeader | Error Obtaining Update/Upgrade Messages', $e->getMessage());
             }
@@ -432,13 +480,18 @@ class Mobbex extends PaymentModule
 
     public function hookActionEmailSendBefore($params)
     {
-        if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
-            $order = new \Order($params['templateVars']['id_order']);
+        if ($params['template'] != 'order_conf' || empty($params['templateVars']['{order_name}']))
+            return true;
 
-            // If current order state is not approved, block mail sending
-            if ($order->getCurrentState() != \Configuration::get('PS_OS_PAYMENT'))
-                return false;
-        }
+        // Intance order from reference
+        $order = \Order::getByReference($params['templateVars']['{order_name}'])->getFirst();
+
+        // Only check status on mobbex orders
+        if (!$order || $order->module != 'mobbex')
+            return true;
+
+        // Allow mails of approved payments
+        return $order->getCurrentState() == (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_PAYMENT'));
     }
 
     public function hookActionMobbexExpireOrder($orderId)
@@ -450,7 +503,7 @@ class Mobbex extends PaymentModule
             return false;
 
         if ($order->getCurrentState() == \Configuration::get('MOBBEX_OS_PENDING'))
-        $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
+            $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
 
         return true;
     }
@@ -478,14 +531,14 @@ class Mobbex extends PaymentModule
 
         // Checkout page
         if ($currentPage == 'order' || $force) {
-            \Mobbex\PS\Checkout\Models\Helper::addAsset("$mediaPath/views/css/front.css", 'css');
-            \Mobbex\PS\Checkout\Models\Helper::addAsset("$mediaPath/views/js/front.js");
+            $this->helper->addAsset("$mediaPath/views/css/front.css", 'css');
+            $this->helper->addAsset("$mediaPath/views/js/front.js");
 
             if ($this->config->settings['wallet'])
-            \Mobbex\PS\Checkout\Models\Helper::addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
+                $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if ($this->config->settings['embed'])
-            \Mobbex\PS\Checkout\Models\Helper::addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.23.js');
+                $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.23.js');
         }
     }
 
@@ -499,7 +552,7 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayPDFInvoice($params)
     {
-        $tab = \Mobbex\PS\Checkout\Models\Helper::getInvoiceData($params['object']->id_order);
+        $tab = $this->helper->getInvoiceData($params['object']->id_order);
 
         return $tab;
     }
@@ -525,8 +578,8 @@ class Mobbex extends PaymentModule
         if ($order) {
             // Get Transaction Data
             $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
-            $trx          = \Mobbex\PS\Checkout\Models\Transaction::getParentTransaction($order->id_cart);
-            $sources      = \Mobbex\PS\Checkout\Models\Helper::getWebhookSources($transactions);
+            $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
+            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions);
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull(\Context::getContext()->language->id)['name']);
@@ -587,7 +640,7 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        $checkoutData = \Mobbex\PS\Checkout\Models\Helper::getPaymentData(false);
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Make sure the assets are loaded correctly
         $this->hookDisplayHeader(true);
@@ -595,18 +648,18 @@ class Mobbex extends PaymentModule
         // Add payment information to js
         \Media::addJsDef([
             'mbbx' => [
-                'paymentUrl' => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('payment', 'process'),
-                'errorUrl'   => \Mobbex\PS\Checkout\Models\Helper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+                'paymentUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
+                'errorUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
                 'embed'      => (bool) $this->config->settings['embed'],
                 'data'       => $checkoutData,
-                'return'     => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
+                'return'     => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 
         $this->smarty->assign([
             'methods'     => isset($checkoutData['paymentMethods']) && !$this->config->settings['unified_method'] ? $checkoutData['paymentMethods'] : [],
             'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
-            'redirectUrl' => isset($checkoutData['id']) ? \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
+            'redirectUrl' => isset($checkoutData['id']) ? \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
         ]);
 
         return $this->display(__FILE__, 'views/templates/front/payment.tpl');
@@ -638,14 +691,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayCustomerAccountForm()
     {
-        if ($this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '')
+        if (!$this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '')
             return;
 
         $customer = \Context::getContext()->customer;
 
         $this->smarty->assign(
             array(
-                'last_dni' => isset($customer->id) ? \Mobbex\PS\Checkout\Models\Helper::getDni($customer->id) : "",
+                'last_dni' => isset($customer->id) ? $this->helper->getDni($customer->id) : "",
             )
         );
 
@@ -684,7 +737,7 @@ class Mobbex extends PaymentModule
     {
 
         $order        = new \Order($params['id_order']);
-        $trx          = \Mobbex\PS\Checkout\Models\Transaction::getParentTransaction($order->id_cart);
+        $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
 
         if (!$trx)
@@ -693,6 +746,7 @@ class Mobbex extends PaymentModule
         $this->smarty->assign(
             [
                 'id' => $trx->payment_id,
+                'cart_id'  => $params['id_order'],
                 'data' => [
                     'payment_id'     => $trx->payment_id,
                     'risk_analysis'  => $trx->risk_analysis,
@@ -700,8 +754,8 @@ class Mobbex extends PaymentModule
                     'total'          => $trx->total,
                     'status_message' => $trx->status_message,
                 ],
-                'sources'  => \Mobbex\PS\Checkout\Models\Helper::getWebhookSources($transactions),
-                'entities' => \Mobbex\PS\Checkout\Models\Helper::getWebhookEntities($transactions)
+                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions),
+                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions)
             ]
         );
 
@@ -718,9 +772,11 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
+        extract($this->config->getProductPlans($products));
+
         $data = [
             'product_price'  => \Product::convertAndFormatPrice($total),
-            'sources'        => \Mobbex\PS\Checkout\Models\Helper::getSources($total, \Mobbex\PS\Checkout\Models\Helper::getInstallments($products)),
+            'sources'        => \Mobbex\Repository::getSources($total, \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans)),
             'style_settings' => [
                 'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
                 'styles'         => $this->config->settings['widget_styles'] ?: $this->config->default['widget_styles'],
@@ -747,10 +803,14 @@ class Mobbex extends PaymentModule
     {
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
+        extract($this->config->getProductPlans([$id], $catalogType, true));
+
         $options  = [
             'id'             => $id,
-            'update_sources' => \Mobbex\PS\Checkout\Models\Helper::getModuleUrl('sources', 'update', "&hash=$hash"),
-            'plans'          => \Mobbex\PS\Checkout\Models\Helper::getPlansFilterFields($id, $catalogType),
+            'update_sources' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
+            'plans'          => $this->config->getStoredSources(),
+            'check_common'   => $common_plans,
+            'check_advanced' => $advanced_plans,
             'entity'         => \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, 'entity') ?: '',
         ];
 
@@ -803,9 +863,8 @@ class Mobbex extends PaymentModule
      */
     private function updateCustomerDniStatus(array $params)
     {
-        if ($this->config->settings['mobbex_dni'] || empty($params['object']->id) || empty($_POST['customer_dni']) || $this->config->settings['custom_dni'] != '') {
+        if (!$this->config->settings['mobbex_dni'] || empty($params['object']->id) || empty($_POST['customer_dni']) || $this->config->settings['custom_dni'] != '')
             return;
-        }
 
         $customer_id  = $params['object']->id;
         $customer_dni = $_POST['customer_dni'];
