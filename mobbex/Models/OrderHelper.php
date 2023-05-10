@@ -263,7 +263,7 @@ class OrderHelper
         if ($addVersion)
             $uri .= '?ver=' . Config::MODULE_VERSION;
 
-        if ($this->config->settings['force_assets'] == \Tools::getValue('controller')) {
+        if (!empty($this->config->settings['force_assets']) && $this->config->settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
         } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
