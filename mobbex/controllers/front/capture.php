@@ -21,30 +21,27 @@ if (!defined('_PS_VERSION_')) {
 
     public function postProcess()
     {
-        // Retun if hash not match
+        // Retun if hash not match. This prevents access to the site from outside the capture
         if(Tools::getValue('hash') !== md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']))
             return;
 
-        else {
-            // Try to make a capture request and redirect
-            try {
-                // Set request necessary data
-                $cartId  = Cart::getCartIdByOrderId(Tools::getValue('order_id'));
-                $url     = urldecode(Tools::getValue('url')); 
-                $mbbxTrx = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($cartId, true);
+        // Try to make a capture request and redirect
+        try {
+            // Set request necessary data
+            $cartId  = Cart::getCartIdByOrderId(Tools::getValue('order_id'));
+            $url     = urldecode(Tools::getValue('url'));
+            $mbbxTrx = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($cartId, true);
 
-                // Capture request
-                \Mobbex\Api::request([
-                    'method' => 'POST',
-                    'uri'    => 'operations/' . $mbbxTrx->payment_id . '/capture',
-                    'body'   => ['total' => $mbbxTrx->total],
-                ]);
+            // Capture request
+            \Mobbex\Api::request([
+                'method' => 'POST',
+                'uri'    => 'operations/' . $mbbxTrx->payment_id . '/capture',
+                'body'   => ['total' => $mbbxTrx->total],
+            ]);
 
-                Tools::redirectAdmin( $url);
-
-            } catch (\Exception $e) {
-                $this->logger->log('error', 'Mobbex > capture | Error making capture', $e->getMessage());
-            }
+            Tools::redirectAdmin($url);
+        } catch (\Exception $e) {
+            $this->logger->log('error', 'Mobbex > capture | Error making capture', $e->getMessage());
         }
     }
 }
