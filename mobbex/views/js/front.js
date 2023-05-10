@@ -1,5 +1,8 @@
 window.addEventListener("load", function () {
 
+  if (typeof $ == "undefined")
+    var $ = jQuery;
+
   window.onpopstate = function (event) {
     window.top.location.href = mbbx.return;
   };
@@ -38,7 +41,8 @@ window.addEventListener("load", function () {
       },
     };
 
-    if (response.data.sid) options.sid = response.data.sid;
+    if (response.data.sid) 
+      options.sid = response.data.sid;
 
     let mobbexEmbed = window.MobbexEmbed.init(options);
     mobbexEmbed.open();
@@ -50,8 +54,7 @@ window.addEventListener("load", function () {
    * @param {array} response Mobbex checkout or subscriber response.
    */
   function redirectToCheckout(response) {
-    window.top.location.href =
-      response.data.url + (mbbx.method ? "?paymentMethod=" + mbbx.method : "");
+    window.top.location.href = response.data.url + (mbbx.method ? "?paymentMethod=" + mbbx.method : "");
   }
 
   /**
@@ -162,7 +165,8 @@ window.addEventListener("load", function () {
     mbbx.method = $(method).attr("group");
 
     // Only for ps 1.6. In ps 1.7 forms are natively hidden
-    if (!window.prestashop) hideCardForms();
+    if (!window.prestashop) 
+      hideCardForms();
   }
 
   /**
@@ -196,12 +200,17 @@ window.addEventListener("load", function () {
    * Execute mobbex payment.
    */
   function executePayment() {
-    if (mbbx.card && !validateCardForm()) return;
+    if (mbbx.card && !validateCardForm()) 
+      return;
 
     processPayment((response) => {
-      if (mbbx.card) executeWallet(response);
-      else if (mbbx.embed) openCheckoutModal(response);
-      else redirectToCheckout(response);
+      if (mbbx.card) {
+        executeWallet(response);
+      } else if (mbbx.embed) {
+        openCheckoutModal(response);
+      } else {
+        redirectToCheckout(response);
+      }
     });
   }
 
