@@ -122,7 +122,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         
         // Verify token
         if (!\Mobbex\Repository::validateToken($token))
-            throw new \Exception("Invalid Token: $token", 1);
+            $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
         // Save webhook data
         \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
