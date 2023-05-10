@@ -51,10 +51,8 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
      */
     public function getCheckoutUrl($paymentData = [])
     {
-        $previousCheckoutUrl = 'https://mobbex.com/p/checkout/v2/' . Tools::getValue('id');
-
-        return (isset($paymentData['data']['url']) ? $paymentData['data']['url'] : $previousCheckoutUrl) . '?' . http_build_query([
+        return isset($paymentData['data']['url']) ? $paymentData['data']['url'] . '?' . http_build_query([
             'paymentMethod' => Tools::getValue('method', null),
-        ]);
+        ]) : 'index.php?controller=order&step=1';
     }
 }
