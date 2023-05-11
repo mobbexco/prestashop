@@ -79,6 +79,8 @@ class Transaction extends AbstractModel
             $trx->$key = $value;
 
         $trx->save();
+
+        return $trx;
     }
 
     /**
@@ -92,13 +94,16 @@ class Transaction extends AbstractModel
      */
     public static function getTransactions($cart_id, $parent = false)
     {
-        $data = \Db::getInstance()->executes('SELECT * FROM '._DB_PREFIX_.'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ($parent ? ' and parent = 1' : '') . ' ORDER BY id DESC');
-        $transactions = [];
+        $data = \Db::getInstance()->executes('SELECT * FROM ' . _DB_PREFIX_ . 'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ($parent ? ' and parent = 1' : '') . ' ORDER BY id DESC');
 
-        foreach ($data as $value)
-            $transactions[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
+        if (!$parent) {
+            $childs = [];
+            foreach ($data as $value)
+                $childs[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
+            return $childs;
+        }
 
-        return $parent && isset($transactions[0]) ? $transactions[0] : $transactions;
+        return !empty($data[0]) ? new \Mobbex\PS\Checkout\Models\Transaction($data[0]['id']) : new \Mobbex\PS\Checkout\Models\Transaction();
     }
 
     /**
@@ -111,10 +116,11 @@ class Transaction extends AbstractModel
     public static function formatData($res)
     {
         $data = [
-            'parent'             => self::isParentWebhook($res['payment']['operation']['type']),
+            'parent'             => isset($res['payment']['id']) ? self::isParentWebhook($res['payment']['id']) : false,
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
-            'status'             => (int) $res['payment']['status']['code'],
+            'status_code'        => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',
+            'status'             => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',
             'order_status'       => (int) \Configuration::get('MOBBEX_OS_PENDING'),
             'status_message'     => isset($res['payment']['status']['message']) ? $res['payment']['status']['message'] : '',
             'source_name'        => !empty($res['payment']['source']['name']) ? $res['payment']['source']['name'] : 'Mobbex',
@@ -124,12 +130,13 @@ class Transaction extends AbstractModel
             'source_expiration'  => isset($res['payment']['source']['expiration']) ? json_encode($res['payment']['source']['expiration']) : '',
             'source_installment' => isset($res['payment']['source']['installment']) ? json_encode($res['payment']['source']['installment']) : '',
             'installment_name'   => isset($res['payment']['source']['installment']['description']) ? $res['payment']['source']['installment']['description'] : '',
-            'source_url'         => isset($res['payment']['source']['url']) ? json_encode($res['payment']['source']['url']) : '',
+            'source_url'         => isset($res['payment']['source']['url']) ? $res['payment']['source']['url'] : '',
             'cardholder'         => isset($res['payment']['source']['cardholder']) ? json_encode(($res['payment']['source']['cardholder'])) : '',
             'entity_name'        => isset($res['entity']['name']) ? $res['entity']['name'] : '',
             'entity_uid'         => isset($res['entity']['uid']) ? $res['entity']['uid'] : '',
             'customer'           => isset($res['customer']) ? json_encode($res['customer']) : '',
             'checkout_uid'       => isset($res['checkout']['uid']) ? $res['checkout']['uid'] : '',
+            'checkout_total'     => isset($res['checkout']['total']) ? $res['checkout']['total'] : 0,
             'total'              => isset($res['payment']['total']) ? $res['payment']['total'] : '',
             'currency'           => isset($res['checkout']['currency']) ? $res['checkout']['currency'] : '',
             'risk_analysis'      => isset($res['payment']['riskAnalysis']['level']) ? $res['payment']['riskAnalysis']['level'] : '',
@@ -139,12 +146,14 @@ class Transaction extends AbstractModel
         ];
 
         // Validate mobbex status and create order status
-        $state = \Mobbex\PS\Checkout\Models\OrderUpdate::getState($data['status']);
+        $state = self::getState($data['status_code']);
 
         if ($state == 'onhold') {
             $data['order_status'] = (int) \Configuration::get('MOBBEX_OS_WAITING');
         } else if ($state == 'approved') {
             $data['order_status'] =  (int) (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
+        } else if ($state == 'expired') {
+            $data['order_status'] = (int) \Configuration::get('MOBBEX_OS_EXPIRED');
         } else if ($state == 'failed') {
             $data['order_status'] = (int) (\Configuration::get('MOBBEX_ORDER_STATUS_FAILED') ?: \Configuration::get('PS_OS_' . 'ERROR'));
         } else if ($state == 'refunded') {
@@ -157,22 +166,15 @@ class Transaction extends AbstractModel
     }
 
     /**
-     * Receives the webhook "opartion type" and return true if the webhook is parent and false if not
+     * Check if webhook is parent type using him payment id.
      * 
-     * @param string $operationType
-     * @return bool true|false
+     * @param string $paymentId
      * 
+     * @return bool
      */
-    public static function isParentWebhook($operationType)
+    public static function isParentWebhook($paymentId)
     {
-        $config = new Config();
-
-        if ($operationType === "payment.v2") {
-            if ($config->settings['multicard'] || $config->settings['multivendor'])
-                return false;
-        }
-
-        return true;
+        return strpos($paymentId, 'CHD-') !== 0;
     }
 
     /**
@@ -257,5 +259,41 @@ class Transaction extends AbstractModel
     {
         $coupon = "https://mobbex.com/console/" . $transaction->entity_uid . "/operations/?oid=" . $transaction->payment_id;
         return $coupon;
+    }
+
+    /**
+     * Check if the current transaction is a retry.
+     * 
+     * @return bool
+     */
+    public function isRetry()
+    {
+        return (bool) \Db::getInstance()->getValue(
+            "SELECT id FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE `payment_id` = '$this->payment_id' AND `status_code` = '$this->status_code' AND `id` != '$this->id' ORDER BY id DESC"
+        ); 
+    }
+
+    /**
+     * Get payment state from Mobbex status code.
+     * 
+     * @param int|string $status
+     * 
+     * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
+     */
+    public static function getState($status)
+    {
+        if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+            return 'onhold';
+        } else if ($status == 4 || $status >= 200 && $status < 400) {
+            return 'approved';
+        } else if ($status == 401) {
+            return 'expired';
+        } else if ($status == 601 || $status == 602 || $status == 605) {
+            return 'refunded';
+        } else if ($status == 604) {
+            return 'rejected';
+        } else {
+            return 'failed';
+        }
     }
 }
