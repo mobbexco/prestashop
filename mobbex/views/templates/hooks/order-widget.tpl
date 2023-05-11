@@ -101,7 +101,7 @@
                 <td><a href="{$coupon}">VER</a></td>
             </tr>
 
-            {hook h="displayMobbexOrderWidget" id="$id"}
+            {hook h="displayMobbexOrderWidget" id="$id" cart_id="$cart_id"}
 
         </table>
 

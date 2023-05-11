@@ -481,10 +481,12 @@ class Mobbex extends PaymentModule
         if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
             $order = new \Order($params['templateVars']['id_order']);
 
-            // If current order state is not approved, block mail sending
-            if ($order->getCurrentState() != \Configuration::get('PS_OS_PAYMENT'))
-                return false;
-        }
+        // Only check status on mobbex orders
+        if (!$order || $order->module != 'mobbex')
+            return true;
+
+        // Allow mails of approved payments
+        return $order->getCurrentState() == (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_PAYMENT'));
     }
 
     public function hookActionMobbexExpireOrder($orderId)
@@ -740,6 +742,7 @@ class Mobbex extends PaymentModule
         $this->smarty->assign(
             [
                 'id' => $parent->payment_id,
+                'cart_id'  => $params['id_order'],
                 'data' => [
                     'payment_id'     => $parent->payment_id,
                     'risk_analysis'  => $parent->risk_analysis,
