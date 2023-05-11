@@ -577,7 +577,7 @@ class Mobbex extends PaymentModule
             // Get Transaction Data
             $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
             $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions, $trx->getChilds());
+            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($trx, !empty($transactions) ? $transactions : $trx->getChilds());
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull(\Context::getContext()->language->id)['name']);
