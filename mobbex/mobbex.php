@@ -478,8 +478,11 @@ class Mobbex extends PaymentModule
 
     public function hookActionEmailSendBefore($params)
     {
-        if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
-            $order = new \Order($params['templateVars']['id_order']);
+        if ($params['template'] != 'order_conf' || empty($params['templateVars']['{order_name}']))
+            return true;
+
+        // Intance order from reference
+        $order = \Order::getByReference($params['templateVars']['{order_name}'])->getFirst();
 
         // Only check status on mobbex orders
         if (!$order || $order->module != 'mobbex')
