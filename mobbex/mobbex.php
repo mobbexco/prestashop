@@ -801,7 +801,6 @@ class Mobbex extends PaymentModule
      */
     private function displayCatalogOptions($id, $catalogType = 'product')
     {
-        error_log('todo ok?: ' . "\n" . json_encode('see', JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
         extract($this->config->getProductPlans([$id], $catalogType, true));

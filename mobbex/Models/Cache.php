@@ -42,10 +42,19 @@ class Cache extends AbstractModel
     public function get($key)
     {
         //Delete expired values
-        \Db::getInstance()->execute("DELETE FROM " . _DB_PREFIX_ . "mobbex_cache WHERE `date` < DATE_SUB(NOW(), INTERVAL 5 MINUTE);");
+        self::deleteExpiredCache();
+        
         //Get data
         $result = \Db::getInstance()->executes("SELECT * FROM " . _DB_PREFIX_ . "mobbex_cache WHERE `cache_key` = '$key';");
 
         return !empty($result[0]) ? $result[0] : false;
+    }
+
+    /**
+     * Delete expired stored data in cache table.
+     */
+    public static function deleteExpiredCache()
+    {
+        return \Db::getInstance()->execute("DELETE FROM " . _DB_PREFIX_ . "mobbex_cache WHERE `date` < DATE_SUB(NOW(), INTERVAL 5 MINUTE);");
     }
 }
