@@ -235,20 +235,23 @@ class Transaction extends AbstractModel
     }
 
     /**
-     * Get childs data from webhook and create an array of transactions
+     * Get childs data from webhook and create an array of child transactions(type object)
      * 
      * @return array $childs
      * 
      */
     public function getChilds()
     {
-        foreach (json_decode($this->childs, true) as $childData)
+        $childs =[];
+        $childrenData = is_array(json_decode($this->childs, true)) ? json_decode($this->childs ? $this->childs : '', true) : [] ;
+
+        foreach ($childrenData as $childData)
             $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
         return $childs;
     }
 
     /**
-     * Create a new transaction with childs data from childs node
+     * Create a formated new transaction with childs data from childs node
      * 
      * @param  array  $childData
      * @return object $this
@@ -256,6 +259,7 @@ class Transaction extends AbstractModel
      */
     public function loadFromWebhookData($childData)
     {
+        $childData    = is_array($childData) ? $childData : [];
         $formatedData = self::formatData($childData);
 
         foreach ($formatedData as $key => $value)
