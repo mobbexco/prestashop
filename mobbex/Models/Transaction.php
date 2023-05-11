@@ -155,7 +155,6 @@ class Transaction extends AbstractModel
             $data['order_status'] = (int) (\Configuration::get('MOBBEX_ORDER_STATUS_REJECTED') ?: \Configuration::get('PS_OS_' . 'ERROR'));
         }
 
-        error_log('Log Message: ' . "\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n", 3, 'log.log');
         return $data;
     }
 
