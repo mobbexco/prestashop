@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 3.3.1
+ * @version 3.5.2
  * @see     PaymentModuleCore
  */
 
@@ -35,8 +35,8 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Logger */
     public $logger;
 
-    /** @var \Mobbex\PS\Checkout\Observers\Sdk */
-    public $sdk;
+    /** @var \Mobbex\PS\Checkout\Models\Installer */
+    public $installer;
 
     /**
      * Constructor
@@ -65,6 +65,8 @@ class Mobbex extends PaymentModule
         $this->registrar = new \Mobbex\PS\Checkout\Models\Registrar();
         $this->helper    = new \Mobbex\PS\Checkout\Models\OrderHelper();
         $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
+        $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
+        $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
         
         //Init php sdk
         $this->initSdk();
@@ -72,14 +74,13 @@ class Mobbex extends PaymentModule
         // On 1.7.5 ignores the creation and finishes on an Fatal Error
         // Create the States if not exists because are really important
         if ($this::isEnabled($this->name))
-            $this->createStates();
+            $this->installer->createStates($this->config->orderStatuses);
 
         // Only if you want to publish your module on the Addons Marketplace
-        $this->updater    = new \Mobbex\PS\Checkout\Models\Updater();
         $this->module_key = 'mobbex_checkout';
 
         // Execute pending tasks if cron is disabled
-        if (!defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
+        if ($this->active && !defined('mobbexTasksExecuted') && !$this->config->settings['cron_mode'] && !\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 
@@ -103,19 +104,11 @@ class Mobbex extends PaymentModule
 
             return false;
         }
-        
-        //install Tables
-        $this->createTables();
 
-        // Try to create finnacial cost product
-        $productId = $this->helper->getProductIdByReference('mobbex-cost');
-        $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
-
-        // Always update product quantity
-        if ($product->id)
-            \StockAvailable::setQuantity($product->id, null, 9999999);
-
-        return parent::install() 
+        return parent::install()
+            && $this->installer->createTables()
+            && $this->installer->createStates($this->config->orderStatuses)
+            && $this->installer->createCostProduct()
             && $this->registrar->unregisterHooks($this)
             && $this->registrar->registerHooks($this)
             && $this->registrar->addExtensionHooks();
@@ -140,58 +133,6 @@ class Mobbex extends PaymentModule
         return parent::uninstall();
     }
 
-    public function createStates()
-    {
-        foreach ($this->config->orderStatuses as $key => $value) {
-            if (
-                !\Configuration::hasKey($value['name'])
-                || empty(\Configuration::get($value['name']))
-                || !\Validate::isLoadedObject(new \OrderState(\Configuration::get($value['name'])))
-            ) {
-                $order_state = new OrderState();
-                $order_state->name = array();
-
-                // The locale parameter does not work as it should, so it is impossible to get the translation for each language
-                foreach (\Language::getLanguages() as $language)
-                    $order_state->name[$language['id_lang']] = $this->l($value['label']);
-
-                $order_state->send_email  = $value['send_email'];
-                $order_state->color       = $value['color'];
-                $order_state->module_name = $this->name;
-
-                $order_state->hidden = $order_state->delivery = $order_state->logable = $order_state->invoice = false;
-
-                // Add to database
-                $order_state->add();
-                \Configuration::updateValue($value['name'], (int) $order_state->id);
-        }
-        }
-    }
-
-    public function createTables()
-    {
-        // Get install query from sql file
-        $db = \DB::getInstance();
-        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
-
-        // If mobbex transaction table exists
-        if ($db->numRows()) {
-            // Check if table has already been modified
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-                return true;
-
-            // If it was modified but id has not auto_increment property, add to column
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
-                return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
-
-            $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/alter.sql'));
-                return $db->execute($sql);
-        }
-        
-        $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/sql/create.sql'));
-            return $db->execute($sql);
-    }
-
     /**
      * Init the PHP Sdk and configure it with module & plataform data.
      */
@@ -201,14 +142,15 @@ class Mobbex extends PaymentModule
         \Mobbex\Platform::init(
             'Prestashop'._PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
-            \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__,
+            \Tools::getShopDomainSsl(true, true),
             [
                 'Prestashop' => _PS_VERSION_,
                 'webpay'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
-                'sdk'        => class_exists('\Composer\InstalledVersions') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
+                'sdk'        => class_exists('\Composer\InstalledVersions') && \Composer\InstalledVersions::isInstalled('mobbexco/php-plugins-sdk') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
             ],
             $this->config->settings,
-            [$this->registrar, 'executeHook']
+            [$this->registrar, 'executeHook'],
+            [$this->logger, 'log']
         );
 
         // Init api conector
@@ -304,35 +246,6 @@ class Mobbex extends PaymentModule
         }
     }
 
-    /**
-     * Create a hidden product.
-     * 
-     * @param string $reference String to identify and get product after.
-     * @param string $name The name of product.
-     * 
-     * @return \Product
-     */
-    public function createHiddenProduct($reference, $name)
-    {
-        $product = new \Product;
-        $product->hydrate([
-            'reference'           => $reference,
-            'name'                => $name,
-            'quantity'            => 9999999,
-            'is_virtual'          => false,
-            'indexed'             => 0,
-            'visibility'          => 'none',
-            'id_category_default' => \Configuration::get('PS_HOME_CATEGORY'),
-            'link_rewrite'        => $reference,
-        ], \Configuration::get('PS_LANG_DEFAULT'));
-
-        // Save to db
-        $product->save();
-        $product->addToCategories(\Configuration::get('PS_HOME_CATEGORY'));
-
-        return $product;
-    }
-
     /** HOOKS **/
 
     /** ACTION HOOKS **/
@@ -347,7 +260,7 @@ class Mobbex extends PaymentModule
             return;
 
         $options = [];
-        $checkoutData = $this->helper->getPaymentData();
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -386,13 +299,15 @@ class Mobbex extends PaymentModule
 
         // Get wallet cards
         foreach ($cards as $key => $card) {
-            $options[] = $this->createPaymentOption(
-                $card['name'],
-                null,
-                $card['source']['card']['product']['logo'],
-                'module:mobbex/views/templates/front/card-form.tpl',
-                compact('card', 'key')
-            );
+            if($card['installments']) {
+                $options[] = $this->createPaymentOption(
+                    $card['name'],
+                    null,
+                    $card['source']['card']['product']['logo'],
+                    'module:mobbex/views/templates/front/card-form.tpl',
+                    compact('card', 'key')
+                );
+            }
         }
 
         $this->logger->log('debug', 'Observer > hookPaymentOptions', $options);
@@ -424,7 +339,7 @@ class Mobbex extends PaymentModule
             }
 
             return $result;
-        } catch (\Mobbex\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->log('error', 'mobbex > hookActionOrderReturn |', $e->getMessage());
             return false;
         }
@@ -488,20 +403,44 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Executes when hook ActionCategoryUpdate is fired. (Used to update category options).
+     * Update category options (ps 1.6 only).
      */
-    public function hookActionCategoryUpdate()
+    public function hookActionCategoryAdd($params)
     {
-        $this->hookActionAfterUpdateCategoryFormHandler();
+        $this->hookActionCategoryUpdate($params);
+    }
+
+    /**
+     * Update category options (ps 1.6 only).
+     */
+    public function hookActionCategoryUpdate($params)
+    {
+        $this->saveCatalogOptions(
+            isset($params['category']->id) ? $params['category']->id : \Tools::getValue('id_category'),
+            'category'
+        );
+    }
+
+    /**
+     * Executes when hook ActionAfterCreateCategoryFormHandler is fired. (Used to update category options).
+     */
+    public function hookActionAfterCreateCategoryFormHandler($params)
+    {
+        $this->saveCatalogOptions(
+            !empty($params['id']) ? $params['id'] : \Tools::getValue('id_category'),
+            'category'
+        );
     }
 
     /**
      * Executes when hook ActionAfterUpdateCategoryFormHandler is fired. (Used to update category options).
      */
-    public function hookActionAfterUpdateCategoryFormHandler()
+    public function hookActionAfterUpdateCategoryFormHandler($params)
     {
-        $id = !empty($params['request']) ? $params['request']->get('categoryId') : \Tools::getValue('id_category');
-        $this->saveCatalogOptions($id, 'category');
+        $this->saveCatalogOptions(
+            !empty($params['id']) ? $params['id'] : \Tools::getValue('id_category'),
+            'category'
+        );
     }
 
     /**
@@ -542,14 +481,18 @@ class Mobbex extends PaymentModule
 
     public function hookActionEmailSendBefore($params)
     {
+        if ($params['template'] != 'order_conf' || empty($params['templateVars']['{order_name}']))
+            return true;
 
-        if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
-            $order = new \Order($params['templateVars']['id_order']);
+        // Intance order from reference
+        $order = \Order::getByReference($params['templateVars']['{order_name}'])->getFirst();
 
-            // If current order state is not approved, block mail sending
-            if ($order->getCurrentState() != \Configuration::get('PS_OS_PAYMENT'))
-            return false;
-        }
+        // Only check status on mobbex orders
+        if (!$order || $order->module != 'mobbex')
+            return true;
+
+        // Allow mails of approved payments
+        return $order->getCurrentState() == (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_PAYMENT'));
     }
 
     public function hookActionMobbexExpireOrder($orderId)
@@ -561,7 +504,7 @@ class Mobbex extends PaymentModule
             return false;
 
         if ($order->getCurrentState() == \Configuration::get('MOBBEX_OS_PENDING'))
-        $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
+            $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
 
         return true;
     }
@@ -593,10 +536,10 @@ class Mobbex extends PaymentModule
             $this->helper->addAsset("$mediaPath/views/js/front.js");
 
             if ($this->config->settings['wallet'])
-            $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
+                $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if ($this->config->settings['embed'])
-            $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.20.js');
+                $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.23.js');
         }
     }
 
@@ -698,7 +641,7 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        $checkoutData = $this->helper->getPaymentData();
+        $checkoutData = $this->helper->getPaymentData(false);
 
         // Make sure the assets are loaded correctly
         $this->hookDisplayHeader(true);
@@ -808,6 +751,7 @@ class Mobbex extends PaymentModule
         $this->smarty->assign(
             [
                 'id' => $trx->payment_id,
+                'cart_id'  => $params['id_order'],
                 'data' => [
                     'payment_id'     => $trx->payment_id,
                     'risk_analysis'  => $trx->risk_analysis,
@@ -866,7 +810,7 @@ class Mobbex extends PaymentModule
     {
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
-        extract($this->config->getProductPlans([$id]));
+        extract($this->config->getProductPlans([$id], $catalogType, true));
 
         $options  = [
             'id'             => $id,

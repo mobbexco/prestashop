@@ -2,9 +2,7 @@
 
 defined('_PS_VERSION_') || exit;
 
-function upgrade_module_2_8_0(Mobbex $module)
-{
-
+function upgrade_module_2_8_0(Mobbex $module) {
     $configs = [
         'color'      => trim((string) \Configuration::get('MOBBEX_PLANS_TEXT_COLOR')),
         'background' => trim((string) \Configuration::get('MOBBEX_PLANS_BACKGROUND')),
@@ -31,6 +29,4 @@ function upgrade_module_2_8_0(Mobbex $module)
     color: #ffffff;
     background-color: #6f00ff;
 }');
-    $registrar = new \Mobbex\PS\Checkout\Models\Registrar();
-    return $module->createTables() && $registrar->unregisterHooks($module) && $registrar->registerHooks($module) && $registrar->addExtensionHooks();
 }

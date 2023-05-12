@@ -6,18 +6,39 @@ class OrderHelper
 {
     public function __construct()
     {
-        $this->config = new Config();
-        $this->logger = new Logger();
+        $this->config = new \Mobbex\PS\Checkout\Models\Config();
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
 
-    public static function getUrl($path)
+    /**
+     * Add a path to the store domain by passing a url 
+     * 
+     * @param string $url
+     * 
+     * @return string domain
+     */
+    public static function getUrl($url)
     {
-        return \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
+        return \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $url;
     }
 
+    /**
+     * Create a url passing the controller, action and path
+     * 
+     * @param string $controller
+     * @param string $action
+     * @param string $path
+     * 
+     * @return string $url
+     * 
+     */ 
     public static function getModuleUrl($controller, $action = '', $path = '')
     {
         $url = ("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
+        //Add xdebug param to webhook
+        if ($action == 'webhook' && \Configuration::get('MOBBEX_DEBUG'))
+            $url .= '&XDEBUG_SESSION_START=PHPSTORM';
+            
         return self::getUrl($url);
     }
 
@@ -87,7 +108,7 @@ class OrderHelper
             );
 
             // Add order expiration task
-            if (!Updater::needUpgrade()) {
+            if (!\Mobbex\PS\Checkout\Models\Updater::needUpgrade()) {
                 $task = new Task(
                     null,
                     'actionMobbexExpireOrder',
@@ -147,10 +168,10 @@ class OrderHelper
 
     /**
      * Get the payment data
-     *
+     * @param bool $webhooks
      * @return array|null
      */
-    public function getPaymentData()
+    public function getPaymentData($webhooks = true)
     {
         $cart = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
@@ -158,13 +179,13 @@ class OrderHelper
         if (!$cart->id)
             return;
 
-        return Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout(null, $cart, $customer);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout($cart, $customer, $webhooks);
     }
 
     /**
      * Creates Mobbex Checkout
      */
-    public function createCheckout($module, $cart, $customer)
+    public function createCheckout($cart, $customer, $webhooks)
     {
         // Get items
         $items    = array();
@@ -222,11 +243,12 @@ class OrderHelper
                 $cart->id,
                 (float) $cart->getOrderTotal(true, \Cart::BOTH),
                 $return_url,
-                self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+                self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 $items,
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
                 $this->getCustomer($cart),
                 $this->getAddresses($cart),
+                $webhooks ? null : 'none',
                 'mobbexProcessPayment'
             );
         } catch (\Mobbex\Exception $e) {
@@ -258,7 +280,7 @@ class OrderHelper
         if ($addVersion)
             $uri .= '?ver=' . Config::MODULE_VERSION;
 
-        if ($this->config->settings['force_assets']) {
+        if (!empty($this->config->settings['force_assets']) && $this->config->settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
         } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];

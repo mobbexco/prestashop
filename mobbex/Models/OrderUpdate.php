@@ -17,7 +17,7 @@ class OrderUpdate
      * @param \Order $order
      * @param array $data Transaction data.
      * 
-     * @return bool Result of update.
+     * @return bool|null Result of update. Null if not applicable.
      */
     public function updateOrderPayment($order, $data)
     {
@@ -25,8 +25,12 @@ class OrderUpdate
             $payments = $order->getOrderPaymentCollection() ?: [];
             $payment  = isset($payments[0]) ? $payments[0] : new \OrderPayment;
 
-            if (!$payment || self::getState($data['status']) != 'approved')
-                return false;
+            if (!$payment || \Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) != 'approved')
+                return;
+
+            // First, decode jsons to use data safely
+            $sourceExpiration = json_decode($data['source_expiration'], true); // chemes
+            $cardHolder       = json_decode($data['cardholder'], true);
 
             $payment->order_reference = $order->reference;
             $payment->id_currency     = $order->id_currency;
@@ -35,8 +39,8 @@ class OrderUpdate
             $payment->payment_method  = $data['source_name'];
             $payment->transaction_id  = $data['payment_id'] ?: null;
             $payment->card_number     = $data['source_number'] ?: null;
-            $payment->card_expiration = $data['source_expiration'] ? implode('/', json_decode($data['source_expiration'], true)) : null;
-            $payment->card_holder     = $data['cardholder'] ? json_decode($data['cardholder'], true)['name'] : null;
+            $payment->card_expiration = $sourceExpiration ? implode('/', $sourceExpiration) : null;
+            $payment->card_holder     = isset($cardHolder['name']) ? $cardHolder['name'] : null;
             $payment->card_brand      = $data['source_type'];
 
             // If is new payment, update order real paid
@@ -45,8 +49,10 @@ class OrderUpdate
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
-            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', [ 'data ' => $e->getMessage(), 'order id' => $order->id]);
+            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', ['msg' => $e->getMessage(), 'order_id' => $order->id]);
         }
+
+        return false;
     }
 
     /**
@@ -58,7 +64,7 @@ class OrderUpdate
      */
     public function removeExpirationTasks($order)
     {
-        if (Updater::needUpgrade())
+        if (\Mobbex\PS\Checkout\Models\Updater::needUpgrade())
             return false;
 
         $tasks = $this->getExpirationTasks($order);
@@ -101,12 +107,22 @@ class OrderUpdate
         if (is_numeric($cart))
             $cart = new \Cart($cart);
 
+        $cartTotal = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+
+        // Exit if amount is invalid
+        if (!$amount || !$cartTotal)
+            return $this->logger->log('error', 'OrderUpdate > updateCartTotal | Invalid amounts updating cart total', [
+                'cart'      => $cart->id,
+                'cartTotal' => $cartTotal,
+                'totalPaid' => $amount,
+            ]);
+
         // Calculate amount diff
-        $diff = (float) $cart->getOrderTotal() - $amount;
+        $diff = $cartTotal - $amount;
 
         try {
             if ($diff > 0)
-                $this->addCartDiscount($cart, $diff);
+                return $this->addCartDiscount($cart, $diff);
             else if ($diff < 0)
                 $this->addCartCost($cart, abs($diff)) && \Cart::resetStaticCache();
 
@@ -142,7 +158,9 @@ class OrderUpdate
         ]);
 
         // Save cart rule to db and return
-        return $cartRule->add() && $cart->addCartRule($cartRule->id);
+        $cartRule->add() && $cart->addCartRule($cartRule->id);
+        //Return the cart rule to delete it
+        return $cartRule; 
     }
 
     /**
@@ -186,26 +204,39 @@ class OrderUpdate
     }
 
     /**
-     * Get payment state from Mobbex status code.
+     * Update order status from webhook data.
      * 
+     * @param OrderInterface $order
      * @param int|string $status
-     * 
-     * @return string "onhold" | "approved" | "authorized" |"refunded" | "rejected" | "failed"
      */
-    public static function getState($status)
+    public function updateStock($order, $status)
     {
-        if ($status == 2 || $status == 100 || $status == 201) {
-            return 'onhold';
-        } else if ($status == 3) {
-            return 'authorized';
-        } else if ($status == 4 || $status >= 200 && $status < 400) {
-            return 'approved';
-        } else if ($status == 602 || $status == 605) {
-            return 'refunded';
-        } else if ($status == 604) {
-            return 'rejected';
-        } else {
-            return 'failed';
+        $refund_status = [
+            \Configuration::get('PS_OS_ERROR'), 
+            \Configuration::get('PS_OS_CANCELLED'), 
+            \Configuration::get('MOBBEX_OS_REJECTED'), 
+            \Configuration::get('MOBBEX_OS_WAITING'), 
+            \Configuration::get('MOBBEX_OS_PENDING')
+        ];
+
+        if(in_array($order->getCurrentState(), $refund_status) || $status === \Configuration::get('PS_OS_CANCELLED') || $status === \Configuration::get('PS_OS_ERROR'))
+            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+
+        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
+            foreach ($order->getProductsDetail() as $product) {
+                if(!\StockAvailable::dependsOnStock($product['product_id']))
+                    \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
+            }
+        }
+
+        if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
+            if($status === \Configuration::get('MOBBEX_OS_REJECTED') || $status === \Configuration::get('MOBBEX_OS_WAITING')){
+                foreach ($order->getProductsDetail() as $product) {
+                    if(!\StockAvailable::dependsOnStock($product['product_id']))
+                        \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
+                }
+                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+            }
         }
     }
 }
