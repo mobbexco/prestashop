@@ -29,11 +29,11 @@ class Installer
                 return $db->execute($sql);
         }
 
-        foreach (['customfields', 'task', 'transaction'] as $table) {
+        foreach (['cache', 'customfields', 'task', 'transaction'] as $table) {
             $query = str_replace(
                 ['DB_PREFIX_', 'ENGINE_TYPE'],
                 [_DB_PREFIX_, _MYSQL_ENGINE_],
-                file_get_contents(dirname(__FILE__) . "/../sql/$table.sql")
+                file_get_contents(dirname(__FILE__) ."/../".($table === 'cache' ? "vendor/mobbexco/php-plugins-sdk/src/" : ''). "sql/$table.sql")
             );
 
             if (!$db->execute($query))

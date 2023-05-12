@@ -67,6 +67,7 @@ class Mobbex extends PaymentModule
         $this->logger    = new \Mobbex\PS\Checkout\Models\Logger();
         $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
         $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
+        $this->cache     = new \Mobbex\PS\Checkout\Models\Cache();
         
         //Init php sdk
         $this->initSdk();
@@ -152,6 +153,8 @@ class Mobbex extends PaymentModule
             [$this->registrar, 'executeHook'],
             [$this->logger, 'log']
         );
+
+        \Mobbex\Platform::loadModels($this->cache);
 
         // Init api conector
         \Mobbex\Api::init();
