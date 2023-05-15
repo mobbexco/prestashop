@@ -10,11 +10,28 @@ class OrderHelper
         $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
     }
 
-    public static function getUrl($path)
+    /**
+     * Add a path to the store domain by passing a url 
+     * 
+     * @param string $url
+     * 
+     * @return string domain
+     */
+    public static function getUrl($url)
     {
-        return \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $path;
+        return \Tools::getShopDomainSsl(true, true) . __PS_BASE_URI__ . $url;
     }
 
+    /**
+     * Create a url passing the controller, action and path
+     * 
+     * @param string $controller
+     * @param string $action
+     * @param string $path
+     * 
+     * @return string $url
+     * 
+     */ 
     public static function getModuleUrl($controller, $action = '', $path = '')
     {
         $url = ("index.php?controller=$controller&module=mobbex&fc=module" . ($action  ? "&action=$action" : '') . $path);
@@ -226,7 +243,7 @@ class OrderHelper
                 $cart->id,
                 (float) $cart->getOrderTotal(true, \Cart::BOTH),
                 $return_url,
-                self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id),
+                self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 $items,
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
                 $this->getCustomer($cart),
@@ -263,7 +280,7 @@ class OrderHelper
         if ($addVersion)
             $uri .= '?ver=' . Config::MODULE_VERSION;
 
-        if ($this->config->settings['force_assets']) {
+        if (!empty($this->config->settings['force_assets']) && $this->config->settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
         } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];

@@ -149,7 +149,8 @@ class Mobbex extends PaymentModule
                 'sdk'        => class_exists('\Composer\InstalledVersions') && \Composer\InstalledVersions::isInstalled('mobbexco/php-plugins-sdk') ? \Composer\InstalledVersions::getVersion('mobbexco/php-plugins-sdk') : '',
             ],
             $this->config->settings,
-            [$this->registrar, 'executeHook']
+            [$this->registrar, 'executeHook'],
+            [$this->logger, 'log']
         );
 
         // Init api conector
@@ -480,13 +481,18 @@ class Mobbex extends PaymentModule
 
     public function hookActionEmailSendBefore($params)
     {
-        if ($params['template'] == 'order_conf' && !empty($params['templateVars']['id_order'])) {
-            $order = new \Order($params['templateVars']['id_order']);
+        if ($params['template'] != 'order_conf' || empty($params['templateVars']['{order_name}']))
+            return true;
 
-            // If current order state is not approved, block mail sending
-            if ($order->getCurrentState() != \Configuration::get('PS_OS_PAYMENT'))
-                return false;
-        }
+        // Intance order from reference
+        $order = \Order::getByReference($params['templateVars']['{order_name}'])->getFirst();
+
+        // Only check status on mobbex orders
+        if (!$order || $order->module != 'mobbex')
+            return true;
+
+        // Allow mails of approved payments
+        return $order->getCurrentState() == (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_PAYMENT'));
     }
 
     public function hookActionMobbexExpireOrder($orderId)
@@ -498,7 +504,7 @@ class Mobbex extends PaymentModule
             return false;
 
         if ($order->getCurrentState() == \Configuration::get('MOBBEX_OS_PENDING'))
-        $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
+            $order->setCurrentState((int) \Configuration::get('PS_OS_CANCELED'));
 
         return true;
     }
@@ -745,6 +751,7 @@ class Mobbex extends PaymentModule
         $this->smarty->assign(
             [
                 'id' => $trx->payment_id,
+                'cart_id'  => $params['id_order'],
                 'data' => [
                     'payment_id'     => $trx->payment_id,
                     'risk_analysis'  => $trx->risk_analysis,
