@@ -344,7 +344,6 @@ class Mobbex extends PaymentModule
             return false;
         }
 
-
     }
 
     /**
@@ -739,10 +738,6 @@ class Mobbex extends PaymentModule
         $order        = new \Order($params['id_order']);
         $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
-        // Set The uri to access to the actual page 
-        $uri          = urlencode($_SERVER['REQUEST_URI']);
-        // Set a hash to limit the access via capture
-        $hash         = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         
         if (!$trx)
             return;

@@ -138,31 +138,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
             // Aditional webhook process
             \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, json_decode($data['data'], true), $cartId);
-
-            // If Order exists
-            if ($order) {
-                if ($data['source_name'] != 'Mobbex' && $data['source_name'] != $order->payment)
-                    $order->payment = $data['source_name'];
-
-                // Update order status only if it was not updated recently
-                if ($order->getCurrentState() != $data['order_status']) {
-                    $this->updateStock($order, $data['order_status']);
-                    $order->setCurrentState($data['order_status']);
-                    $this->orderUpdate->removeExpirationTasks($order);
-                    $this->orderUpdate->updateOrderPayment($order, $data);
-                }
-                $order->update();
-                
-            } else {
-                // Update cart total
-                $this->orderUpdate->updateCartTotal($cartId, $data['total']);
-                // Create and validate Order
-                $order = $this->helper->createOrder($cartId, $data['order_status'], $data['source_name'], $this->module);
-                
-                if ($order)
-                    $this->orderUpdate->updateOrderPayment($order, $data);
             }
-        }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
     }

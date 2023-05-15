@@ -280,12 +280,14 @@ class Transaction extends AbstractModel
      * 
      * @param int|string $status
      * 
-     * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
+     * @return string "onhold" | "authorized" | "approved" | "refunded" | "rejected" | "failed"
      */
     public static function getState($status)
     {
-        if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+        if ($status == 2 || $status == 100 || $status == 201) {
             return 'onhold';
+        } else if ($status == 3){
+            return 'authorized';
         } else if ($status == 4 || $status >= 200 && $status < 400) {
             return 'approved';
         } else if ($status == 401) {
