@@ -735,9 +735,14 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminOrder($params)
     {
+        // Get order, parent and childs transactions
         $order        = new \Order($params['id_order']);
         $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
+
+        // Set the uri to access to the actual page, and a hash to limit the access via capture
+        $uri  = urlencode($_SERVER['REQUEST_URI']);
+        $hash = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']); 
         
         if (!$trx)
             return;

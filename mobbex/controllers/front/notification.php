@@ -137,8 +137,8 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $order ? $this->updateOrder($order, $data, $trx) : $this->createOrder($cart, $data, $trx);
 
             // Aditional webhook process
-            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, json_decode($data['data'], true), $cartId);
-            }
+            \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexWebhook', false, $trx->data, $cartId);
+        }
 
         die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
     }
