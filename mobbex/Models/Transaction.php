@@ -90,7 +90,7 @@ class Transaction extends AbstractModel
      * Get the transactions from the db and returns an array of \Mobbex\PS\Checkout\Models\Transaction objects.
      * If param $parent is true, it returns only the parent webhook
      * 
-     * @param int $order_id
+     * @param int $cart_id
      * @param bool $parent 
      * 
      * @return array|object
@@ -154,6 +154,8 @@ class Transaction extends AbstractModel
 
         if ($state == 'onhold') {
             $data['order_status'] = (int) \Configuration::get('MOBBEX_OS_WAITING');
+        } else if ($state == 'authorized') {
+            $data['order_status'] =  (int) (\Configuration::get('MOBBEX_ORDER_STATUS_AUTHORIZED') ?: \Configuration::get('MOBBEX_OS_' . 'AUTHORIZED'));
         } else if ($state == 'approved') {
             $data['order_status'] =  (int) (\Configuration::get('MOBBEX_ORDER_STATUS_APPROVED') ?: \Configuration::get('PS_OS_' . 'PAYMENT'));
         } else if ($state == 'expired') {
@@ -307,12 +309,14 @@ class Transaction extends AbstractModel
      * 
      * @param int|string $status
      * 
-     * @return string "onhold" | "approved" | "refunded" | "rejected" | "failed"
+     * @return string "onhold" | "authorized" | "approved" | "refunded" | "rejected" | "failed"
      */
     public static function getState($status)
     {
-        if ($status == 2 || $status == 3 || $status == 100 || $status == 201) {
+        if ($status == 2 || $status == 100 || $status == 201) {
             return 'onhold';
+        } else if ($status == 3){
+            return 'authorized';
         } else if ($status == 4 || $status >= 200 && $status < 400) {
             return 'approved';
         } else if ($status == 401) {

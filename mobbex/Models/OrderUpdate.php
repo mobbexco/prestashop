@@ -207,7 +207,7 @@ class OrderUpdate
      * Update order status from webhook data.
      * 
      * @param OrderInterface $order
-     * @param int|string $data
+     * @param int|string $status
      */
     public function updateStock($order, $status)
     {

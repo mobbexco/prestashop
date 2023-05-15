@@ -47,7 +47,7 @@ class Mobbex extends PaymentModule
         $this->tab             = 'payments_gateways';
         $this->version         = \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
         $this->author          = 'Mobbex Co';
-        $this->controllers     = ['notification', 'payment', 'task', 'sources'];
+        $this->controllers     = ['notification', 'payment', 'task', 'sources', 'capture'];
         $this->currencies      = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap       = true;
@@ -746,6 +746,11 @@ class Mobbex extends PaymentModule
         if (!$parent)
             return;
 
+        // Set the uri to access to the actual page, and a hash to limit the access via capture
+        $uri  = urlencode($_SERVER['REQUEST_URI']);
+        $hash = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']); 
+
+        // Add payment information data and try to create a capture button
         $this->smarty->assign(
             [
                 'id' => $parent->payment_id,
@@ -760,6 +765,8 @@ class Mobbex extends PaymentModule
                 'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
                 'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
                 'coupon'   => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
+                'capture'    => $trx->status == '3' ? true : false ,
+                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
             ]
         );
 
