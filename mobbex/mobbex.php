@@ -25,10 +25,10 @@ class Mobbex extends PaymentModule
 
     /** @var \Mobbex\PS\Checkout\Models\Updater */
     public $updater;
-    
+
     /** @var \Mobbex\PS\Checkout\Models\Registrar */
     public $registrar;
-    
+
     /** @var \Mobbex\PS\Checkout\Models\OrderHelper */
     public $helper;
 
@@ -141,7 +141,7 @@ class Mobbex extends PaymentModule
     {
         // Set platform information
         \Mobbex\Platform::init(
-            'Prestashop'._PS_VERSION_,
+            'Prestashop' . _PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
             \Tools::getShopDomainSsl(true, true),
             [
@@ -323,8 +323,8 @@ class Mobbex extends PaymentModule
         $order = new \Order($params['orderReturn']->orderId);
 
         if ($order->module != 'mobbex')
-        return true;
-        
+            return true;
+
         $trans  = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
 
         try {
@@ -346,8 +346,6 @@ class Mobbex extends PaymentModule
             $this->logger->log('error', 'mobbex > hookActionOrderReturn |', $e->getMessage());
             return false;
         }
-
-
     }
 
     /**
@@ -458,7 +456,7 @@ class Mobbex extends PaymentModule
 
         // Module Manager page
         if ($currentPage == 'AdminModulesManage')
-        $this->helper->addAsset("$mediaPath/views/js/uninstall-options.js");
+            $this->helper->addAsset("$mediaPath/views/js/uninstall-options.js");
 
         // Configuration page
         if ($currentPage == 'AdminModules' && \Tools::getValue('configure') == 'mobbex') {
@@ -583,7 +581,7 @@ class Mobbex extends PaymentModule
             // Get Transaction Data
             $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
             $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions);
+            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($trx, !empty($transactions) ? $transactions : $trx->getChilds());
 
             // Assign the Data into Smarty
             $this->smarty->assign('status', $order->getCurrentStateFull(\Context::getContext()->language->id)['name']);
@@ -603,7 +601,7 @@ class Mobbex extends PaymentModule
     {
 
         if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !$this->config->settings['finance_product'])
-        return;
+            return;
 
         return $this->displayPlansWidget($params['product']['price_amount'], [$params['product']['id']]);
     }
@@ -630,7 +628,7 @@ class Mobbex extends PaymentModule
         $cart = \Context::getContext()->cart;
 
         if (!\Validate::isLoadedObject($cart) || !$this->config->settings['finance_cart'])
-        return false;
+            return false;
 
         return $this->displayPlansWidget((float) $cart->getOrderTotal(true, \Cart::BOTH), array_column($cart->getProducts(), 'id_product'));
     }
@@ -739,27 +737,29 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayAdminOrder($params)
     {
+        $order  = new \Order($params['id_order']);
 
-        $order        = new \Order($params['id_order']);
-        $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-        $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
+        //Get transaction data
+        $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
+        $childs = !empty($parent->childs) ? $parent->getChilds() : $parent->loadChildTransactions();
 
-        if (!$trx)
+        if (!$parent)
             return;
 
         $this->smarty->assign(
             [
-                'id' => $trx->payment_id,
+                'id' => $parent->payment_id,
                 'cart_id'  => $params['id_order'],
                 'data' => [
-                    'payment_id'     => $trx->payment_id,
-                    'risk_analysis'  => $trx->risk_analysis,
-                    'currency'       => $trx->currency,
-                    'total'          => $trx->total,
-                    'status_message' => $trx->status_message,
+                    'payment_id'     => $parent->payment_id,
+                    'risk_analysis'  => $parent->risk_analysis,
+                    'currency'       => $parent->currency,
+                    'total'          => $parent->total,
+                    'status_message' => $parent->status_message,
                 ],
-                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($transactions),
-                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($transactions)
+                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
+                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
+                'coupon'   => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
             ]
         );
 
@@ -889,7 +889,7 @@ class Mobbex extends PaymentModule
         if (is_array($currencies_module)) {
             foreach ($currencies_module as $currency_module) {
                 if ($currency_order->id == $currency_module['id_currency'])
-                return true;
+                    return true;
             }
         }
 

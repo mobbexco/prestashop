@@ -17,6 +17,10 @@ class Installer
 
         // If mobbex transaction table exists
         if ($db->numRows()) {
+            // Add column childs if not exists
+            if (!$db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';"))
+            $db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;");
+
             // Check if table has already been modified
             if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
                 return true;
