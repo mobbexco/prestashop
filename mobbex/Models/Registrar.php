@@ -11,8 +11,6 @@ class Registrar
         'displayAdminProductsExtra',
         'actionAdminProductsControllerSaveBefore',
         'displayBackOfficeCategory',
-        'categoryAddition',
-        'categoryUpdate',
         'displayPDFInvoice',
         'displayBackOfficeHeader',
         'paymentReturn',
@@ -24,6 +22,8 @@ class Registrar
     public $ps16Hooks = [
         'payment',
         'header',
+        'categoryUpdate',
+        'categoryAddition',
         'displayMobileHeader',
         'displayProductButtons',
         'displayCustomerAccountForm',
@@ -39,7 +39,22 @@ class Registrar
         'actionObjectCustomerAddAfter',
         'displayProductPriceBlock',
         'displayExpressCheckout',
+        'categoryUpdate',
+        'categoryAddition',
+        'actionEmailSendBefore',
+    ];
+
+    public $ps176Hooks = [
+        'paymentOptions',
+        'displayHeader',
+        'additionalCustomerFormFields',
+        'actionObjectCustomerUpdateAfter',
+        'actionObjectCustomerAddAfter',
+        'displayProductPriceBlock',
+        'displayExpressCheckout',
+        'ActionAfterCreateCategoryFormHandler',
         'ActionAfterUpdateCategoryFormHandler',
+        'actionEmailSendBefore',
     ];
 
     /**
@@ -49,15 +64,32 @@ class Registrar
      */
     public function registerHooks($module)
     {
-        // Merge current version hooks with common hooks
-        $this->hooks = array_merge($this->hooks, _PS_VERSION_ > '1.7' ? $this->ps17Hooks : $this->ps16Hooks);
-
-        foreach ($this->hooks as $hookName) {
+        foreach ($this->getInstallableHooks() as $hookName) {
             if (!$module->registerHook($hookName))
                 return false;
         }
 
         return true;
+    }
+
+    /**
+     * Retrieve the list of installable hooks for this specific ps version.
+     * 
+     * @return string[] 
+     */
+    public function getInstallableHooks()
+    {
+        $versionHooks = [];
+
+        if (_PS_VERSION_ > '1.7.6')
+            $versionHooks = $this->ps176Hooks;
+        else if (_PS_VERSION_ > '1.7')
+            $versionHooks = $this->ps17Hooks;
+        else
+            $versionHooks = $this->ps176Hooks;
+
+        // Merge current version hooks with common hooks and return
+        return array_merge($this->hooks, $versionHooks);
     }
 
     /**

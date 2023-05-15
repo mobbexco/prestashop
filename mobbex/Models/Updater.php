@@ -155,7 +155,9 @@ class Updater
      */
     public static function needUpgrade()
     {
-        return Config::MODULE_VERSION > \Db::getInstance()->getValue("SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'");
+        return \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION > \Db::getInstance()->getValue(
+            "SELECT version FROM " . _DB_PREFIX_ . "module WHERE name = 'mobbex'"
+        );
     }
 
     /**
