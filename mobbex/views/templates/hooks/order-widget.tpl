@@ -34,6 +34,8 @@
                 <td><strong>{$data['status_message']}</strong></td>
             </tr>
 
+            <tr class="mobbex-end-table"></tr>
+            
             <tr>
                 <th>
                     <h3>{l s='Payment Method' mod='mobbex'}</h3>
@@ -56,7 +58,7 @@
                         <td>{l s='Installment:' mod='mobbex'}</td>
                         <td>{$source['installment_name']}</td>
                     </tr>
-                    <tr class="mobbex-color-column mobbex-end-table">
+                    <tr class="mobbex-color-column" >
                         <td>{l s='Amount:' mod='mobbex'}</td>
                         <td><strong>${$source['total']}</strong></td>
                     </tr>
@@ -72,6 +74,8 @@
                     </tr>
                 {/if}
             {/foreach}
+
+            <tr class="mobbex-end-table"></tr>
 
             <tr>
                 <th>
@@ -89,12 +93,13 @@
                     <td>UID:</td>
                     <td>{$entity['entity_uid']}</td>
                 </tr>
-                <tr class="mobbex-end-table">
-                    <td>Coupon:</td>
-                    <td><a href="{$entity['coupon']}">VER</a></td>
-                </tr>
 
             {/foreach}
+            
+            <tr class="mobbex-end-table">
+                <td>Coupon:</td>
+                <td><a href="{$coupon}">VER</a></td>
+            </tr>
 
             {hook h="displayMobbexOrderWidget" id="$id" cart_id="$cart_id"}
 

@@ -17,6 +17,10 @@ class Installer
 
         // If mobbex transaction table exists
         if ($db->numRows()) {
+            // Add column childs if not exists
+            if (!$db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';"))
+            $db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;");
+
             // Check if table has already been modified
             if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
                 return true;
@@ -29,11 +33,11 @@ class Installer
                 return $db->execute($sql);
         }
 
-        foreach (['customfields', 'task', 'transaction'] as $table) {
+        foreach (['cache', 'customfields', 'task', 'transaction'] as $table) {
             $query = str_replace(
                 ['DB_PREFIX_', 'ENGINE_TYPE'],
                 [_DB_PREFIX_, _MYSQL_ENGINE_],
-                file_get_contents(dirname(__FILE__) . "/../sql/$table.sql")
+                file_get_contents(dirname(__FILE__) ."/../".($table === 'cache' ? "vendor/mobbexco/php-plugins-sdk/src/" : ''). "sql/$table.sql")
             );
 
             if (!$db->execute($query))
