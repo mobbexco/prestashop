@@ -205,8 +205,8 @@ class OrderHelper
             }
 
             $link = new \Link;
-            $imagePath = $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default');
-
+            $imagePath = !empty($image) ? $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default') : '';
+            
             if (CustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
                 $items[] = [
                     'type'      => 'subscription',
