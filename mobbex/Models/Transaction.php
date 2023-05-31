@@ -329,4 +329,107 @@ class Transaction extends AbstractModel
             return 'failed';
         }
     }
+
+    /**
+     * Get data from mobbex transaction table.
+     * 
+     * @param string $operation Type of operation in sql sintax examples "SELECT *" or "SELECT column_name".
+     * @param array $conditions An array with the condition in the following format: ['column' => ['logic operator', 'value']].
+     * @param int $limit Amount of data to get.
+     * 
+     * @return array|null An asociative array with transaction values.
+     */
+    public static function getData($operation = 'SELECT *', $conditions, $limit = 1)
+    {
+        // Generate query params
+        $query = [
+            'operation' => $operation,
+            'table'     => _DB_PREFIX_ . 'mobbex_transaction',
+            'condition' => self::getCondition($conditions),
+            'order'     => 'ORDER BY `id` DESC',
+            'limit'     => "LIMIT $limit",
+        ];
+        // Make request to db
+        $result = \Db::getInstance()->executeS("$query[operation] FROM $query[table] $query[condition] $query[order] $query[limit];");
+
+        if ($limit <= 1)
+            return isset($result[0]) ? $result[0] : null;
+
+        return !empty($result) ? $result : null;
+    }
+
+    /**
+     * Creates sql 'WHERE' statement with an associative array.
+     * 
+     * @param array $conditions An array with the condition in the following format: ['column_name' => ['logic_operator', 'value']]
+     * 
+     * @return string $condition
+     */
+    public static function getCondition($conditions)
+    {
+        $i = 0;
+        $condition = '';
+
+        foreach ($conditions as $key => $value) {
+            if ($i < 1)
+                $condition .= "WHERE `$key`$value[0]'$value[1]'";
+            else
+                $condition .= " AND `$key`$value[0]'$value[1]'";
+            $i++;
+        }
+
+        return $condition;
+    }
+
+    /** Lock Webhook logic */
+
+    /**
+     * Check if it is a duplicated request locking process execution.
+     * 
+     * @return bool True if is duplicated.
+     */
+    public function isDuplicated()
+    {
+        return $this->sleepProcess(
+            $this->id,
+            50000, // 50 ms
+            10000, //10 ms
+            function () {
+                return !empty($this->getDuplicated());
+            }
+        );
+    }
+
+    /**
+     * Sleep the execution until the callback condition is met or the time runs out.
+     * 
+     * @param int $max_time Max sleep time in microseconds.
+     * @param int $interval Interval in microseconds to awake and test condition.
+     * @param callable $condition The condition to check each cicle.
+     * 
+     * @return bool Last condition callback result.
+     */
+    public function sleepProcess($id, $max_time, $interval, $condition)
+    {
+        $codition_result = $condition();
+
+        while ($max_time > 0 && !$codition_result) {
+            usleep($interval);
+            $max_time -= $interval;
+            $codition_result = $condition();
+        }
+
+        return $codition_result;
+    }
+
+    /**
+     * Retrieve all duplicated transactions from db.
+     * 
+     * @return array A list of rows.
+     */
+    public function getDuplicated()
+    {
+        $db = \Db::getInstance();
+        return self::getData("SELECT `id`", ["id" => ['<', $this->id], "data" => ['=', $db->escape($this->data)]]);
+    }
 }
