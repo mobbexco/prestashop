@@ -333,13 +333,13 @@ class Transaction extends AbstractModel
     /**
      * Get data from mobbex transaction table.
      * 
-     * @param string $operation Type of operation in sql sintax examples "SELECT *" or "SELECT column_name".
      * @param array $conditions An array with the condition in the following format: ['column' => ['logic operator', 'value']].
+     * @param string $operation Type of operation in sql sintax examples "SELECT *" or "SELECT column_name".
      * @param int $limit Amount of data to get.
      * 
      * @return array|null An asociative array with transaction values.
      */
-    public static function getData($operation = 'SELECT *', $conditions, $limit = 1)
+    public static function getData($conditions, $operation = 'SELECT *', $limit = 1)
     {
         // Generate query params
         $query = [
@@ -439,11 +439,11 @@ class Transaction extends AbstractModel
     {
         $db = \Db::getInstance();
         return self::getData(
-            "SELECT `id`", 
             [
                 "id" => '<'.$this->id, 
                 "data" => $db->escape($this->data)
-            ]
+            ],
+            "SELECT `id`"
         );
     }
 }
