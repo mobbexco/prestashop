@@ -361,7 +361,8 @@ class Transaction extends AbstractModel
     /**
      * Creates sql 'WHERE' statement with an associative array.
      * 
-     * @param array $conditions An array with the condition in the following format: ['column_name' => ['logic_operator', 'value']]
+     * @param array $conditions An array with the conditions in the following format: ['column_name' => 'value', 'id' => '>25'].
+     * You can add the logical operator at the beginning of the value, by default it takes '='. 
      * 
      * @return string $condition
      */
@@ -371,10 +372,18 @@ class Transaction extends AbstractModel
         $condition = '';
 
         foreach ($conditions as $key => $value) {
+
+            preg_match('/([=<>]+)([A-Za-z0-9]+)/', $value, $result);
+
+            //set de logic operator & the value to compare
+            $operator    = !empty($result) ? $result[1] : '=';
+            $comparation = !empty($result) ? $result[2] : $value;
+            
+            //Build the condition
             if ($i < 1)
-                $condition .= "WHERE `$key`$value[0]'$value[1]'";
+                $condition .= "WHERE `$key`$operator'$comparation'";
             else
-                $condition .= " AND `$key`$value[0]'$value[1]'";
+                $condition .= " AND `$key`$operator'$comparation'";
             $i++;
         }
 
@@ -391,7 +400,6 @@ class Transaction extends AbstractModel
     public function isDuplicated()
     {
         return $this->sleepProcess(
-            $this->id,
             50000, // 50 ms
             10000, //10 ms
             function () {
@@ -403,23 +411,23 @@ class Transaction extends AbstractModel
     /**
      * Sleep the execution until the callback condition is met or the time runs out.
      * 
-     * @param int $max_time Max sleep time in microseconds.
+     * @param int $maxTime Max sleep time in microseconds.
      * @param int $interval Interval in microseconds to awake and test condition.
      * @param callable $condition The condition to check each cicle.
      * 
      * @return bool Last condition callback result.
      */
-    public function sleepProcess($id, $max_time, $interval, $condition)
+    public function sleepProcess($maxTime, $interval, $condition)
     {
-        $codition_result = $condition();
+        $coditionResult = $condition();
 
-        while ($max_time > 0 && !$codition_result) {
+        while ($maxTime > 0 && !$coditionResult) {
             usleep($interval);
-            $max_time -= $interval;
-            $codition_result = $condition();
+            $maxTime -= $interval;
+            $coditionResult = $condition();
         }
 
-        return $codition_result;
+        return $coditionResult;
     }
 
     /**
@@ -430,6 +438,12 @@ class Transaction extends AbstractModel
     public function getDuplicated()
     {
         $db = \Db::getInstance();
-        return self::getData("SELECT `id`", ["id" => ['<', $this->id], "data" => ['=', $db->escape($this->data)]]);
+        return self::getData(
+            "SELECT `id`", 
+            [
+                "id" => '<'.$this->id, 
+                "data" => $db->escape($this->data)
+            ]
+        );
     }
 }
