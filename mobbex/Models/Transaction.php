@@ -330,66 +330,6 @@ class Transaction extends AbstractModel
         }
     }
 
-    /**
-     * Get data from mobbex transaction table.
-     * 
-     * @param array $conditions An array with the condition in the following format: ['column' => ['logic operator', 'value']].
-     * @param string $operation Type of operation in sql sintax examples "SELECT *" or "SELECT column_name".
-     * @param int $limit Amount of data to get.
-     * 
-     * @return array|null An asociative array with transaction values.
-     */
-    public static function getData($conditions, $operation = 'SELECT *', $limit = 1)
-    {
-        // Generate query params
-        $query = [
-            'operation' => $operation,
-            'table'     => _DB_PREFIX_ . 'mobbex_transaction',
-            'condition' => self::getCondition($conditions),
-            'order'     => 'ORDER BY `id` DESC',
-            'limit'     => "LIMIT $limit",
-        ];
-        // Make request to db
-        $result = \Db::getInstance()->executeS("$query[operation] FROM $query[table] $query[condition] $query[order] $query[limit];");
-
-        if ($limit <= 1)
-            return isset($result[0]) ? $result[0] : null;
-
-        return !empty($result) ? $result : null;
-    }
-
-    /**
-     * Creates sql 'WHERE' statement with an associative array.
-     * 
-     * @param array $conditions An array with the conditions in the following format: ['column_name' => 'value', 'id' => '>25'].
-     * You can add the logical operator at the beginning of the value, by default it takes '='. 
-     * 
-     * @return string $condition
-     */
-    public static function getCondition($conditions)
-    {
-        $i = 0;
-        $condition = '';
-
-        foreach ($conditions as $key => $value) {
-
-            preg_match('/([=<>]+)([A-Za-z0-9]+)/', $value, $result);
-
-            //set de logic operator & the value to compare
-            $operator    = !empty($result) ? $result[1] : '=';
-            $comparation = !empty($result) ? $result[2] : $value;
-            
-            //Build the condition
-            if ($i < 1)
-                $condition .= "WHERE `$key`$operator'$comparation'";
-            else
-                $condition .= " AND `$key`$operator'$comparation'";
-            $i++;
-        }
-
-        return $condition;
-    }
-
     /** Lock Webhook logic */
 
     /**
@@ -438,12 +378,6 @@ class Transaction extends AbstractModel
     public function getDuplicated()
     {
         $db = \Db::getInstance();
-        return self::getData(
-            [
-                "id" => '<'.$this->id, 
-                "data" => $db->escape($this->data)
-            ],
-            "SELECT `id`"
-        );
+        return $db->executeS("SELECT `id` FROM ". _DB_PREFIX_ ."mobbex_transactions WHERE `id`<'$this->id' AND `data`='$db->escape($this->data);");
     }
 }
