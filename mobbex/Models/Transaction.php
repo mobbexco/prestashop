@@ -293,18 +293,6 @@ class Transaction extends AbstractModel
     }
 
     /**
-     * Check if the current transaction is a retry.
-     * 
-     * @return bool
-     */
-    public function isRetry()
-    {
-        return (bool) \Db::getInstance()->getValue(
-            "SELECT id FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE `payment_id` = '$this->payment_id' AND `status_code` = '$this->status_code' AND `id` != '$this->id' ORDER BY id DESC"
-        ); 
-    }
-
-    /**
      * Get payment state from Mobbex status code.
      * 
      * @param int|string $status
