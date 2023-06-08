@@ -293,18 +293,6 @@ class Transaction extends AbstractModel
     }
 
     /**
-     * Check if the current transaction is a retry.
-     * 
-     * @return bool
-     */
-    public function isRetry()
-    {
-        return (bool) \Db::getInstance()->getValue(
-            "SELECT id FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE `payment_id` = '$this->payment_id' AND `status_code` = '$this->status_code' AND `id` != '$this->id' ORDER BY id DESC"
-        ); 
-    }
-
-    /**
      * Get payment state from Mobbex status code.
      * 
      * @param int|string $status
@@ -328,5 +316,56 @@ class Transaction extends AbstractModel
         } else {
             return 'failed';
         }
+    }
+
+    /** Lock Webhook logic */
+
+    /**
+     * Check if it is a duplicated request locking process execution.
+     * 
+     * @return bool True if is duplicated.
+     */
+    public function isDuplicated()
+    {
+        return $this->sleepProcess(
+            50000, // 50 ms
+            10000, //10 ms
+            function () {
+                return !empty($this->getDuplicated());
+            }
+        );
+    }
+
+    /**
+     * Sleep the execution until the callback condition is met or the time runs out.
+     * 
+     * @param int $maxTime Max sleep time in microseconds.
+     * @param int $interval Interval in microseconds to awake and test condition.
+     * @param callable $condition The condition to check each cicle.
+     * 
+     * @return bool Last condition callback result.
+     */
+    public function sleepProcess($maxTime, $interval, $condition)
+    {
+        $coditionResult = $condition();
+
+        while ($maxTime > 0 && !$coditionResult) {
+            usleep($interval);
+            $maxTime -= $interval;
+            $coditionResult = $condition();
+        }
+
+        return $coditionResult;
+    }
+
+    /**
+     * Retrieve all duplicated transactions from db.
+     * 
+     * @return array A list of rows.
+     */
+    public function getDuplicated()
+    {
+        $db = \Db::getInstance();
+        return $db->executeS("SELECT `id` FROM ". _DB_PREFIX_ ."mobbex_transactions WHERE `id`<'$this->id' AND `data`='$db->escape($this->data);");
     }
 }

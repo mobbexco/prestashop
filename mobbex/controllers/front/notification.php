@@ -128,9 +128,9 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Save webhook data
         $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
 
-        // Check if it is a retry webhook and if process is allowed
-        if (!$this->config->settings['process_webhook_retries'] && $trx->isRetry())
-            die('OK: ' . \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION);
+        //Check if it is a retry webhook and if process is allowed
+        if (!$this->config->settings['process_webhook_retries'] && $trx->isDuplicated())
+            return $this->logger->log('debug', 'notification > webhook | Mobbex Webhook: Duplicated Request Detected');
 
         // Only process if it is a parent webhook
         if ($data['parent']) {
