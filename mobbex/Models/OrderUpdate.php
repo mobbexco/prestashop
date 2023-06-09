@@ -173,7 +173,7 @@ class OrderUpdate
      */
     public function addCartCost($cart, $amount)
     {
-        $productId = $this->helper->getProductIdByReference('mobbex-cost');
+        $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
 
         // Exit if product not exists or it was already added
         if (!$productId)

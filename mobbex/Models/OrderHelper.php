@@ -533,7 +533,7 @@ class OrderHelper
      * 
      * @return int
      */
-    public function getProductIdByReference($reference)
+    public static function getProductIdByReference($reference)
     {
         return (int) \Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue(
             "SELECT `id_product` FROM " . _DB_PREFIX_ . "product WHERE `reference` = '$reference'"

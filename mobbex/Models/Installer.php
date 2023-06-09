@@ -72,7 +72,7 @@ class Installer
     public function createCostProduct()
     {
         // Try to create finnacial cost product
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
         $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
 
         // Always update product quantity
