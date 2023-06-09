@@ -5,6 +5,10 @@
         }
     },
     "require": {
-        "mobbexco/php-plugins-sdk": "1.3.0"
+        "mobbexco/php-plugins-sdk": "1.4.0"
+    },
+    "require-dev": {
+        "php-parallel-lint/php-parallel-lint": "*",
+        "phpstan/phpstan": "*"
     }
 }
