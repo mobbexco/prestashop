@@ -11,7 +11,7 @@ function upgrade_module_2_8_0(Mobbex $module) {
     ];
 
     // Migrate previus plan configs to new option
-    \Configuration::updateValue($module->config->names['widget'],
+    \Configuration::updateValue('widget_styles',
 '.mbbxWidgetOpenBtn {
     width: fit-content;
     min-height: 40px;
