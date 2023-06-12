@@ -21,29 +21,40 @@ class Installer
             $tableExist = $db->numRows();
 
             if ($tableExist && $table === 'transaction') {
-
-                // Add column childs if not exists
-                if (!$db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';")){
-                    $db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;");
-                    continue;
-                }
-
-                // Check if table has already been modified
-                if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-                    continue;
-
-                // If it was modified but id has not auto_increment property, add to column
-                if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';")){
-                    $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
-                    continue;
-                }
-                //Alter the table
-                $db->execute(str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/alter.sql')));
-
-            } elseif (!$tableExist) {
-                $this->installTable($table, $db);
+                if(!$this->checkTransactionTable($db))
+                    return false;
+            } else if (!$tableExist) {
+                if(!$this->installTable($table, $db))
+                    return false;
             }
         }
+        return true;
+    }
+
+    /**
+     * Check the schema of mobbex transaction table & alter it if its necesary.
+     * 
+     * @param object $db Prestashop db connection.
+     * 
+     * @return bool
+     * 
+     */
+    public function checkTransactionTable($db)
+    {
+        // Add column childs if not exists
+        if (!$db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';") && !$db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;"))
+            return false;
+
+        // Check if table has already been modified
+        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
+         return true;
+
+        // If it was modified but id has not auto_increment property, add to column
+        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';") && !$db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;"))
+            return false;
+
+        //Alter the table
+        return $db->execute(str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/alter.sql')));
     }
 
     /**
@@ -53,7 +64,7 @@ class Installer
      * @param object $db connection.
      * 
      */
-    function installTable($table, $db)
+    public function installTable($table, $db)
     {
         //Get query
         $query = str_replace(
@@ -91,7 +102,7 @@ class Installer
     public function createCostProduct()
     {
         // Try to create finnacial cost product
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
         $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
 
         // Always update product quantity
