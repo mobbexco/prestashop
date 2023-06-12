@@ -4,7 +4,7 @@ namespace Mobbex\PS\Checkout\Models;
 
 class Installer
 {
-    public $sdk_sql = ['cache', 'transaction', 'custom_fields'];
+    public $sdk_sql = ['cache', 'custom_fields'];
 
     /**
      * Create module tables if these do not exist.
