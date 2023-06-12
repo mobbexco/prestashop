@@ -567,18 +567,18 @@ $form = [
                 'name'     => 'MOBBEX_PAYMENT_MODE',
                 'key'      => 'payment_mode',
                 'default'  => 'payment.v2',
-                'is_bool'  => true,
+                'is_bool'  => false,
                 'required' => false,
                 'tab'      => 'tab_orders',
                 'values'   => [
                     [
                         'id'    => 'payment.2-step',
-                        'value' => true,
+                        'value' => 'payment.2-step',
                         'label' => $this->l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'payment.v2',
-                        'value' => false,
+                        'value' => 'payment.v2',
                         'label' => $this->l( 'Disabled', 'config-form'),
                     ],
                 ],
