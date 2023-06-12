@@ -249,7 +249,7 @@ class OrderHelper
                 $this->getCustomer($cart),
                 $this->getAddresses($cart),
                 $webhooks ? null : 'none',
-                'mobbexProcessPayment'
+                'actionMobbexCheckoutRequest'
             );
         } catch (\Mobbex\Exception $e) {
             $this->logger->log('error', "Checkout > getCheckout | Fail getting checkout", $e->getMessage());
