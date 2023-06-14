@@ -396,7 +396,7 @@ class OrderHelper
                 return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
             }
         } else {
-            return;
+            return $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
         }
     }
 
