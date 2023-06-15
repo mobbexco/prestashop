@@ -354,8 +354,11 @@ class Mobbex extends PaymentModule
      */
     public function hookAdditionalCustomerFormFields($params)
     {
-        if (!$this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '')
+        if ($this->config->settings['custom_dni'] != '')
             return;
+
+        if(!$this->config->settings['mobbex_dni'])
+            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
 
         $customer  = \Context::getContext()->customer;
         $dni_field = array();
@@ -693,8 +696,11 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayCustomerAccountForm()
     {
-        if (!$this->config->settings['mobbex_dni'] || $this->config->settings['custom_dni'] != '')
+        if ($this->config->settings['custom_dni'] != '')
             return;
+
+        if (!$this->config->settings['mobbex_dni'])
+            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
 
         $customer = \Context::getContext()->customer;
 
@@ -874,6 +880,9 @@ class Mobbex extends PaymentModule
      */
     private function updateCustomerDniStatus(array $params)
     {
+        if (empty($this->config->settings['custom_dni']) && !$this->config->settings['mobbex_dni'])
+            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
+
         if (!$this->config->settings['mobbex_dni'] || empty($params['object']->id) || empty($_POST['customer_dni']) || $this->config->settings['custom_dni'] != '')
             return;
 
