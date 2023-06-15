@@ -4,6 +4,8 @@ namespace Mobbex\PS\Checkout\Models;
 
 class Installer
 {
+    public $sdk_sql = ['cache', 'custom_fields'];
+
     /**
      * Create module tables if these do not exist.
      * 
@@ -11,40 +13,68 @@ class Installer
      */
     public function createTables()
     {
-        // Get install query from sql file
         $db = \DB::getInstance();
-        $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_transaction';");
 
-        // If mobbex transaction table exists
-        if ($db->numRows()) {
-            // Add column childs if not exists
-            if (!$db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';"))
-            $db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;");
+        foreach (['cache', 'custom_fields', 'task', 'transaction'] as  $table) {
 
-            // Check if table has already been modified
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-                return true;
+            $db->execute("SHOW TABLES LIKE '" . _DB_PREFIX_ . "mobbex_$table';");
+            $tableExist = $db->numRows();
 
-            // If it was modified but id has not auto_increment property, add to column
-            if ($db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';"))
-                return $db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;");
-
-            $sql = str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/alter.sql'));
-                return $db->execute($sql);
+            if ($tableExist && $table === 'transaction') {
+                if(!$this->checkTransactionTable($db))
+                    return false;
+            } else if (!$tableExist) {
+                if(!$this->installTable($table, $db))
+                    return false;
+            }
         }
-
-        foreach (['cache', 'customfields', 'task', 'transaction'] as $table) {
-            $query = str_replace(
-                ['DB_PREFIX_', 'ENGINE_TYPE'],
-                [_DB_PREFIX_, _MYSQL_ENGINE_],
-                file_get_contents(dirname(__FILE__) ."/../".($table === 'cache' ? "vendor/mobbexco/php-plugins-sdk/src/" : ''). "sql/$table.sql")
-            );
-
-            if (!$db->execute($query))
-                return false;
-        }
-
         return true;
+    }
+
+    /**
+     * Check the schema of mobbex transaction table & alter it if its necesary.
+     * 
+     * @param object $db Prestashop db connection.
+     * 
+     * @return bool
+     * 
+     */
+    public function checkTransactionTable($db)
+    {
+        // Add column childs if not exists
+        if (!$db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';") && !$db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;"))
+            return false;
+
+        // Check if table has already been modified
+        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
+         return true;
+
+        // If it was modified but id has not auto_increment property, add to column
+        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';") && !$db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;"))
+            return false;
+
+        //Alter the table
+        return $db->execute(str_replace(['DB_PREFIX_', 'ENGINE_TYPE'], [_DB_PREFIX_, _MYSQL_ENGINE_], file_get_contents(dirname(__FILE__) . '/../sql/alter.sql')));
+    }
+
+    /**
+     * Install a table from sql scripts.
+     * 
+     * @param string $table Table name without db & mobbex prefix .
+     * @param object $db connection.
+     * 
+     */
+    public function installTable($table, $db)
+    {
+        //Get query
+        $query = str_replace(
+            ['DB_PREFIX_', 'ENGINE_TYPE'],
+            [_DB_PREFIX_, _MYSQL_ENGINE_],
+            file_get_contents(dirname(__FILE__) . "/../" . (in_array($table, $this->sdk_sql) ? "vendor/mobbexco/php-plugins-sdk/src/" : '') . "sql/$table.sql")
+        );
+
+        //Execute query
+        return $db->execute($query);
     }
 
     /**
@@ -72,7 +102,7 @@ class Installer
     public function createCostProduct()
     {
         // Try to create finnacial cost product
-        $productId = \Mobbex\PS\Checkout\Models\Helper::getProductIdByReference('mobbex-cost');
+        $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
         $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
 
         // Always update product quantity
