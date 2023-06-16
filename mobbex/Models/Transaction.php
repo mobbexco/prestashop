@@ -366,6 +366,6 @@ class Transaction extends AbstractModel
     public function getDuplicated()
     {
         $db = \Db::getInstance();
-        return $db->executeS("SELECT `id` FROM ". _DB_PREFIX_ ."mobbex_transactions WHERE `id`<'$this->id' AND `data`='$db->escape($this->data);");
+        return $db->executeS("SELECT `id` FROM `". _DB_PREFIX_ ."mobbex_transaction` WHERE `id`<'$this->id' AND `data`='{$db->escape($this->data)}'");
     }
 }
