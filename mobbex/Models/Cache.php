@@ -47,7 +47,7 @@ class Cache extends AbstractModel
         //Get data
         $result = \Db::getInstance()->executes("SELECT * FROM " . _DB_PREFIX_ . "mobbex_cache WHERE `cache_key` = '$key';");
 
-        return !empty($result[0]) ? $result[0] : false;
+        return !empty($result[0]['data']) ? json_decode($result[0]['data'], true) : false;
     }
 
     /**
