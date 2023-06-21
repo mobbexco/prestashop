@@ -190,11 +190,15 @@ class OrderHelper
         // Get items
         $items    = array();
         $products = $cart->getProducts(true);
-
+        
         //Get products active plans
         extract($this->config->getProductPlans($products));
+        
+        // Checks if there´s any cart rule and returns an array with the discounts
+        if ($cart->getCartRules())
+            $ruleProducts = \Mobbex\PS\Checkout\Models\CartRules::getRules($cart->getCartRules(), $products);
 
-        foreach ($products as $product) {
+        foreach (!$cart->getCartRules() ? $products : $ruleProducts as $product) {
 
             $image = \Image::getCover($product['id_product']);
 
@@ -259,7 +263,7 @@ class OrderHelper
         $this->logger->log('debug', "Checkout Response: ", $mobbexCheckout->response);
 
         $mobbexCheckout->response['return_url'] = $return_url;
-
+        
         return $mobbexCheckout->response;
     }
 
