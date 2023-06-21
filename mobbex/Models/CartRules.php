@@ -59,7 +59,7 @@ class CartRules
     public static function getChepeastRule($rule, $products)
     {
         $chepeast = min(array_column($products, 'price_wt'));
-        return self::getRuleProduct($products, $rule, 'price_wt', $chepeast);
+        return self::getRuleProduct($products, $rule, ['price_wt', $chepeast]);
     }
 
     /**
@@ -73,7 +73,7 @@ class CartRules
      */
     public static function getSpecificRule($rule, $products)
     {
-        return self::getRuleProduct($products, $rule, 'id_product', $rule['reduction_product']);
+        return self::getRuleProduct($products, $rule, ['id_product', $rule['reduction_product']]);
     }
 
     /**
@@ -81,15 +81,15 @@ class CartRules
      * 
      * @param array $rule
      * @param array $products
-     * @param int|string $condition
+     * @param array $conditions
      * 
      * @return array $rulesProducts
      * 
      */
-    public static function getRuleProduct($products, $rule, $condition1 = '', $condition2)
+    public static function getRuleProduct($products, $rule, $conditions)
     {
         foreach ($products as $product){
-            if ($product[$condition1] == $condition2)
+            if ($product[$conditions[0]] == $conditions[1])
                 // Stores the discount values per product in a new position
                 $product['rules_discount'] = self::storeDiscount($product, $rule);
             $rulesProducts[] = $product;
