@@ -428,8 +428,8 @@ class OrderHelper
 
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
 
-        // Get Transaction Data
-        $transactions = Transaction::getTransactions($id_cart);
+        // Get childs transaction Data
+        $transactions = Transaction::load($id_cart);
 
         // Check if data exists
         if (empty($transactions) || !is_array($transactions)) {
