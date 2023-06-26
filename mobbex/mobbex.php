@@ -325,7 +325,8 @@ class Mobbex extends PaymentModule
         if ($order->module != 'mobbex')
             return true;
 
-        $trans  = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
+        // Get parent transaction data 
+        $trans  = \Mobbex\PS\Checkout\Models\Transaction::load($order->id_cart);
 
         try {
             // Process refund
@@ -564,8 +565,11 @@ class Mobbex extends PaymentModule
 
     /**
      * Logic to execute when the hook 'displayPaymentReturn' is fired
+     * 
+     * @param array $params
      *
      * @return string
+     * 
      */
     public function hookPaymentReturn($params)
     {
@@ -581,17 +585,19 @@ class Mobbex extends PaymentModule
         }
 
         if ($order) {
-            // Get Transaction Data
-            $transactions = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart);
-            $trx          = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-            $sources      = \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($trx, !empty($transactions) ? $transactions : $trx->getChilds());
+            // Get transaction Data
+            $transaction = \Mobbex\PS\Checkout\Models\Transaction::load($order->id_cart);
 
             // Assign the Data into Smarty
-            $this->smarty->assign('status', $order->getCurrentStateFull(\Context::getContext()->language->id)['name']);
-            $this->smarty->assign('total', $trx->total);
-            $this->smarty->assign('payment', $order->payment);
-            $this->smarty->assign('status_message', $trx->status_message);
-            $this->smarty->assign('sources', $sources);
+            $this->smarty->assign( 
+                [
+                    'status'         => $order->getCurrentStateFull(\Context::getContext()->language->id)['name'],
+                    'total'          => $transaction->total,
+                    'payment'        => $order->payment,
+                    'status_message' => $transaction->status_message,
+                    'transactions'   => $transaction->source_name == 'multicard' ? $transaction->childrens : array($transaction),
+                ]
+            );
         }
 
         return $this->display(__FILE__, 'views/templates/hooks/orderconfirmation.tpl');
@@ -740,16 +746,18 @@ class Mobbex extends PaymentModule
      * Show the mobbex order widget in the order panel backoffice.
      * 
      * @param array $params
+     * 
+     * @return string 
+     * 
      */
     public function hookDisplayAdminOrder($params)
     {
         $order  = new \Order($params['id_order']);
 
-        //Get transaction data
-        $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
-        $childs = !empty($parent->childs) ? $parent->getChilds() : $parent->loadChildTransactions();
+        // Get transaction data
+        $transaction = \Mobbex\PS\Checkout\Models\Transaction::load($order->id_cart);
 
-        if (!$parent)
+        if (!$transaction)
             return;
 
         // Set the uri to access to the actual page, and a hash to limit the access via capture
@@ -759,19 +767,19 @@ class Mobbex extends PaymentModule
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
             [
-                'id' => $parent->payment_id,
+                'id' => $transaction->payment_id,
                 'cart_id'  => $params['id_order'],
-                'data' => [
-                    'payment_id'     => $parent->payment_id,
-                    'risk_analysis'  => $parent->risk_analysis,
-                    'currency'       => $parent->currency,
-                    'total'          => $parent->total,
-                    'status_message' => $parent->status_message,
+                'data'     => [
+                    'payment_id'     => $transaction->payment_id,
+                    'risk_analysis'  => $transaction->risk_analysis,
+                    'currency'       => $transaction->currency,
+                    'total'          => $transaction->total,
+                    'status_message' => $transaction->status_message,
                 ],
-                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
-                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
-                'coupon'   => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
-                'capture'    => $trx->status == '3' ? true : false ,
+                'sources'    => $transaction->source_name == 'multicard' ? $transaction->childrens : array($transaction),
+                'entities'   => !empty($transaction->childrens) && $transaction->source_name != 'multicard' ? $transaction->childrens : array($transaction),
+                'coupon'     => array($transaction->entity_uid, $transaction->payment_id),
+                'capture'    => $transaction->status == '3' ? true : false ,
                 'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
             ]
         );
