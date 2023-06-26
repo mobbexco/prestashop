@@ -42,34 +42,33 @@
                 </th>
             </tr>
 
-
             {foreach from=$sources item=source}
-                {if $source['source_type'] eq 'card'}
+                {if $source->source_type eq 'card'}
 
                     <tr>
                         <td>{l s='Card' mod='mobbex'}</td>
-                        <td>{$source['source_name']}</td>
+                        <td>{$source->source_name}</td>
                     </tr>
                     <tr class="mobbex-color-column">
                         <td>{l s='Number:' mod='mobbex'}</td>
-                        <td>{$source['source_number']}</td>
+                        <td>{$source->source_number}</td>
                     </tr>
                     <tr>
                         <td>{l s='Installment:' mod='mobbex'}</td>
-                        <td>{$source['installment_name']}</td>
+                        <td>{$source->installment_name}</td>
                     </tr>
                     <tr class="mobbex-color-column" >
                         <td>{l s='Amount:' mod='mobbex'}</td>
-                        <td><strong>${$source['total']}</strong></td>
+                        <td><strong>${$source->total}</strong></td>
                     </tr>
 
                 {/if}
-                {if $source['source_type'] eq 'cash'}
+                {if $source->source_type eq 'cash'}
                     <tr>
                         <td>{l s='Payment Source:' mod='mobbex'}</td>
                         <td>
-                            <img src="{$source['source_url']}" style="max-width: 30px; display: inline;" />
-                            {$source['source_name']}
+                            <img src="{$source->source_url}" style="max-width: 30px; display: inline;" />
+                            {$source->source_name}
                         </td>
                     </tr>
                 {/if}
@@ -87,18 +86,18 @@
 
                 <tr>
                     <td>{l s='Name:' mod='mobbex'}</td>
-                    <td>{$entity['entity_name']}</td>
+                    <td>{$entity->entity_name}</td>
                 </tr>
                 <tr class="mobbex-color-column">
                     <td>UID:</td>
-                    <td>{$entity['entity_uid']}</td>
+                    <td>{$entity->entity_uid}</td>
                 </tr>
 
             {/foreach}
-            
+
             <tr class="mobbex-end-table">
                 <td>Coupon:</td>
-                <td><a href="{$coupon}">VER</a></td>
+                <td><a href="https://mobbex.com/console/{$coupon[0]}/operations/?oid={$coupon[1]}">VER</a></td>
             </tr>
 
             {hook h="displayMobbexOrderWidget" id="$id" cart_id="$cart_id"}
