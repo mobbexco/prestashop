@@ -365,7 +365,7 @@ class Mobbex extends PaymentModule
 
         $dni_field['customer_dni'] = (new \FormField)
             ->setName('customer_dni')
-            ->setValue(isset($customer->id) ? $this->helper->getDni($customer->id) : '')
+            ->setValue(isset($customer->id) ? $this->helper->getDni($customer->id, false) : '')
             ->setType('text')
             ->setRequired(true)
             ->setLabel($this->l('DNI'));
@@ -706,7 +706,7 @@ class Mobbex extends PaymentModule
 
         $this->smarty->assign(
             array(
-                'last_dni' => isset($customer->id) ? $this->helper->getDni($customer->id) : "",
+                'last_dni' => isset($customer->id) ? $this->helper->getDni($customer->id, false) : "",
             )
         );
 

@@ -246,7 +246,7 @@ class OrderHelper
                 self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 $items,
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
-                $this->getCustomer($cart),
+                $this->getCustomer($cart, $webhooks),
                 $this->getAddresses($cart),
                 $webhooks ? null : 'none',
                 'actionMobbexCheckoutRequest'
@@ -342,7 +342,7 @@ class OrderHelper
      *
      * @return array
      */
-    public function getCustomer($cart)
+    public function getCustomer($cart, $finalCheckout)
     {
         // Get address and customer data from context
         $address  = new \Address($cart->id_address_delivery);
@@ -355,7 +355,7 @@ class OrderHelper
             'name'           => "$firstName $lastName",
             'email'          => $customer->email,
             'phone'          => $address->phone_mobile ?: $address->phone,
-            'identification' => $customer->id ? $this->getDni($customer->id) : null,
+            'identification' => $customer->id ? $this->getDni($customer->id, $finalCheckout) : null,
             'uid'            => $customer->id,
         ];
     }
@@ -384,7 +384,7 @@ class OrderHelper
         return $addresses;
     }
 
-    public function getDni($customer_id)
+    public function getDni($customer_id, $finalCheckout)
     {
         extract($this->config->getCustomDniColumn());
         // Check if dni column exists
@@ -396,7 +396,9 @@ class OrderHelper
                 return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
             }
         } else {
-            return $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
+            if($finalCheckout){}
+                $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
+            return '';
         }
     }
 
