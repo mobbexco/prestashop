@@ -236,7 +236,11 @@ class OrderHelper
             ];
         }
 
-        $return_url = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
+        $return_url   = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
+        $customerData = $this->getCustomer($cart);
+        
+        if(empty($customerData['identification']))
+            \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
 
         try {
             $mobbexCheckout = new \Mobbex\Modules\Checkout(
@@ -246,7 +250,7 @@ class OrderHelper
                 self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 $items,
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
-                $this->getCustomer($cart),
+                $customerData,
                 $this->getAddresses($cart),
                 $webhooks ? null : 'none',
                 'actionMobbexCheckoutRequest'
