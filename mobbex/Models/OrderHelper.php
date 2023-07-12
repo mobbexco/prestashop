@@ -168,12 +168,16 @@ class OrderHelper
 
     /**
      * Get the payment data
+     * 
      * @param bool $webhooks
+     * 
      * @return array|null
+     * 
      */
     public function getPaymentData($webhooks = true)
     {
-        $cart = \Context::getContext()->cart;
+        // Get cart and customer from context
+        $cart     = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
 
         if (!$cart->id)
@@ -184,33 +188,40 @@ class OrderHelper
 
     /**
      * Creates Mobbex Checkout
+     * 
+     * @param object $cart
+     * @param object $customer
+     * @param bool   $webhook
+     * 
+     * @return array response
+     * 
      */
     public function createCheckout($cart, $customer, $webhooks)
     {
         // Get items
         $items    = array();
-        $products = $cart->getProducts(true);
+        // Checks if there´s any cart rule and returns an array of products with the discounts
+        $products = !$cart->getCartRules() ? $cart->getProducts(true) : (new \Mobbex\PS\Checkout\Models\PriceCalculator($cart))->applyCartRules();
         
         //Get products active plans
         extract($this->config->getProductPlans($products));
-        
-        // Checks if there´s any cart rule and returns an array with the discounts
-        if ($cart->getCartRules())
-            $ruleProducts = \Mobbex\PS\Checkout\Models\CartRules::getRules($cart->getCartRules(), $products);
 
-        foreach (!$cart->getCartRules() ? $products : $ruleProducts as $product) {
+        foreach ($products as $product) {
 
             $image = \Image::getCover($product['id_product']);
+            $prd   = new \Product($product['id_product']);
 
-            $prd = new \Product($product['id_product']);
+            // Get product image
             if ($prd->hasAttributes() && !empty($product['id_product_attribute'])) {
                 $images = $prd->getCombinationImages(\Context::getContext()->language->id);
                 $image = !empty($images[$product['id_product_attribute']][0]) ? $images[$product['id_product_attribute']][0] : $image;
             }
 
-            $link = new \Link;
+            // Get link from product image
+            $link      = new \Link;
             $imagePath = !empty($image) ? $link->getImageLink($product['link_rewrite'], $image['id_image'], 'home_default') : '';
             
+            // Get items metadata
             if (CustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
                 $items[] = [
                     'type'      => 'subscription',
@@ -229,6 +240,7 @@ class OrderHelper
 
         $shippingTotal = $this->getShippingCost($cart);
 
+        // Get carrier instance data and add it to items array
         if ($shippingTotal) {
             $carrier = new \Carrier($cart->id_carrier);
 
@@ -240,8 +252,10 @@ class OrderHelper
             ];
         }
 
+        // Set return url
         $return_url = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
 
+        // Attempt to create a payment checkout
         try {
             $mobbexCheckout = new \Mobbex\Modules\Checkout(
                 $cart->id,
