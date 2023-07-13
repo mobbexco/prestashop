@@ -75,7 +75,7 @@ class PriceCalculator
     {
         // Get cart rule discount. Add it to the accumulated rules discount in product if it is the case
         if (empty($product['rules_discount']))
-            return $this->calculateDiscount($rule, $product['price_wt']);
+            return $this->calculateDiscount($product['price_wt'], $rule);
         else
             return $product['rules_discount'] + $this->calculateDiscount($product['price_wt'] - $product['rules_discount'], $rule);
     }
