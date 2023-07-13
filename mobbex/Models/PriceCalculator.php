@@ -4,7 +4,9 @@ namespace Mobbex\PS\Checkout\Models;
 
 class PriceCalculator
 {
+    /** Products from cart */
     public $products;
+    /** Rules from cart */
     public $cartRules;
 
     public function __construct($cart){
