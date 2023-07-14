@@ -77,7 +77,7 @@ class PriceCalculator
         if (empty($product['rules_discount']))
             return $this->calculateDiscount($product['price_wt'], $rule);
         else
-            return $product['rules_discount'] + $this->calculateDiscount($product['price_wt'] - $product['rules_discount'], $rule);
+            return $product['rules_discount'] + $this->calculateDiscount($product['price_wt'], $rule);
     }
 
     /**
