@@ -125,8 +125,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!\Mobbex\Repository::validateToken($token))
             $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
-        // Save webhook data
-        $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        try {
+            // Save webhook data
+            $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        } catch (\Exception $e) {
+            $this->logger->log('fatal', __METHOD__ . ': ' . $e->getMessage(), isset($e->data) ? $e->data : []);
+        }
 
         //Check if it is a retry webhook and if process is allowed
         if (!$this->config->settings['process_webhook_retries'] && $trx->isDuplicated())
