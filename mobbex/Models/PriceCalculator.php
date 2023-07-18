@@ -22,6 +22,10 @@ class PriceCalculator
      */
     public function applyCartRules()
     {
+        // If there are no cart rules, it returns the intact products
+        if (!$this->cartRules)
+            return $this->products;
+
         // Get cart products
         $products = $this->products;
         // Traverse each Cart Rule
@@ -31,10 +35,10 @@ class PriceCalculator
                 $products = $this->getRuleProduct($products, $rule);
             // Chepeast Product Cart Rule
             elseif ($rule['reduction_product'] == '-1')
-                $products = $this->getRuleProduct($products, $rule, ['price_wt', min(array_column($products, 'price_wt'))]);
+                $products = $this->getRuleProduct($products, $rule, 'price_wt', min(array_column($products, 'price_wt')));
             // Specific Product Cart Rule
             else
-                $products = $this->getRuleProduct($products, $rule, ['id_product', $rule['reduction_product']]);
+                $products = $this->getRuleProduct($products, $rule, 'id_product', $rule['reduction_product']);
         }
         // Apply discount to every product with Cart Rule
         return array_map([$this, 'applyProductDiscount'], $products);
@@ -43,20 +47,21 @@ class PriceCalculator
     /**
      * Search for product and create a new position with cart rule discount
      * 
-     * @param array $rule       actual cart rule
-     * @param array $products   products from the cart
-     * @param array $conditions conditions to evaluate if the product corresponds to a cart rule
+     * @param array $rule           actual cart rule
+     * @param array $products       products from the cart
+     * @param array $conditionKey   points to the position of the product to evaluate its value
+     * @param array $conditionValue points to the value that should be matched
      * 
      * @return array $products  products with rules discounts position
      * 
      */
-    public function getRuleProduct($products, $rule, $conditions = [])
+    public function getRuleProduct($products, $rule, $conditionKey, $conditionValue)
     {
         // Get the rule discount values per product in a new position
         foreach ($products as &$product){
             if (empty($conditions))
                 $product['rules_discount'] = $this->getDiscount($product, $rule);
-            elseif ($product[$conditions[0]] == $conditions[1])
+            elseif ($product[$conditionKey] == $conditionValue)
                 $product['rules_discount'] = $this->getDiscount($product, $rule);
         }
         return $products;

@@ -201,7 +201,7 @@ class OrderHelper
         // Get items
         $items    = array();
         // Checks if there´s any cart rule and returns an array of products with the discounts
-        $products = !$cart->getCartRules() ? $cart->getProducts(true) : (new \Mobbex\PS\Checkout\Models\PriceCalculator($cart))->applyCartRules();
+        $products =(new \Mobbex\PS\Checkout\Models\PriceCalculator($cart))->applyCartRules();
         
         //Get products active plans
         extract($this->config->getProductPlans($products));
