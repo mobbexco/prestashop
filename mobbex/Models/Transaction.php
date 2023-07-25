@@ -76,12 +76,14 @@ class Transaction extends AbstractModel
     {
         $trx = new \Mobbex\PS\Checkout\Models\Transaction();
 
-        $trx->cart_id = $cart_id;
+        // Remember add cart_id to data array
+        $data['cart_id'] = $cart_id;
 
-        foreach ($data as $key => $value)
-            $trx->$key = $value;
+        foreach (self::$definition['fields'] as $key => $value)
+            $trx->$key = isset($data[$key]) ? $data[$key] : null;
 
-        $trx->save();
+        if (!$trx->save())
+            throw new \Mobbex\Exception("Error saving a transaction for Cart #$cart_id", 1, Db::getInstance()->getMsgError());
 
         return $trx;
     }
