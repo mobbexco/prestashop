@@ -41,16 +41,20 @@ class Installer
      */
     public function checkTransactionTable($db)
     {
+        $childsExists = $db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';");
+        $idExists     = $db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';");
+        $idHasExtras  = $db->executeS("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';");
+
         // Add column childs if not exists
-        if (!$db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'childs';") && !$db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;"))
+        if (!$childsExists && !$db->execute("ALTER TABLE " . _DB_PREFIX_ . "mobbex_transaction ADD COLUMN childs TEXT NOT NULL;"))
             return false;
 
-        // Check if table has already been modified
-        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id' AND EXTRA LIKE '%auto_increment%';"))
-         return true;
+        // Return if id exists and has the correct extras
+        if ($idHasExtras)
+            return true;
 
         // If it was modified but id has not auto_increment property, add to column
-        if ($db->execute("SHOW COLUMNS FROM `" . _DB_PREFIX_ . "mobbex_transaction` WHERE FIELD = 'id';") && !$db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;"))
+        if (!$idExists && !$db->execute("ALTER TABLE `" . _DB_PREFIX_ . "mobbex_transaction` MODIFY `id` INT NOT NULL AUTO_INCREMENT;"))
             return false;
 
         //Alter the table
