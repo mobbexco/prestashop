@@ -41,7 +41,28 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             return $this->callback();
         } else if ($action == 'webhook') {
             return $this->webhook();
+        } else if($action == 'redirect'){
+            $this->redirectAction();
         }
+    }
+
+    /**
+     * Redirect to controller with a prestashop alert.
+     */
+    public function redirectAction()
+    {
+        $messages = [
+            'missing_dni' => 'Debes completar tu DNI para poder continuar tu compra.'
+        ];
+
+        $type = \Tools::getValue('type');
+        $url  = \Tools::getValue('url');
+
+        //Set Notification
+        $this->{$type}[] = $messages[\Tools::getValue('message')];
+
+        //Redirect with notification
+        $this->redirectWithNotifications("index.php?controller=$url");
     }
 
     /**
