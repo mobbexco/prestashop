@@ -115,27 +115,52 @@ class Config
 
     /**
      * Get active plans for a given products.
-     * @param array $ids
-     * @param string $catalogType type of catalog object
+     * 
+     * @param array $products Products list
+     * 
      * @return array $array
      */
-    public function getProductPlans($ids, $catalogType = 'product', $admin = false)
+    public function getProductsPlans($products)
     {
         $common_plans = $advanced_plans = [];
 
-        foreach ($ids as $catalog) {
-            $catalog = $catalog instanceof \Product ? $catalog : new \Product($catalog, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
-            foreach (['common_plans', 'advanced_plans'] as $value) {
-                //Get product active plans
-                ${$value} = array_merge($this->getCatalogSetting($catalog instanceof \Product ? $catalog->id : $catalog, $value, $catalogType), ${$value});
+        foreach ($products as $product) {
+            $id = $product instanceof \Product ? $product->id : $product;
+            $product_plans = $this->getCatalogPlans($id);
+            //Merge all catalog plans
+            $common_plans   = array_merge($common_plans, $product_plans['common_plans']);
+            $advanced_plans = array_merge($advanced_plans, $product_plans['advanced_plans']);
+        }
 
-                if($catalogType === 'product' && !$admin){
-                    //Get product category active plans
-                    foreach ($catalog->getCategories() as $categoryId)
-                        ${$value} = array_unique(array_merge(${$value}, $this->getCatalogSetting($categoryId, $value, 'category')));
-                }
+        return compact('common_plans', 'advanced_plans');
+    }
+
+    /**
+     * Get all the Mobbex plans from a given product or category id.
+     * 
+     * @param string $id Product/Cat id.
+     * @param string $catalog_type
+     * 
+     * @return array
+     */
+    public function getCatalogPlans($id, $catalog_type = 'product', $admin = false)
+    {
+        //Get product plans
+        $common_plans   = $this->getCatalogSetting($id, 'common_plans', $catalog_type) ?: [];
+        $advanced_plans = $this->getCatalogSetting($id, 'advanced_plans', $catalog_type) ?: [];
+        $product        = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+
+        //Get plans from categories
+        if (!$admin && $catalog_type === 'product') {
+            foreach ($product->getCategories() as $categoryId) {
+                $common_plans   = array_merge($common_plans, $this->getCatalogSetting($categoryId, 'common_plans', 'category'));
+                $advanced_plans = array_merge($advanced_plans, $this->getCatalogSetting($categoryId, 'advanced_plans', 'category'));
             }
         }
+
+        //Avoid duplicated plans
+        $common_plans   = array_unique($common_plans);
+        $advanced_plans = array_unique($advanced_plans);
 
         return compact('common_plans', 'advanced_plans');
     }

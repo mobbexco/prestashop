@@ -192,7 +192,7 @@ class OrderHelper
         $products = $cart->getProducts(true);
 
         //Get products active plans
-        extract($this->config->getProductPlans($products));
+        extract($this->config->getProductsPlans($products));
 
         foreach ($products as $product) {
 
