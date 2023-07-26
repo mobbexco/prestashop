@@ -29,6 +29,7 @@ class Registrar
         'displayCustomerAccountForm',
         'actionCustomerAccountAdd',
         'displayShoppingCartFooter',
+        'actionCategoryUpdate',
     ];
 
     public $ps17Hooks = [
