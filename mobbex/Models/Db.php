@@ -7,7 +7,7 @@ namespace Mobbex\PS\Checkout\Models;
  * 
  * This class alow the Mobbex php-plugins-sdk interact with platform database.
  */
-class Db extends \Mobbex\Model\AbstractDb
+class Db extends \Mobbex\Model\Db
 {
     public $prefix;
 
