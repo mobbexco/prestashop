@@ -29,7 +29,6 @@ class Registrar
         'displayCustomerAccountForm',
         'actionCustomerAccountAdd',
         'displayShoppingCartFooter',
-        'actionCategoryUpdate',
     ];
 
     public $ps17Hooks = [
@@ -87,7 +86,7 @@ class Registrar
         else if (_PS_VERSION_ > '1.7')
             $versionHooks = $this->ps17Hooks;
         else
-            $versionHooks = $this->ps176Hooks;
+            $versionHooks = $this->ps16Hooks;
 
         // Merge current version hooks with common hooks and return
         return array_merge($this->hooks, $versionHooks);
