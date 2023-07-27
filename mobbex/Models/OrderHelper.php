@@ -236,7 +236,13 @@ class OrderHelper
             ];
         }
 
-        $return_url = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
+        $return_url   = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
+        $customerData = $this->getCustomer($cart);
+        
+        if(empty($customerData['identification'])){
+            
+        }
+            \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
 
         try {
             $mobbexCheckout = new \Mobbex\Modules\Checkout(
@@ -246,7 +252,7 @@ class OrderHelper
                 self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 $items,
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
-                $this->getCustomer($cart, $webhooks),
+                $customerData,
                 $this->getAddresses($cart),
                 $webhooks ? null : 'none',
                 'actionMobbexCheckoutRequest'
@@ -342,7 +348,7 @@ class OrderHelper
      *
      * @return array
      */
-    public function getCustomer($cart, $finalCheckout)
+    public function getCustomer($cart)
     {
         // Get address and customer data from context
         $address  = new \Address($cart->id_address_delivery);
@@ -355,7 +361,7 @@ class OrderHelper
             'name'           => "$firstName $lastName",
             'email'          => $customer->email,
             'phone'          => $address->phone_mobile ?: $address->phone,
-            'identification' => $customer->id ? $this->getDni($customer->id, $finalCheckout) : null,
+            'identification' => $customer->id ? $this->getDni($customer->id) : null,
             'uid'            => $customer->id,
         ];
     }
@@ -384,7 +390,7 @@ class OrderHelper
         return $addresses;
     }
 
-    public function getDni($customer_id, $finalCheckout)
+    public function getDni($customer_id)
     {
         extract($this->config->getCustomDniColumn());
         // Check if dni column exists
@@ -396,8 +402,6 @@ class OrderHelper
                 return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
             }
         } else {
-            if($finalCheckout)
-                $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
             return '';
         }
     }

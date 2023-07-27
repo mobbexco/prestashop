@@ -745,6 +745,10 @@ class Mobbex extends PaymentModule
     {
         $order  = new \Order($params['id_order']);
 
+        // It only shows the widget if it is an operation made with mobbex
+        if ($order->module != 'mobbex')
+            return;
+
         //Get transaction data
         $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $childs = !empty($parent->childs) ? $parent->getChilds() : $parent->loadChildTransactions();
