@@ -56,7 +56,8 @@ class OrderHelper
     public function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
     {
         try {
-            $cart   = new \Cart($cartId);
+            $db   = \Db::getInstance();
+            $cart = new \Cart($cartId);
 
             // Validate order, remember to send secure key to avoid warning logs
             $module->validateOrder(
@@ -71,7 +72,15 @@ class OrderHelper
                 $cart->secure_key
             );
         } catch (\Exception $e) {
-            $this->logger->log($die ? 'fatal' : 'error', 'Helper > createOrder | Order Creation Error ' . $e->getMessage(), compact('cartId', 'orderStatus', 'methodName'));
+            $this->logger->log(
+                $die ? 'fatal' : 'error', 'Helper > createOrder | Order Creation Error ' . $e->getMessage(), [
+                    'cart_id'             => $cartId,
+                    'order_status'        => $orderStatus,
+                    'method_name'         => $methodName,
+                    'query_error_message' => $db->getMsgError(),
+                    'query_error_number'  => $db->getNumberError(),
+                ]
+            );
         }
 
         return $this->getOrderByCartId($cartId, true);
