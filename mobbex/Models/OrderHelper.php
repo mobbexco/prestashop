@@ -239,8 +239,10 @@ class OrderHelper
         $return_url   = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
         $customerData = $this->getCustomer($cart);
         
-        if(empty($customerData['identification']))
+        if(empty($customerData['identification'])){
+            $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
             \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
+        }
 
         try {
             $mobbexCheckout = new \Mobbex\Modules\Checkout(
@@ -400,7 +402,7 @@ class OrderHelper
                 return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
             }
         } else {
-            return $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer_id]);
+            return '';
         }
     }
 
