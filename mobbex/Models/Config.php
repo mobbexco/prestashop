@@ -80,8 +80,8 @@ class Config
         ];
 
         if ($this->settings['custom_dni'] != '') {
-            foreach (explode(':', $this->config->settings['custom_dni']) as $key => $value) {
-                if ($key === 0 && count(explode(':', $this->config->settings['custom_dni'])) > 1) {
+            foreach (explode(':', $this->settings['custom_dni']) as $key => $value) {
+                if ($key === 0 && count(explode(':', $this->settings['custom_dni'])) > 1) {
                     $data['table'] = trim($value);
                 } else if ($key === 1) {
                     $data['identifier'] = trim($value);
