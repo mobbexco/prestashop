@@ -793,7 +793,7 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        extract($this->config->getProductPlans($products));
+        extract($this->config->getProductsPlans($products));
 
         $data = [
             'product_price'  => \Product::convertAndFormatPrice($total),
@@ -824,7 +824,7 @@ class Mobbex extends PaymentModule
     {
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
-        extract($this->config->getProductPlans([$id], $catalogType, true));
+        extract($this->config->getCatalogPlans($id, $catalogType, true));
 
         $options  = [
             'id'             => $id,
