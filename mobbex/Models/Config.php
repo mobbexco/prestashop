@@ -125,7 +125,7 @@ class Config
         $common_plans = $advanced_plans = [];
 
         foreach ($products as $product) {
-            $id = $product instanceof \Product ? $product->id : $product;
+            $id = isset($product['id_product']) ? $product['id_product'] : $product;
             $product_plans = $this->getCatalogPlans($id);
             //Merge all catalog plans
             $common_plans   = array_merge($common_plans, $product_plans['common_plans']);
