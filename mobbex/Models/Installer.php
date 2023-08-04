@@ -14,8 +14,16 @@ class Installer
     public function createTables()
     {
         foreach (['cache', 'custom_fields', 'task', 'transaction'] as  $tableName) {
-            //Get the transaction definition
-            $definition = $tableName === 'transaction' ? include __DIR__ . "/../utils/transaction-definition.php" : [];
+            $definition = [];
+
+            //Modify transaction definition
+            if ($tableName === 'transaction') {
+                $definition = \Mobbex\Model\Table::getTableDefinition($tableName);
+                foreach ($definition as &$column)
+                    if ($column['Field'] === 'order_id')
+                        $column['Field'] = 'cart_id';
+            }
+            
             //Create the table
             $table = new \Mobbex\Model\Table($tableName, $definition);
             //If table creation fails, return false
