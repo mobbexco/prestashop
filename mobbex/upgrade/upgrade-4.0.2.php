@@ -11,7 +11,7 @@ defined('_PS_VERSION_') || exit;
  * 
  * @return bool Upgrade result.
  */
-function upgrade_module_4_0_1($module) {
+function upgrade_module_4_0_2($module) {
     return $module->installer->createTables()
         && $module->installer->createStates($module->config->orderStatuses)
         && $module->installer->createCostProduct()
