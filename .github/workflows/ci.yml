@@ -18,6 +18,6 @@ jobs:
         php-version: ${{ matrix.php }}
         tools: composer
     - name: Install dependencies
-      run: composer install --dev --working-dir=./mobbex
+      run: composer install --dev --working-dir=./
     - name: Execute PHP Paralel Lint
       run: mobbex/vendor/php-parallel-lint/php-parallel-lint/parallel-lint ./mobbex --exclude mobbex/vendor
