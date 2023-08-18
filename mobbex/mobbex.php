@@ -595,7 +595,7 @@ class Mobbex extends PaymentModule
                     'total'          => $transaction->total,
                     'payment'        => $order->payment,
                     'status_message' => $transaction->status_message,
-                    'transactions'   => $transaction->source_name == 'multicard' ? $transaction->childrens : array($transaction),
+                    'transactions'   => $transaction->source_name == 'multicard' ? $transaction->childs : array($transaction),
                 ]
             );
         }
@@ -767,8 +767,8 @@ class Mobbex extends PaymentModule
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
             [
-                'id' => $transaction->payment_id,
                 'cart_id'  => $params['id_order'],
+                'id'       => $transaction->payment_id,
                 'data'     => [
                     'payment_id'     => $transaction->payment_id,
                     'risk_analysis'  => $transaction->risk_analysis,
@@ -776,11 +776,11 @@ class Mobbex extends PaymentModule
                     'total'          => $transaction->total,
                     'status_message' => $transaction->status_message,
                 ],
-                'sources'    => $transaction->source_name == 'multicard' ? $transaction->childrens : array($transaction),
-                'entities'   => !empty($transaction->childrens) && $transaction->source_name != 'multicard' ? $transaction->childrens : array($transaction),
-                'coupon'     => array($transaction->entity_uid, $transaction->payment_id),
                 'capture'    => $transaction->status == '3' ? true : false ,
+                'sources'    => $transaction->source_name == 'multicard' ? $transaction->childs : array($transaction),
+                'coupon'     => "https://mobbex.com/console/$transaction->entity_uid/operations/?oid=$transaction->payment_id",
                 'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
+                'entities'   => !empty($transaction->childs) && $transaction->source_name != 'multicard' ? $transaction->childs : array($transaction),
             ]
         );
 

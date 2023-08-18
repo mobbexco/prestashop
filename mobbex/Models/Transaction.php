@@ -8,7 +8,6 @@ class Transaction extends AbstractModel
     public $cart_id;
     public $parent;
     public $childs;
-    public $childrens;
     public $payment_id;
     public $description;
     public $status_code;
@@ -83,15 +82,15 @@ class Transaction extends AbstractModel
     {
         $logger = new \Mobbex\PS\Checkout\Models\Logger();
 
-        // Get the transaction from mobbex table and instance a transaction object with that id
+        // Get the transaction from mobbex table and instance it as an object with that id
         $transactionData = self::getData(['cart_id' => $cart_id, 'parent' => true]);
-        $transaction     = new Transaction($transactionData['id']);
-
-        if (!$transaction)
-            $logger->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData['id']);
-
+        
+        if (!$transactionData['id'])
+            $logger->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
+        
+        $transaction = new Transaction($transactionData['id']);
         // Get childs from parent transaction
-        $transaction->getChilds(); 
+        $transaction->getChilds();
         return $transaction;
     }
 
@@ -115,7 +114,7 @@ class Transaction extends AbstractModel
             'limit'     => "LIMIT $limit",
         ];
         // Make request to db to get an array of the transaction
-        $result = \Db::getInstance()->executes(
+        $result = \Db::getInstance()->executeS(
             $query['operation'] . ' FROM ' . $query['table'] . ' ' . $query['condition'] . ' ' . $query['order'] . ' ' . $query['limit']
         );
 
@@ -152,29 +151,22 @@ class Transaction extends AbstractModel
     /**
      * Get childs data from transaction or from webhook and create an array of child transactions(type object)
      * 
-     * @return array $childrens (funciona como nuevo atributo que guarda childs trx)
+     * @return array $childs (funciona como nuevo atributo que guarda childs trx)
      * 
      */
     public function getChilds()
     {
-        // Checks if transaction is child and instance each one (soporte forma antigua donde llegaban webhooks parent = false)
-        if (!$this->parent) {
-            $this->childrens = [];
-            foreach ($this as $value)
-                $this->childrens[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
-            return $this->childrens;
-        }
-
-        // Confirm that childs node does have data to continue (soporte para cuando childs se guarda en $this->childs)
-        if (empty($this->childs))
-            return;
-        $this->childrens =[];
-        // Set and array with childs data and makes sure the code flows correctly in case an array is not returned
-        $childrenData = is_array(json_decode($this->childs, true)) ? json_decode($this->childs ? $this->childs : '', true) : [] ;
-        // Create a transaction instance and set it with formated webhook childs data as an array
-        foreach ($childrenData as $childData)
-            $this->childrens[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
-        return $this->childrens;
+        if (!empty($this->childs)){
+            // Create a transaction instance and set it with formated webhook childs data as an array
+            foreach (json_decode($this->childs, true) as $child)
+                $childsData[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($child);
+        } else {
+            // Takes all the child transactions of the table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
+            $childs = self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0);
+            foreach ($childs as $childData)
+                $childsData[] = new Transaction($childData['id']);
+            }
+        $this->childs = $childsData;
     }
 
     /**

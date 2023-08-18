@@ -97,7 +97,7 @@
 
             <tr class="mobbex-end-table">
                 <td>Coupon:</td>
-                <td><a href="https://mobbex.com/console/{$coupon[0]}/operations/?oid={$coupon[1]}">VER</a></td>
+                <td><a href="{$coupon}">VER</a></td>
             </tr>
 
             {hook h="displayMobbexOrderWidget" id="$id" cart_id="$cart_id"}
