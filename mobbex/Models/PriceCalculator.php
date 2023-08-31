@@ -15,12 +15,12 @@ class PriceCalculator
     }
     
     /**
-     * Apply the corresponding cart rules discounts to each product in the order
+     * Get the corresponding cart rules discounts to each product in the order
      * 
      * @return array $products products with discount applied
      * 
      */
-    public function applyCartRules()
+    public function getCartRules()
     {
         // If there are no cart rules, it returns the intact products
         if (!$this->cartRules)
@@ -55,11 +55,11 @@ class PriceCalculator
      * @return array $products  products with rules discounts position
      * 
      */
-    public function getRuleProduct($products, $rule, $conditionKey, $conditionValue)
+    public function getRuleProduct($products, $rule, $conditionKey = '', $conditionValue = '')
     {
         // Get the rule discount values per product in a new position
         foreach ($products as &$product){
-            if (empty($conditions))
+            if ($conditionKey = '' && $conditionValue = '')
                 $product['rules_discount'] = $this->getDiscount($product, $rule);
             elseif ($product[$conditionKey] == $conditionValue)
                 $product['rules_discount'] = $this->getDiscount($product, $rule);
