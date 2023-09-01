@@ -59,7 +59,7 @@ class PriceCalculator
     {
         // Get the rule discount values per product in a new position
         foreach ($products as &$product)
-            // If there are no conditions or if it matches the conditions, gets discount
+            // If there are no conditions or if product matches the conditions, gets discount
             if (!$conditionKey || $product[$conditionKey] == $conditionValue)
                 $product['rules_discount'] = $this->getDiscount($product, $rule);
         return $products;
