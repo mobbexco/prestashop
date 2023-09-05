@@ -255,7 +255,7 @@ class OrderHelper
             $this->logger->log('error', "Checkout > getCheckout | Fail getting checkout", $e->getMessage());
             return false;
         }
-
+        
         $this->logger->log('debug', "Checkout Response: ", $mobbexCheckout->response);
 
         $mobbexCheckout->response['return_url'] = $return_url;
@@ -428,7 +428,7 @@ class OrderHelper
 
         $tab = '<table style="border: solid 1pt black; padding:0 10pt">';
 
-        // Get childs transaction Data
+        // Get transaction data
         $transactions = Transaction::load($id_cart);
 
         // Check if data exists

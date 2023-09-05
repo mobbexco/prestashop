@@ -90,7 +90,7 @@ class Transaction extends AbstractModel
         
         $transaction = new Transaction($transactionData['id']);
         // Get childs from parent transaction
-        $transaction->getChilds();
+        $transaction->loadChilds();
         return $transaction;
     }
 
@@ -103,7 +103,7 @@ class Transaction extends AbstractModel
      * @return array|null An asociative array with transaction values.
      * 
      */
-    public static function getData($conditions, $limit = 1) // se le podria añadir column como param
+    public static function getData($conditions, $limit = 1)
     {
         // Generate query params
         $query = [
@@ -149,37 +149,38 @@ class Transaction extends AbstractModel
     }
 
     /**
-     * Get childs data from transaction or from webhook and create an array of child transactions(type object)
-     * 
-     * @return array $childs (funciona como nuevo atributo que guarda childs trx)
+     * Load childs data from transaction or from webhook and set childs attribute with an array of child(type object)
      * 
      */
-    public function getChilds()
+    public function loadChilds()
     {
+        $childsData = [];
+
         if (!empty($this->childs)){
             // Create a transaction instance and set it with formated webhook childs data as an array
             foreach (json_decode($this->childs, true) as $child)
                 $childsData[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($child);
-        } else {
-            // Takes all the child transactions of the table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
+        } elseif (self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0) ) {
+            // Gets all child transactions from table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
             $childs = self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0);
             foreach ($childs as $childData)
                 $childsData[] = new Transaction($childData['id']);
-            }
+        }
+
         $this->childs = $childsData;
     }
 
     /**
      * Create a formated new transaction with childs data from childs node
      * 
-     * @param  array  $childData
+     * @param  array  $child
      * 
      * @return object $this
      * 
      */
-    public function loadFromWebhookData($childData)
+    public function loadFromWebhookData($child)
     {
-        $childData    = is_array($childData) ? $childData : [];
+        $childData    = is_array($child) ? $child : [];
         $formatedData = self::formatData($childData);
         // Set each data key as an atribute for the transaction instance
         foreach ($formatedData as $key => $value)
@@ -297,6 +298,10 @@ class Transaction extends AbstractModel
         $trx = new \Mobbex\PS\Checkout\Models\Transaction();
 
         $trx->cart_id = $cart_id;
+
+        if (!$data['parent'])
+            // Stores data in the position of childs
+            $data['childs'] = $data['data'];       
 
         foreach ($data as $key => $value)
             $trx->$key = $value;
