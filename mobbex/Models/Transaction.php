@@ -32,6 +32,11 @@ class Transaction extends AbstractModel
     public $data;
     public $created;
     public $updated;
+    public $logger;
+
+    public function __construct() {
+        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();;
+    }
 
     // Indicates to Prestashop the table structure
     public static $definition = array(
@@ -80,15 +85,13 @@ class Transaction extends AbstractModel
      */
     public static function load($cart_id)
     {
-        $logger = new \Mobbex\PS\Checkout\Models\Logger();
-
         // Get the transaction from mobbex table and instance it as an object with that id
         $transactionData = self::getData(['cart_id' => $cart_id, 'parent' => true]);
         
         if (!$transactionData['id'])
-            $logger->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
+            self::$logger->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
         
-        $transaction = new Transaction($transactionData['id']);
+        $transaction = new \Mobbex\PS\Checkout\Models\Transaction($transactionData['id']);
         // Get childs from parent transaction
         $transaction->loadChilds();
         return $transaction;
@@ -100,7 +103,7 @@ class Transaction extends AbstractModel
      * @param array $conditions ex: WHERE cart_id = $cart_id
      * @param int $limit
      * 
-     * @return array|null An asociative array with transaction values.
+     * @return array|null An array with transaction values.
      * 
      */
     public static function getData($conditions, $limit = 1)
@@ -164,7 +167,7 @@ class Transaction extends AbstractModel
             // Gets all child transactions from table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
             $childs = self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0);
             foreach ($childs as $childData)
-                $childsData[] = new Transaction($childData['id']);
+                $childsData[] = new \Mobbex\PS\Checkout\Models\Transaction($childData['id']);
         }
 
         $this->childs = $childsData;
