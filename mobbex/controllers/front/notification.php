@@ -41,7 +41,28 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             return $this->callback();
         } else if ($action == 'webhook') {
             return $this->webhook();
+        } else if($action == 'redirect'){
+            $this->redirectAction();
         }
+    }
+
+    /**
+     * Redirect to controller with a prestashop alert.
+     */
+    public function redirectAction()
+    {
+        $messages = [
+            'missing_dni' => 'Debes completar tu DNI para poder continuar tu compra.'
+        ];
+
+        $type = \Tools::getValue('type');
+        $url  = \Tools::getValue('url');
+
+        //Set Notification
+        $this->{$type}[] = $messages[\Tools::getValue('message')];
+
+        //Redirect with notification
+        $this->redirectWithNotifications("index.php?controller=$url");
     }
 
     /**
@@ -125,8 +146,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!\Mobbex\Repository::validateToken($token))
             $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
-        // Save webhook data
-        $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        try {
+            // Save webhook data
+            $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
+        } catch (\Exception $e) {
+            $this->logger->log('fatal', __METHOD__ . ': ' . $e->getMessage(), isset($e->data) ? $e->data : []);
+        }
 
         //Check if it is a retry webhook and if process is allowed
         if (!$this->config->settings['process_webhook_retries'] && $trx->isDuplicated())
