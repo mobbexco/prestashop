@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 4.0.0
+ * @version 4.1.0
  * @see     PaymentModuleCore
  */
 
@@ -796,7 +796,7 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        extract($this->config->getProductPlans($products));
+        extract($this->config->getProductsPlans($products));
 
         $data = [
             'product_price'  => \Product::convertAndFormatPrice($total),
@@ -827,7 +827,7 @@ class Mobbex extends PaymentModule
     {
         $hash     = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
         $template = "views/templates/hooks/$catalogType-settings.tpl";
-        extract($this->config->getProductPlans([$id], $catalogType, true));
+        extract($this->config->getCatalogPlans($id, $catalogType, true));
 
         $options  = [
             'id'             => $id,
