@@ -41,7 +41,7 @@
                     <h3>{l s='Payment Method' mod='mobbex'}</h3>
                 </th>
             </tr>
-
+            {$sources = ($transaction->source_name eq 'multicard') ? $transaction->childs : [$transaction]}
             {foreach from=$sources item=source}
                 {if $source->source_type eq 'card'}
 
@@ -81,19 +81,17 @@
                     <h3>{l s='Entities' mod='mobbex'}</h3>
                 </th>
             </tr>
-
-            {foreach from=$entities item=entity}
-
-                <tr>
-                    <td>{l s='Name:' mod='mobbex'}</td>
-                    <td>{$entity->entity_name}</td>
-                </tr>
-                <tr class="mobbex-color-column">
-                    <td>UID:</td>
-                    <td>{$entity->entity_uid}</td>
-                </tr>
-
-            {/foreach}
+                {$entities = ($transaction->source_name neq 'multicard' && !empty($transaction->childs)) ? $transaction->childs : [$transaction]}
+                {foreach from=$entities item=entity}
+                    <tr>
+                        <td>{l s='Name:' mod='mobbex'}</td>
+                        <td>{$entity->entity_name}</td>
+                    </tr>
+                    <tr class="mobbex-color-column">
+                        <td>UID:</td>
+                        <td>{$entity->entity_uid}</td>
+                    </tr>
+                {/foreach}
 
             <tr class="mobbex-end-table">
                 <td>Coupon:</td>

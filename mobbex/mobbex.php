@@ -776,11 +776,10 @@ class Mobbex extends PaymentModule
                     'total'          => $transaction->total,
                     'status_message' => $transaction->status_message,
                 ],
-                'capture'    => $transaction->status == '3' ? true : false ,
-                'sources'    => $transaction->source_name == 'multicard' ? $transaction->childs : array($transaction),
-                'coupon'     => "https://mobbex.com/console/$transaction->entity_uid/operations/?oid=$transaction->payment_id",
-                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
-                'entities'   => !empty($transaction->childs) && $transaction->source_name != 'multicard' ? $transaction->childs : array($transaction),
+                'transaction' => $transaction,
+                'capture'     => $transaction->status == '3' ? true : false ,
+                'coupon'      => "https://mobbex.com/console/$transaction->entity_uid/operations/?oid=$transaction->payment_id",
+                'captureUrl'  => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
             ]
         );
 
