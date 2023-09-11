@@ -32,11 +32,6 @@ class Transaction extends AbstractModel
     public $data;
     public $created;
     public $updated;
-    public $logger;
-
-    public function __construct() {
-        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();;
-    }
 
     // Indicates to Prestashop the table structure
     public static $definition = array(
@@ -86,69 +81,15 @@ class Transaction extends AbstractModel
     public static function load($cart_id)
     {
         // Get the transaction from mobbex table and instance it as an object with that id
-        $transactionData = self::getData(['cart_id' => $cart_id, 'parent' => true]);
+        $transactionData = \Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '$cart_id' AND parent = true LIMIT 1");
         
-        if (!$transactionData['id'])
-            self::$logger->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
+        if (!$transactionData[0]['id'])
+            (new \Mobbex\PS\Checkout\Models\Logger())->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
         
-        $transaction = new \Mobbex\PS\Checkout\Models\Transaction($transactionData['id']);
+        $transaction = new \Mobbex\PS\Checkout\Models\Transaction($transactionData[0]['id']);
         // Get childs from parent transaction
         $transaction->loadChilds();
         return $transaction;
-    }
-
-    /**
-     * Get data from mobbex transaction table.
-     * 
-     * @param array $conditions ex: WHERE cart_id = $cart_id
-     * @param int $limit
-     * 
-     * @return array|null An array with transaction values.
-     * 
-     */
-    public static function getData($conditions, $limit = 1)
-    {
-        // Generate query params
-        $query = [
-            'operation' => 'SELECT *',
-            'table'     => _DB_PREFIX_ . 'mobbex_transaction',
-            'condition' => self::getCondition($conditions),
-            'order'     => 'ORDER BY `id` DESC',
-            'limit'     => "LIMIT $limit",
-        ];
-        // Make request to db to get an array of the transaction
-        $result = \Db::getInstance()->executeS(
-            $query['operation'] . ' FROM ' . $query['table'] . ' ' . $query['condition'] . ' ' . $query['order'] . ' ' . $query['limit']
-        );
-
-        if ($limit <= 1)
-            return isset($result[0]) ? $result[0] : null;
-
-        return !empty($result) ? $result : null;
-    }
-    
-    /**
-     * Creates sql 'WHERE' statement with an associative array.
-     * 
-     * @param array $conditions
-     * 
-     * @return string $condition
-     * 
-     */
-    public static function getCondition($conditions)
-    {
-        $i = 0;
-        $condition = '';
-
-        foreach ($conditions as $key => $value) {
-            if($i < 1)
-                $condition .= "WHERE `$key`='{$value}' ";
-            else
-                $condition .= " AND `$key`='$value' ";
-            $i++;
-        }
-
-       return $condition;
     }
 
     /**
@@ -163,9 +104,9 @@ class Transaction extends AbstractModel
             // Create a transaction instance and set it with formated webhook childs data as an array
             foreach (json_decode($this->childs, true) as $child)
                 $childsData[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($child);
-        } elseif (self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0) ) {
+        } elseif (\Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '{$this->cart_id}' AND parent = false")) {
             // Gets all child transactions from table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
-            $childs = self::getData(['cart_id' => $this->cart_id, 'parent' => false], 0);
+            $childs = \Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '{$this->cart_id}' AND parent = false");
             foreach ($childs as $childData)
                 $childsData[] = new \Mobbex\PS\Checkout\Models\Transaction($childData['id']);
         }
@@ -361,7 +302,6 @@ class Transaction extends AbstractModel
      */
     public function getDuplicated()
     {
-        $db = \Db::getInstance();
-        return $db->executeS("SELECT `id` FROM `". _DB_PREFIX_ ."mobbex_transaction` WHERE `id`<'$this->id' AND `data`='{$db->escape($this->data)}'");
+        return \Db::getInstance()->executeS("SELECT `id` FROM `". _DB_PREFIX_ ."mobbex_transaction` WHERE `id`<'$this->id' AND `data`='{$this->db->escape($this->data)}'");
     }
 }
