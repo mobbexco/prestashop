@@ -33,6 +33,7 @@ class Transaction extends AbstractModel
     public $created;
     public $updated;
 
+    // Indicates to Prestashop the table structure
     public static $definition = array(
         'table' => 'mobbex_transaction',
         'primary' => 'id',
@@ -68,47 +69,67 @@ class Transaction extends AbstractModel
             'updated'            => array('type' => self::TYPE_STRING, 'required' => false),
         ),
     );
-
+ 
     /**
-     * Saves the transaction with the data
+     * Load transaction
+     * 
+     * @param int|string $cart_id
+     * 
+     * @return object $transaction
+     * 
      */
-    public static function saveTransaction($cart_id, $data)
+    public static function load($cart_id)
     {
-        $trx = new \Mobbex\PS\Checkout\Models\Transaction();
-
-        // Remember add cart_id to data array
-        $data['cart_id'] = $cart_id;
-
-        foreach (self::$definition['fields'] as $key => $value)
-            $trx->$key = isset($data[$key]) ? $data[$key] : null;
-
-        if (!$trx->save())
-            throw new \Mobbex\Exception("Error saving a transaction for Cart #$cart_id", 1, Db::getInstance()->getMsgError());
-
-        return $trx;
+        // Get the transaction from mobbex table and instance it as an object with that id
+        $transactionData = \Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '$cart_id' AND parent = true LIMIT 1");
+        
+        if (!$transactionData[0]['id'])
+            (new \Mobbex\PS\Checkout\Models\Logger())->log('error', 'webhook > load | Failed to obtain the transaction with id ' . $transactionData);
+        
+        $transaction = new \Mobbex\PS\Checkout\Models\Transaction($transactionData[0]['id']);
+        // Get childs from parent transaction
+        $transaction->loadChilds();
+        return $transaction;
     }
 
     /**
-     * Get the transactions from the db and returns an array of \Mobbex\PS\Checkout\Models\Transaction objects.
-     * If param $parent is true, it returns only the parent webhook
+     * Load childs data from transaction or from webhook and set childs attribute with an array of child(type object)
      * 
-     * @param int $cart_id
-     * @param bool $parent 
-     * 
-     * @return array|object
      */
-    public static function getTransactions($cart_id, $parent = false)
+    public function loadChilds()
     {
-        $data = \Db::getInstance()->executes('SELECT * FROM ' . _DB_PREFIX_ . 'mobbex_transaction' . ' WHERE cart_id = ' . $cart_id . ($parent ? ' and parent = 1' : '') . ' ORDER BY id DESC');
+        $childsData = [];
 
-        if (!$parent) {
-            $childs = [];
-            foreach ($data as $value)
-                $childs[] = new \Mobbex\PS\Checkout\Models\Transaction($value['id']);
-            return $childs;
+        if (!empty($this->childs)){
+            // Create a transaction instance and set it with formated webhook childs data as an array
+            foreach (json_decode($this->childs, true) as $child)
+                $childsData[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($child);
+        } elseif (\Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '{$this->cart_id}' AND parent = false")) {
+            // Gets all child transactions from table, instantiates them, and stores them in an array (support for the old way webhooks arrived)
+            $childs = \Db::getInstance()->executeS("SELECT * FROM " . _DB_PREFIX_ . "mobbex_transaction WHERE cart_id = '{$this->cart_id}' AND parent = false");
+            foreach ($childs as $childData)
+                $childsData[] = new \Mobbex\PS\Checkout\Models\Transaction($childData['id']);
         }
 
-        return !empty($data[0]) ? new \Mobbex\PS\Checkout\Models\Transaction($data[0]['id']) : new \Mobbex\PS\Checkout\Models\Transaction();
+        $this->childs = $childsData;
+    }
+
+    /**
+     * Create a formated new transaction with childs data from childs node
+     * 
+     * @param  array  $child
+     * 
+     * @return object $this
+     * 
+     */
+    public function loadFromWebhookData($child)
+    {
+        $childData    = is_array($child) ? $child : [];
+        $formatedData = self::formatData($childData);
+        // Set each data key as an atribute for the transaction instance
+        foreach ($formatedData as $key => $value)
+            $this->$key = $value;
+        return $this;
     }
 
     /**
@@ -183,117 +204,7 @@ class Transaction extends AbstractModel
     {
         return strpos($paymentId, 'CHD-') !== 0;
     }
-
-    /**
-     * Return the list of sources from the weebhook and filter them
-     * 
-     * @param object $parent
-     * @param array  $childs
-     * @return array $sources
-     * 
-     */
-    public static function getTransactionsSources($parent, $childs)
-    {
-        if ($parent->source_name == 'multicard' && !empty($childs))
-            foreach ($childs as $child)
-                $sources[] = [
-                    'source_type'      => $child->source_type,
-                    'source_name'      => $child->source_name,
-                    'source_number'    => $child->source_number,
-                    'installment_name' => $child->installment_name,
-                    'total'            => $child->total,
-                ];
-        else
-            $sources[] = [
-                'source_type'      => $parent->source_type,
-                'source_name'      => $parent->source_name,
-                'source_number'    => $parent->source_number,
-                'installment_name' => $parent->installment_name,
-                'total'            => $parent->total,
-            ];
-        return $sources;
-    }
-
-    /**
-     * Return the list of entities from the weebhook and filter them.
-     * 
-     * @param object $parent
-     * @param array  $childs
-     * @return array $entities
-     * 
-     */
-    public static function getTransactionsEntities($parent, $childs)
-    {
-        if ($parent->source_name != 'multicard' && !empty($childs))
-            foreach ($childs as $child)
-                $entities[] = [
-                    'entity_uid'  => $child->entity_uid,
-                    'entity_name' => $child->entity_name,
-                ];
-        else
-            $entities[] = [
-                'entity_uid'  => $parent->entity_uid,
-                'entity_name' => $parent->entity_name,
-            ];
-        return $entities;
-    }
-
-    /**
-     * Get childs data from webhook and create an array of child transactions(type object)
-     * 
-     * @return array $childs
-     * 
-     */
-    public function getChilds()
-    {
-        $childs =[];
-        $childrenData = is_array(json_decode($this->childs, true)) ? json_decode($this->childs ? $this->childs : '', true) : [] ;
-
-        foreach ($childrenData as $childData)
-            $childs[] = (new \Mobbex\PS\Checkout\Models\Transaction)->loadFromWebhookData($childData);
-        return $childs;
-    }
-
-    /**
-     * Create a formated new transaction with childs data from childs node
-     * 
-     * @param  array  $childData
-     * @return object $this
-     * 
-     */
-    public function loadFromWebhookData($childData)
-    {
-        $childData    = is_array($childData) ? $childData : [];
-        $formatedData = self::formatData($childData);
-
-        foreach ($formatedData as $key => $value)
-            $this->$key = $value;
-        return $this;
-    }
-
-    /**
-     * Create a new transaction with childs data from webhook childs transactions
-     * 
-     */
-    public function loadChildTransactions()
-    {
-        $trx = new \PrestaShopCollection('\Mobbex\PS\Checkout\Models\Transaction');
-        return $trx->sqlWhere("`parent` = '0' AND `cart_id` ='" . $this->id . "'") ? $trx->getResults() : [];
-    }
-
-    /**
-     * Return the coupon of the transaction.
-     * 
-     * @param array $transactions
-     * @return string $coupon
-     * 
-     */
-    public static function generateCoupon($transaction)
-    {
-        $coupon = "https://mobbex.com/console/" . $transaction->entity_uid . "/operations/?oid=" . $transaction->payment_id;
-        return $coupon;
-    }
-
+    
     /**
      * Get payment state from Mobbex status code.
      * 
@@ -318,6 +229,30 @@ class Transaction extends AbstractModel
         } else {
             return 'failed';
         }
+    }
+
+
+    /** SQL logic */
+
+    /**
+     * Saves the transaction with the data
+     */
+    public static function saveTransaction($cart_id, $data)
+    {
+        $trx = new \Mobbex\PS\Checkout\Models\Transaction();
+
+        $trx->cart_id = $cart_id;
+
+        if (!$data['parent'])
+            // Stores data in the position of childs
+            $data['childs'] = $data['data'];       
+
+        foreach ($data as $key => $value)
+            $trx->$key = $value;
+
+        $trx->save();
+
+        return $trx;
     }
 
     /** Lock Webhook logic */
@@ -367,7 +302,6 @@ class Transaction extends AbstractModel
      */
     public function getDuplicated()
     {
-        $db = \Db::getInstance();
-        return $db->executeS("SELECT `id` FROM `". _DB_PREFIX_ ."mobbex_transaction` WHERE `id`<'$this->id' AND `data`='{$db->escape($this->data)}'");
+        return \Db::getInstance()->executeS("SELECT `id` FROM `". _DB_PREFIX_ ."mobbex_transaction` WHERE `id`<'$this->id' AND `data`='{$this->db->escape($this->data)}'");
     }
 }

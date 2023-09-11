@@ -30,7 +30,7 @@ if (!defined('_PS_VERSION_')) {
             // Set request necessary data
             $cartId  = Cart::getCartIdByOrderId(Tools::getValue('order_id'));
             $url     = urldecode(Tools::getValue('url'));
-            $mbbxTrx = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($cartId, true);
+            $mbbxTrx = \Mobbex\PS\Checkout\Models\Transaction::load($cartId);
 
             // Capture request
             \Mobbex\Api::request([
