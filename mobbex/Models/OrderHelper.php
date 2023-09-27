@@ -267,7 +267,10 @@ class OrderHelper
         
         if(empty($customerData['identification'])){
             $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
-            \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
+            
+            // If commerce use mobbex dni redirect to customer page.
+            if($this->config->settings['mobbex_dni'])
+                \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
         }
 
         // Attempt to create a payment checkout
@@ -419,9 +422,12 @@ class OrderHelper
 
     public function getDni($customer_id)
     {
+        //get custom dni column
         extract($this->config->getCustomDniColumn());
+        
         // Check if dni column exists
         $custom_dni = CustomFields::getCustomField($customer_id, 'customer', 'dni');
+
         if ($custom_dni) {
             return $custom_dni;
         } else if (!empty($dniColumn)) {
