@@ -560,28 +560,28 @@ $form = [
                 ],
             ],
             [
-                'type'     => 'switch',
-                'label'    => $this->l( 'Enable / Disable 2-step Payment Mode', 'config-form'),
-                'hint'     => 'El modo de pago en dos pasos asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido.',
-                'desc'     => 'Once activated, orders will have authorized status',
+                'type'     => 'select',
+                'label'    => $this->l('Payment Mode', 'config-form'),
+                'desc'     => 'El modo de pago en dos pasos asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido. En Two Steps Mode, los pedidos pasaran a esatdo autorizado',
                 'name'     => 'MOBBEX_PAYMENT_MODE',
                 'key'      => 'payment_mode',
                 'default'  => 'payment.v2',
-                'is_bool'  => false,
                 'required' => false,
                 'tab'      => 'tab_orders',
-                'values'   => [
-                    [
-                        'id'    => 'payment.2-step',
-                        'value' => 'payment.2-step',
-                        'label' => $this->l( 'Enable', 'config-form'),
+                'options'  => [
+                    'query' => [
+                        [
+                            'id_option' => 'payment.v2',
+                            'name'      => 'Payment v2'
+                        ],
+                        [
+                            'id_option' => 'payment.2-step',
+                            'name'      => 'Two Step Payment'
+                        ],
                     ],
-                    [
-                        'id'    => 'payment.v2',
-                        'value' => 'payment.v2',
-                        'label' => $this->l( 'Disabled', 'config-form'),
-                    ],
-                ],
+                    'id'   => 'id_option',
+                    'name' => 'name'
+                ]
             ],
             [
                 'type'     => 'text',
