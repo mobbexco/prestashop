@@ -392,9 +392,6 @@ class Mobbex extends PaymentModule
         if ($this->config->settings['custom_dni'] != '')
             return;
 
-        if(!$this->config->settings['mobbex_dni'])
-            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
-
         $customer  = \Context::getContext()->customer;
         $dni_field = array();
 
@@ -734,9 +731,6 @@ class Mobbex extends PaymentModule
         if ($this->config->settings['custom_dni'] != '')
             return;
 
-        if (!$this->config->settings['mobbex_dni'])
-            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
-
         $customer = \Context::getContext()->customer;
 
         $this->smarty->assign(
@@ -784,7 +778,7 @@ class Mobbex extends PaymentModule
         if ($order->module != 'mobbex')
             return;
 
-        //Get transaction data
+        // Get transaction data
         $parent = \Mobbex\PS\Checkout\Models\Transaction::getTransactions($order->id_cart, true);
         $childs = !empty($parent->childs) ? $parent->getChilds() : $parent->loadChildTransactions();
 
@@ -798,19 +792,19 @@ class Mobbex extends PaymentModule
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
             [
-                'id' => $parent->payment_id,
-                'cart_id'  => $params['id_order'],
-                'data' => [
+                'id'      => $parent->payment_id,
+                'cart_id' => $params['id_order'],
+                'data'    => [
+                    'total'          => $parent->total,
+                    'currency'       => $parent->currency,
                     'payment_id'     => $parent->payment_id,
                     'risk_analysis'  => $parent->risk_analysis,
-                    'currency'       => $parent->currency,
-                    'total'          => $parent->total,
                     'status_message' => $parent->status_message,
                 ],
-                'sources'  => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
-                'entities' => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
-                'coupon'   => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
-                'capture'    => $trx->status == '3' ? true : false ,
+                'capture'    => $parent->status == '3' ? true : false,
+                'coupon'     => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
+                'sources'    => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
+                'entities'   => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
                 'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
             ]
         );
@@ -919,9 +913,6 @@ class Mobbex extends PaymentModule
      */
     private function updateCustomerDniStatus(array $params)
     {
-        if (empty($this->config->settings['custom_dni']) && !$this->config->settings['mobbex_dni'])
-            \Configuration::updateValue('MOBBEX_OWN_DNI', true);
-
         if (!$this->config->settings['mobbex_dni'] || empty($params['object']->id) || empty($_POST['customer_dni']) || $this->config->settings['custom_dni'] != '')
             return;
 
