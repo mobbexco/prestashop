@@ -269,7 +269,7 @@ class OrderHelper
             $this->logger->log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
             
             // If commerce use mobbex dni redirect to customer page.
-            if($this->config->settings['mobbex_dni'])
+            if($this->config->settings['mobbex_dni'] && _PS_VERSION_ >= Config::PS17)
                 \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
         }
 
