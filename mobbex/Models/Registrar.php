@@ -17,7 +17,6 @@ class Registrar
         'actionOrderReturn',
         'displayAdminOrder',
         'actionMobbexExpireOrder',
-        'actionCustomerFormBuilderModifier'
     ];
 
     public $ps16Hooks = [
@@ -43,6 +42,7 @@ class Registrar
         'categoryUpdate',
         'categoryAddition',
         'actionEmailSendBefore',
+        'actionCustomerFormBuilderModifier',
     ];
 
     public $ps176Hooks = [
@@ -56,6 +56,7 @@ class Registrar
         'ActionAfterCreateCategoryFormHandler',
         'ActionAfterUpdateCategoryFormHandler',
         'actionEmailSendBefore',
+        'actionCustomerFormBuilderModifier',
     ];
 
     /**

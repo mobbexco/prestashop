@@ -357,11 +357,16 @@ class Mobbex extends PaymentModule
      */
     public function hookActionCustomerFormBuilderModifier($params)
     {
-        // Gets FormBuilder object
-        $formBuilder = $params['form_builder'];
+        // Gets customer and FormBuilder object
+        $customer    = \Context::getContext()->customer;
+        $formBuilder = isset($params['form_builder']) ? $params['form_builder'] : null;
+
+        if(!isset($formBuilder, $customer)){
+            $this->logger->log('debug', 'Observer > hookActionCustomerFormBuilder', [$formBuilder, $customer]);
+            return;
+        }
 
         // Checks if dni is set
-        $customer  = \Context::getContext()->customer;
         $dni       = isset($customer->id) ? $this->helper->getDni($customer->id) : '';
 
         // Build customer dni field
