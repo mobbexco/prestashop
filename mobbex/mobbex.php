@@ -349,6 +349,46 @@ class Mobbex extends PaymentModule
     }
 
     /**
+     * Logic to execute when the hook 'CustomerFormBuilder' is fired.
+     * Add Mobbex own dni field to prestashop admin customer form.
+     * Support for 1.7
+     * 
+     * @param array $params
+     */
+    public function hookActionCustomerFormBuilderModifier($params)
+    {
+        // Gets customer and FormBuilder object
+        $customer    = \Context::getContext()->customer;
+        $formBuilder = isset($params['form_builder']) ? $params['form_builder'] : null;
+
+        if(!isset($formBuilder, $customer)){
+            $this->logger->log('debug', 'Observer > hookActionCustomerFormBuilder', [$formBuilder, $customer]);
+            return;
+        }
+
+        // Checks if dni is set
+        $dni       = isset($customer->id) ? $this->helper->getDni($customer->id) : '';
+
+        // Build customer dni field
+        $formBuilder->add(
+            'customer_dni',
+            'Symfony\Component\Form\Extension\Core\Type\TextType',
+            [
+                'data'     => $dni,
+                'label'    => 'DNI',
+                'required' => false,
+            ]
+        );
+        
+        // When it is modified in the form, save new dni value in mobbex custom fields table
+        if(isset($_POST['customer']['customer_dni'])) {
+            // Gets the new dni entered in the form through post
+            $dni = $_POST['customer']['customer_dni'];
+            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($customer->id, 'customer', 'dni', $dni);
+        }
+    }
+
+    /**
      * Logic to execute when the hook 'AdditionalCustomerFormFields' is fired.
      * Add Mobbex own fields to prestashop checkout.
      */

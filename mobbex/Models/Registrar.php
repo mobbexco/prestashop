@@ -42,6 +42,7 @@ class Registrar
         'categoryUpdate',
         'categoryAddition',
         'actionEmailSendBefore',
+        'actionCustomerFormBuilderModifier',
     ];
 
     public $ps176Hooks = [
@@ -55,6 +56,7 @@ class Registrar
         'ActionAfterCreateCategoryFormHandler',
         'ActionAfterUpdateCategoryFormHandler',
         'actionEmailSendBefore',
+        'actionCustomerFormBuilderModifier',
     ];
 
     /**

@@ -420,16 +420,24 @@ class OrderHelper
         return $addresses;
     }
 
+    /**
+     * Get customer dni from Mobbex or PS table
+     * 
+     * @param mixed $customer_id
+     * 
+     * @return mixed customer dni
+     */
     public function getDni($customer_id)
     {
         //get custom dni column
         extract($this->config->getCustomDniColumn());
-        
         // Check if dni column exists
         $custom_dni = CustomFields::getCustomField($customer_id, 'customer', 'dni');
-
+        
+        // Try to get dni from the mobbex custom fields table
         if ($custom_dni) {
             return $custom_dni;
+        // Try to get dni from the prestashop customer table
         } else if (!empty($dniColumn)) {
             if (!empty(\DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$dniColumn'")) || !empty(\DB::getInstance()->executeS("SHOW COLUMNS FROM $table LIKE '$identifier'"))) {
                 return \DB::getInstance()->getValue("SELECT $dniColumn FROM $table WHERE $identifier='$customer_id'");
