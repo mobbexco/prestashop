@@ -143,6 +143,7 @@ class Mobbex extends PaymentModule
         \Mobbex\Platform::init(
             'Prestashop' . _PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
+            \Mobbex\PS\Checkout\Models\Config::EMBED_VERSION,
             \Tools::getShopDomainSsl(true, true),
             [
                 'Prestashop' => _PS_VERSION_,
@@ -543,7 +544,7 @@ class Mobbex extends PaymentModule
                 $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if ($this->config->settings['embed'])
-                $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.1.0.js');
+                $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@'. \Mobbex\PS\Checkout\Models\Config::EMBED_VERSION .'.js');
         }
     }
 
