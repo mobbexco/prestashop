@@ -143,8 +143,8 @@ class Mobbex extends PaymentModule
         \Mobbex\Platform::init(
             'Prestashop' . _PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
-            \Mobbex\PS\Checkout\Models\Config::EMBED_VERSION,
             \Tools::getShopDomainSsl(true, true),
+            \Mobbex\PS\Checkout\Models\Config::EMBED_VERSION,
             [
                 'Prestashop' => _PS_VERSION_,
                 'webpay'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
