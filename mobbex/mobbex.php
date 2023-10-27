@@ -144,7 +144,6 @@ class Mobbex extends PaymentModule
             'Prestashop' . _PS_VERSION_,
             \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
             \Tools::getShopDomainSsl(true, true),
-            \Mobbex\PS\Checkout\Models\Config::EMBED_VERSION,
             [
                 'Prestashop' => _PS_VERSION_,
                 'webpay'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
@@ -275,7 +274,7 @@ class Mobbex extends PaymentModule
             'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) $this->config->settings['embed'],
             'data'        => $checkoutData,
-            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
+            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
         ]);
 
         // Get payment methods from checkout
