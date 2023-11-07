@@ -215,41 +215,45 @@ class Config
     {
         $source_names = $common_sources = $advanced_sources = [];
 
-        foreach (\Mobbex\Repository::getSources() as $source) {
-            if (empty($source['installments']['list']))
-                continue;
+        try {
+            foreach (\Mobbex\Repository::getSources() as $source) {
+                if (empty($source['installments']['list']))
+                    continue;
 
-            // Format field data
-            foreach ($source['installments']['list'] as $plan) {
-                $common_sources[$plan['reference']] = [
-                    'id'    => "common_plan_$plan[reference]",
-                    'key'   => $plan['reference'],
-                    'label' => $plan['name'] ?: $plan['description'],
-                ];
+                // Format field data
+                foreach ($source['installments']['list'] as $plan) {
+                    $common_sources[$plan['reference']] = [
+                        'id'    => "common_plan_$plan[reference]",
+                        'key'   => $plan['reference'],
+                        'label' => $plan['name'] ?: $plan['description'],
+                    ];
+                }
             }
-        }
 
-        foreach (\Mobbex\Repository::getSourcesAdvanced() as $source) {
-            if (empty($source['installments']))
-                continue;
+            foreach (\Mobbex\Repository::getSourcesAdvanced() as $source) {
+                if (empty($source['installments']))
+                    continue;
 
-            // Save source name
-            $source_names[$source['source']['reference']] = $source['source']['name'];
+                // Save source name
+                $source_names[$source['source']['reference']] = $source['source']['name'];
 
-            // Format field data
-            foreach ($source['installments'] as $plan) {
-                $advanced_sources[$source['source']['reference']][] = [
-                    'id'    => "advanced_plan_$plan[uid]",
-                    'key'   => $plan['uid'],
-                    'label' => $plan['name'] ?: $plan['description'],
-                ];
+                // Format field data
+                foreach ($source['installments'] as $plan) {
+                    $advanced_sources[$source['source']['reference']][] = [
+                        'id'    => "advanced_plan_$plan[uid]",
+                        'key'   => $plan['uid'],
+                        'label' => $plan['name'] ?: $plan['description'],
+                    ];
+                }
             }
-        }
 
-        // Save to db
-        $shopId = \Context::getContext()->shop->id ?: null;
-        foreach (['source_names', 'common_sources', 'advanced_sources'] as $value)
-            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $value, json_encode(${$value}));
+            // Save to db
+            $shopId = \Context::getContext()->shop->id ?: null;
+            foreach (['source_names', 'common_sources', 'advanced_sources'] as $value)
+                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $value, json_encode(${$value}));
+        } catch (\Exception $e) {
+            $this->logger->log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
+        }
 
         return compact('names', 'common', 'advanced');
     }

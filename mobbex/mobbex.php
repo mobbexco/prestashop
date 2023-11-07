@@ -828,10 +828,18 @@ class Mobbex extends PaymentModule
     public function displayPlansWidget($total, $products = [])
     {
         extract($this->config->getProductsPlans($products));
+        $sources = array();
+
+        //Try to get installments from API
+        try {
+            $sources = \Mobbex\Repository::getSources($total, \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans));
+        } catch (\Exception $e) {
+            $this->logger->log('error', 'mobbex > displayPlansWidget | Error Obtaining Mobbex installments from API', $e->getMessage());
+        }
 
         $data = [
             'product_price'  => \Product::convertAndFormatPrice($total),
-            'sources'        => \Mobbex\Repository::getSources($total, \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans)),
+            'sources'        => $sources,
             'style_settings' => [
                 'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
                 'styles'         => $this->config->settings['widget_styles'] ?: $this->config->default['widget_styles'],
@@ -840,6 +848,7 @@ class Mobbex extends PaymentModule
                 'plans_theme'    => $this->config->settings['theme'] ?: $this->config->default['theme'],
             ],
         ];
+        
         //Debug Data
         $this->logger->log('debug', 'Observer > displayPlansWidget', $data);
 
