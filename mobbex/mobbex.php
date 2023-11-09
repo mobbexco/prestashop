@@ -264,6 +264,7 @@ class Mobbex extends PaymentModule
 
         $options = [];
         $checkoutData = $this->helper->getPaymentData(false);
+        $method_icon  = (bool) $this->config->settings['method_icon'];
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -284,7 +285,7 @@ class Mobbex extends PaymentModule
                 $this->config->settings['mobbex_description'],
                 \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]"), $method_icon]
             );
         } else {
             foreach ($methods as $method) {
@@ -295,7 +296,7 @@ class Mobbex extends PaymentModule
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method', 'checkoutUrl')
+                    compact('method', 'checkoutUrl', 'method_icon')
                 );
             }
         }
@@ -308,7 +309,7 @@ class Mobbex extends PaymentModule
                     null,
                     $card['source']['card']['product']['logo'],
                     'module:mobbex/views/templates/front/card-form.tpl',
-                    compact('card', 'key')
+                    compact('card', 'key', 'method_icon')
                 );
             }
         }
@@ -974,8 +975,10 @@ class Mobbex extends PaymentModule
         $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $option->setCallToActionText($title)
             ->setForm($this->smarty->fetch($template))
-            ->setLogo($logo)
             ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
+
+        if($this->config->settings['method_icon'])
+            $option->setLogo($logo);
 
         return $option;
     }
