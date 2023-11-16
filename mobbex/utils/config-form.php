@@ -469,6 +469,16 @@ $form = [
                 ],
             ],
             [
+                'type'    => 'text',
+                'label'   => $this->l ( 'Unified Mode Image', 'config-form'),
+                'desc'     => 'Enter the url address from the image you want to use',
+                'hint'    => 'You can customize your checkout logo from here.',
+                'name'    => 'MOBBEX_PAYMENT_METHOD_IMAGE',
+                'key'     => 'payment_method_image',
+                'tab'     => 'tab_advanced',
+                'default' => '',
+            ],
+            [
                 'type'     => 'switch',
                 'label'    => $this->l( 'Debug Mode', 'config-form'),
                 'name'     => 'MOBBEX_DEBUG',
