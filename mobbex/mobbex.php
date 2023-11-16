@@ -279,10 +279,12 @@ class Mobbex extends PaymentModule
 
         // Get payment methods from checkout
         if ($this->config->settings['unified_method'] || isset($checkoutData['sid'])) {
-            $options[] = $this->createPaymentOption(
+            $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
+            $image        = !empty($this->config->settings['payment_method_image']) ? $this->config->settings['payment_method_image'] : $defaultImage;
+            $options[]    = $this->createPaymentOption(
                 $this->config->settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 $this->config->settings['mobbex_description'],
-                \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
+                \Media::getMediaPath($image),
                 'module:mobbex/views/templates/front/payment.tpl',
                 ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
             );
