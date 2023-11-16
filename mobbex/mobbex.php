@@ -280,7 +280,7 @@ class Mobbex extends PaymentModule
         // Get payment methods from checkout
         if ($this->config->settings['unified_method'] || isset($checkoutData['sid'])) {
             $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
-            $image        = !empty($this->config->settings['payment_method_image']) ? $this->config->settings['payment_method_image'] : $defaultImage;
+            $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
             $options[]    = $this->createPaymentOption(
                 $this->config->settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 $this->config->settings['mobbex_description'],
