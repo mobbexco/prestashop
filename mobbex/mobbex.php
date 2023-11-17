@@ -264,6 +264,9 @@ class Mobbex extends PaymentModule
 
         $options = [];
         $checkoutData = $this->helper->getPaymentData(false);
+        // Necessary variables when defining the payment method icon
+        $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
+        $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -279,8 +282,6 @@ class Mobbex extends PaymentModule
 
         // Get payment methods from checkout
         if ($this->config->settings['unified_method'] || isset($checkoutData['sid'])) {
-            $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
-            $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
             $options[]    = $this->createPaymentOption(
                 $this->config->settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 $this->config->settings['mobbex_description'],
@@ -291,11 +292,10 @@ class Mobbex extends PaymentModule
         } else {
             foreach ($methods as $method) {
                 $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
-
                 $options[] = $this->createPaymentOption(
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') && $this->config->settings['mobbex_title'] ? $this->config->settings['mobbex_title'] : $method['subgroup_title'],
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
-                    $method['subgroup_logo'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl')
                 );
