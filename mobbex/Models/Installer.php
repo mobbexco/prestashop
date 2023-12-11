@@ -105,13 +105,17 @@ class Installer
      */
     public function createCostProduct()
     {
+        //Set default employee for console install
+        if(_PS_VERSION_ >= '8.0')
+            \Context::getContext()->employee = new \Employee(1);
+
         // Try to create finnacial cost product
         $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
         $product   = $productId ? new \Product($productId) : $this->createHiddenProduct('mobbex-cost', 'Costo financiero');
 
         // Always update product quantity
         if ($product->id)
-            \StockAvailable::setQuantity($product->id, null, 9999999);
+            \StockAvailable::setQuantity($product->id, 0, 9999999);
 
         return (bool) $product->id;
     }
