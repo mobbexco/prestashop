@@ -82,3 +82,11 @@ img[src*='res.sugaway'] {
   left: 15px;
   border-radius: 100%;
 }
+
+.mbbx-extra {
+  margin-bottom: 3em;
+}
+
+.mbbx-banner {
+  width: 80%;
+}

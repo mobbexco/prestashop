@@ -284,7 +284,8 @@ class Mobbex extends PaymentModule
                 $this->config->settings['mobbex_description'],
                 \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")],
+                $this->config->settings['checkout_banner']
             );
         } else {
             foreach ($methods as $method) {
@@ -295,7 +296,8 @@ class Mobbex extends PaymentModule
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
                     $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method', 'checkoutUrl')
+                    compact('method', 'checkoutUrl'),
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['checkout_banner'] : ''
                 );
             }
         }
@@ -963,19 +965,29 @@ class Mobbex extends PaymentModule
      * @param string $logo
      * @param string $template
      * @param array $templateVars
+     * @param string $banner
      * 
      * @return Object
      */
-    private function createPaymentOption($title, $description, $logo, $template, $templateVars = null)
+    private function createPaymentOption($title, $description, $logo, $template, $templateVars = null, $banner = '')
     {
         if ($templateVars)
             $this->smarty->assign($templateVars);
+
+        $extraInfo = '';
+        
+        //Add banner
+        if($banner)
+            $extraInfo .= "<img src='$banner' class='mbbx-banner'>";
+        //Add description
+        if($description)
+            $extraInfo .= "<p>$description</p>";
 
         $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $option->setCallToActionText($title)
             ->setForm($this->smarty->fetch($template))
             ->setLogo($logo)
-            ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
+            ->setAdditionalInformation($extraInfo ? "<section class='mbbx-extra'>$extraInfo</section>" : '');
 
         return $option;
     }
