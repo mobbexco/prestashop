@@ -234,6 +234,16 @@ $form = [
                 'tab'      => 'tab_appearence',
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l( 'Checkout Banner ( URL )', 'config-form'),
+                'name'     => 'MOBBEX_CHECKOUT_BANNER',
+                'key'      => 'checkout_banner',
+                'default'  => '',
+                'required' => false,
+                'desc'     => 'Optional. You must use the full URL and it must be HTTPS. (default banner https://res.mobbex.com/ecommerce/mobbex_1.png )',
+                'tab'      => 'tab_appearence',
+            ],
+            [
                 'type'     => 'switch',
                 'label'    => $this->l('Embed Payment', 'config-form'),
                 'name'     => 'MOBBEX_EMBED',
