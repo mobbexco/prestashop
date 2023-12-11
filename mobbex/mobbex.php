@@ -265,38 +265,43 @@ class Mobbex extends PaymentModule
         $options = [];
         $checkoutData = $this->helper->getPaymentData(false);
 
+        // Necessary variables when defining the payment method icon
+        $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
+        $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
+        $method_icon  = (bool) $this->config->settings['method_icon'];
+
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
+            'primaryColor' => $this->config->settings['color'],
             'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
             'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) $this->config->settings['embed'],
             'data'        => $checkoutData,
-            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
+            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
         ]);
 
         // Get payment methods from checkout
         if ($this->config->settings['unified_method'] || isset($checkoutData['sid'])) {
-            $options[] = $this->createPaymentOption(
+            $options[]    = $this->createPaymentOption(
                 $this->config->settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 $this->config->settings['mobbex_description'],
-                \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png'),
+                \Media::getMediaPath($image),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")],
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]"), $method_icon],
                 $this->config->settings['checkout_banner']
             );
         } else {
             foreach ($methods as $method) {
                 $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
-
                 $options[] = $this->createPaymentOption(
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') && $this->config->settings['mobbex_title'] ? $this->config->settings['mobbex_title'] : $method['subgroup_title'],
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
-                    $method['subgroup_logo'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method', 'checkoutUrl'),
+                    compact('method', 'checkoutUrl', 'method_icon'),
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['checkout_banner'] : ''
                 );
             }
@@ -310,7 +315,7 @@ class Mobbex extends PaymentModule
                     null,
                     $card['source']['card']['product']['logo'],
                     'module:mobbex/views/templates/front/card-form.tpl',
-                    compact('card', 'key')
+                    compact('card', 'key', 'method_icon')
                 );
             }
         }
@@ -692,11 +697,12 @@ class Mobbex extends PaymentModule
         // Add payment information to js
         \Media::addJsDef([
             'mbbx' => [
-                'paymentUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
-                'errorUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-                'embed'      => (bool) $this->config->settings['embed'],
-                'data'       => $checkoutData,
-                'return'     => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
+                'primaryColor' => $this->config->settings['color'],
+                'paymentUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
+                'errorUrl'     => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+                'embed'        => (bool) $this->config->settings['embed'],
+                'data'         => $checkoutData,
+                'return'       => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 
@@ -986,8 +992,10 @@ class Mobbex extends PaymentModule
         $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $option->setCallToActionText($title)
             ->setForm($this->smarty->fetch($template))
-            ->setLogo($logo)
             ->setAdditionalInformation($extraInfo ? "<section class='mbbx-extra'>$extraInfo</section>" : '');
+
+        if($this->config->settings['method_icon'])
+            $option->setLogo($logo);
 
         return $option;
     }
