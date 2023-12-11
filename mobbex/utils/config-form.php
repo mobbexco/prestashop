@@ -147,6 +147,16 @@ $form = [
                 'tab'      => 'tab_appearence',
             ],
             [
+                'type'     => 'text',
+                'label'    => $this->l( 'Payment Method Image', 'config-form' ),
+                'name'     => 'MOBBEX_PAYMENT_METHOD_IMAGE',
+                'key'      => 'mobbex_payment_method_image',
+                'default'  => '',
+                'required' => false,
+                'desc'     => 'Enter the url address from the image you want to use',
+                'tab'      => 'tab_appearence',
+            ],
+            [
                 'type'     => 'radio',
                 'label'    => $this->l( 'Theme Mode', 'config-form'),
                 'name'     => 'MOBBEX_THEME',
