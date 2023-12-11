@@ -3,6 +3,13 @@ window.addEventListener("load", function () {
   if (typeof $ == "undefined")
     var $ = jQuery;
 
+  // Add Background-color to payment methods icons
+  var icons = document.querySelectorAll('img[src*="res.sugaway"]');
+
+  icons.forEach(function (icon) {
+    icon.style.backgroundColor = mbbx.primaryColor;
+  });
+
   window.onpopstate = function (event) {
     window.top.location.href = mbbx.return;
   };

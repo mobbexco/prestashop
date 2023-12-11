@@ -275,6 +275,7 @@ class Mobbex extends PaymentModule
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
         \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
+            'primaryColor' => $this->config->settings['color'],
             'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
             'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) $this->config->settings['embed'],
@@ -694,11 +695,12 @@ class Mobbex extends PaymentModule
         // Add payment information to js
         \Media::addJsDef([
             'mbbx' => [
-                'paymentUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
-                'errorUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-                'embed'      => (bool) $this->config->settings['embed'],
-                'data'       => $checkoutData,
-                'return'     => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
+                'primaryColor' => $this->config->settings['color'],
+                'paymentUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
+                'errorUrl'     => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+                'embed'        => (bool) $this->config->settings['embed'],
+                'data'         => $checkoutData,
+                'return'       => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 
