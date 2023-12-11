@@ -20,25 +20,23 @@ window.addEventListener("load", function () {
       type: response.data.sid ? "subscriber_source" : "checkout",
       paymentMethod: mbbx.method || null,
       onResult: (data) => {
-        var status = data.status.code;
-
-        if (status > 1 && status < 400) {
-          window.top.location.href =
-            response.data.return_url +
-            "&status=" +
-            status +
-            "&transactionId=" +
-            data.id;
-        } else {
-          window.top.location.href = mbbx.return;
-        }
+        let url = response.data.return_url || mbbx.return;
+        window.top.location.href = `${url}&fromCallback=onResult&status=${data.status.code}&transactionId=${data.id}`;
       },
       onClose: (cancelled) => {
-        // Only if cancelled
-        if (cancelled === true) {
-          window.top.location.href = mbbx.return;
-        }
+        let url           = response.data.return_url || mbbx.return;
+        let status        = mbbx.paymentData ? mbbx.paymentData.status.code : '500';
+        let transactionId = mbbx.paymentData ? mbbx.paymentData.id          : null;
+
+        window.top.location.href = `${url}&fromCallback=onClose&status=${status}&transactionId=${transactionId}`;
       },
+      onError: (error) => {
+        console.log(error);
+        window.top.location.href = mbbx.return + '&fromCallback=onError&status=500';
+      },
+      onPayment: (data) => {
+        mbbx.paymentData = data.data;
+      }
     };
 
     if (response.data.sid) 

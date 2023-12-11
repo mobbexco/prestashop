@@ -264,9 +264,11 @@ class Mobbex extends PaymentModule
 
         $options = [];
         $checkoutData = $this->helper->getPaymentData(false);
+
         // Necessary variables when defining the payment method icon
         $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
         $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
+        $method_icon  = (bool) $this->config->settings['method_icon'];
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
@@ -277,7 +279,7 @@ class Mobbex extends PaymentModule
             'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) $this->config->settings['embed'],
             'data'        => $checkoutData,
-            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id . '&status=' . 500),
+            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
         ]);
 
         // Get payment methods from checkout
@@ -287,7 +289,7 @@ class Mobbex extends PaymentModule
                 $this->config->settings['mobbex_description'],
                 \Media::getMediaPath($image),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]")]
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]"), $method_icon]
             );
         } else {
             foreach ($methods as $method) {
@@ -297,7 +299,7 @@ class Mobbex extends PaymentModule
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $this->config->settings['mobbex_description'] : null,
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
-                    compact('method', 'checkoutUrl')
+                    compact('method', 'checkoutUrl', 'method_icon')
                 );
             }
         }
@@ -310,7 +312,7 @@ class Mobbex extends PaymentModule
                     null,
                     $card['source']['card']['product']['logo'],
                     'module:mobbex/views/templates/front/card-form.tpl',
-                    compact('card', 'key')
+                    compact('card', 'key', 'method_icon')
                 );
             }
         }
@@ -976,8 +978,10 @@ class Mobbex extends PaymentModule
         $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $option->setCallToActionText($title)
             ->setForm($this->smarty->fetch($template))
-            ->setLogo($logo)
             ->setAdditionalInformation($description ? "<section><p>$description</p></section>" : '');
+
+        if($this->config->settings['method_icon'])
+            $option->setLogo($logo);
 
         return $option;
     }

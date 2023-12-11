@@ -114,6 +114,29 @@ $form = [
                 'tab'      => 'tab_appearence',
             ],
             [
+                'type'     => 'switch',
+                'label'    => $this->l('Payment Method Icons', 'config-form'),
+                'desc'     => "Shows methods icons in methods subdivision.",
+                'name'     => 'MOBBEX_METHOD_ICON',
+                'key'      => 'method_icon',
+                'default'  => true,
+                'is_bool'  => true,
+                'required' => true,
+                'tab'      => 'tab_appearence',
+                'values'   => [
+                    [
+                        'id'    => 'active_icons_on',
+                        'value' => true,
+                        'label' => $this->l('Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'active_icons_off',
+                        'value' => false,
+                        'label' => $this->l('Disabled', 'config-form'),
+                    ],
+                ],
+            ],
+            [
                 'type'     => 'text',
                 'label'    => $this->l( 'Payment Method Description', 'config-form'),
                 'name'     => 'MOBBEX_DESCRIPTION',

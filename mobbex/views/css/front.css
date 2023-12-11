@@ -48,7 +48,8 @@
   border-radius: 100%;
 }
 
-.payment-option img[src*="mobbex"] {
+.payment-option img[src*="mobbex"],
+img[src*='res.sugaway'] {
   width: 50px;
   border-radius: 100%;
 }
