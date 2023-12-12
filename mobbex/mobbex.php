@@ -154,7 +154,7 @@ class Mobbex extends PaymentModule
             [$this->logger, 'log']
         );
 
-        \Mobbex\Platform::loadModels($this->cache);
+        \Mobbex\Platform::loadModels($this->cache, new \Mobbex\PS\Checkout\Models\Db(_DB_PREFIX_));
 
         // Init api conector
         \Mobbex\Api::init();
