@@ -1,13 +1,13 @@
 #!/bin/sh
 
-VER="4.1.0"
+VER="4.2.0"
 
 # Unified Version
 PRESTAV="1.6-1.7"
 
 # Install dependencies
 cd mobbex
-composer update
+composer install --no-dev
 cd ..
 
 if type 7z > /dev/null; then
