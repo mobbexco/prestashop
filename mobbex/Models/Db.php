@@ -9,13 +9,6 @@ namespace Mobbex\PS\Checkout\Models;
  */
 class Db extends \Mobbex\Model\Db
 {
-    public $prefix;
-
-    public function __construct()
-    {
-        $this->prefix = _DB_PREFIX_;
-    }
-
     /**
      * Executes a sql query & return the results.
      * 
