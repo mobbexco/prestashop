@@ -17,9 +17,19 @@ class Installer
             //Modify transaction definition
             if ($tableName === 'transaction') {
                 $definition = \Mobbex\Model\Table::getTableDefinition($tableName);
-                foreach ($definition as &$column)
+                foreach ($definition as &$column) {
                     if ($column['Field'] === 'order_id')
                         $column['Field'] = 'cart_id';
+                }
+
+                $definition[] = [
+                    'Field'   => 'status',
+                    'Type'    => 'text',
+                    'Null'    => 'NO',
+                    'Key'     => '',
+                    'Extra'   => '',
+                    'Default' => null
+                ];
             }
             
             //Create the table
