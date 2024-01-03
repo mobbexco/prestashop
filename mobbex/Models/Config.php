@@ -7,7 +7,7 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '4.1.0';
+    const MODULE_VERSION = '4.2.0';
     const EMBED_VERSION  = '1.0.23';
 
     const PS16           = '1.6';
