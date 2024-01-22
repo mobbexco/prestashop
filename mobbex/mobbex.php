@@ -266,7 +266,7 @@ class Mobbex extends PaymentModule
         $checkoutData = $this->helper->getPaymentData(false);
 
         // Necessary variables when defining the payment method icon
-        $defaultImage = _PS_MODULE_DIR_ . 'mobbex/views/img/logo_transparent.png';
+        $defaultImage = '/modules/mobbex/views/img/logo_transparent.png';
         $image        = !empty($this->config->settings['mobbex_payment_method_image']) ? $this->config->settings['mobbex_payment_method_image'] : $defaultImage;
         $method_icon  = (bool) $this->config->settings['method_icon'];
 
