@@ -225,9 +225,10 @@ class Config
                 // Format field data
                 foreach ($source['installments']['list'] as $plan) {
                     $common_sources[$plan['reference']] = [
-                        'id'    => "common_plan_$plan[reference]",
-                        'key'   => $plan['reference'],
-                        'label' => $plan['name'] ?: $plan['description'],
+                        'id'          => "common_plan_$plan[reference]",
+                        'key'         => $plan['reference'],
+                        'label'       => $plan['name'],
+                        'description' => $plan['description'],
                     ];
                 }
             }
@@ -242,9 +243,10 @@ class Config
                 // Format field data
                 foreach ($source['installments'] as $plan) {
                     $advanced_sources[$source['source']['reference']][] = [
-                        'id'    => "advanced_plan_$plan[uid]",
-                        'key'   => $plan['uid'],
-                        'label' => $plan['name'] ?: $plan['description'],
+                        'id'          => "advanced_plan_$plan[uid]",
+                        'key'         => $plan['uid'],
+                        'label'       => $plan['name'],
+                        'description' => $plan['description'],
                     ];
                 }
             }
