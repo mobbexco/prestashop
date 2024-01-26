@@ -226,9 +226,9 @@ class Config
                 foreach ($source['installments']['list'] as $plan) {
                     $common_sources[$plan['reference']] = [
                         'id'          => "common_plan_$plan[reference]",
-                        'key'         => $plan['reference'],
-                        'label'       => $plan['name'],
-                        'description' => $plan['description'],
+                        'key'         => isset($plan['reference']) ? $plan['reference'] : '',
+                        'label'       => isset($plan['name']) ? $plan['name'] : '',
+                        'description' => isset($plan['description']) ? $plan['description'] : '',
                     ];
                 }
             }
