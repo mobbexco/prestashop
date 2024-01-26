@@ -244,9 +244,9 @@ class Config
                 foreach ($source['installments'] as $plan) {
                     $advanced_sources[$source['source']['reference']][] = [
                         'id'          => "advanced_plan_$plan[uid]",
-                        'key'         => $plan['uid'],
-                        'label'       => $plan['name'],
-                        'description' => $plan['description'],
+                        'key'         => isset($plan['uid']) ? $plan['uid'] : '',
+                        'label'       => isset($plan['name']) ? $plan['name'] : '',
+                        'description' => isset($plan['description']) ? $plan['description'] : '',
                     ];
                 }
             }
