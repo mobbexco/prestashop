@@ -14,7 +14,11 @@
                             id="{$field['id']}">
                             <label for="{$field['id']}">{$field['label']}</label>
                         </div>
-                        <p>{{$field['description']}}</p>
+                        <p>
+                            {if isset($field['description'])}
+                                {{$field['description']}}
+                            {/if}
+                        </p>
                     </div>
                 {/foreach}
             </td>
