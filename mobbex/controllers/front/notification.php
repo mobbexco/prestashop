@@ -227,13 +227,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             ]);
 
         // Exit if cart was modified
-        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5)
-            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Difference found between cart and checkout totals', [
-                'cart'          => $cart->id,
-                'transaction'   => $trx->id,
-                'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
-                'checkoutTotal' => $data['checkout_total'],
-            ]);
+        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5) {
+            $isFatal = $this->config->settings['check_cart_totals'];
+
+            $this->logger->log(
+                $isFatal ? 'fatal' : 'error',
+                'notification > createOrder | Difference found between cart and checkout totals ' + ($isFatal ? '[Order Creation Aborted]' : ''),
+                [
+                    'cart'          => $cart->id,
+                    'transaction'   => $trx->id,
+                    'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
+                    'checkoutTotal' => $data['checkout_total'],
+                ] 
+            );
+        }
 
         // If finance charge discuount is enable, update cart total
         if ($this->config->settings['charge_discount'])

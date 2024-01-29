@@ -189,6 +189,7 @@ class Transaction extends AbstractModel
      * 
      * @param object $parent
      * @param array  $childs
+     * 
      * @return array $sources
      * 
      */
@@ -208,6 +209,7 @@ class Transaction extends AbstractModel
                 'source_type'      => $parent->source_type,
                 'source_name'      => $parent->source_name,
                 'source_number'    => $parent->source_number,
+                'source_url'       => $parent->source_url,
                 'installment_name' => $parent->installment_name,
                 'total'            => $parent->total,
             ];

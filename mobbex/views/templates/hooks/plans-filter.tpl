@@ -9,9 +9,21 @@
                 {foreach from=$plans['common'] key=key item=field}
                     <div class="mbbx-plan">
                         <div class="mbbx-plan-cont">
+                            <div class="source-popover">
+                                <h3>Medios Disponibles</h3>
+                                {foreach from=$plans['groups'][$field['label']] item=sourceRef}
+                                    <div class="mbbx-plan-group">
+                                        <img src="https://res.mobbex.com/images/sources/original/{$sourceRef}.png">
+                                        <p>
+                                            {$sourceRef}
+                                        </p>
+                                    </div>
+                                {/foreach}
+                            </div>
+
                             <input type="hidden" name="{$field['id']}" value="no">
                             <input type="checkbox" name="{$field['id']}" value="yes" {if !in_array($field['key'], $check_common)}checked="checked" {/if}
-                            id="{$field['id']}">
+                              id="{$field['id']}">
                             <label for="{$field['id']}">{$field['label']}</label>
                         </div>
                         <p>
@@ -47,6 +59,51 @@
 
 {literal}
     <style>
+
+        .source-popover {
+            display: none;
+            position: absolute;
+            top: 2em;
+            left: 30px;
+            min-width: 15em;
+            justify-content: center;
+            flex-direction: column;
+            border-radius: 5px;
+            background-color: #eaeffb;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .source-popover h3 {
+            text-align: center;
+        }
+
+        .mbbx-plan {
+            position: relative;
+        }
+
+        .mbbx-plan:hover .source-popover {
+            display: flex;
+        }
+        
+        .mbbx-plan-group {
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            padding: 5px;
+            background-color: #eaeffb;
+            margin-bottom: 15px;
+        }
+
+        .mbbx-plan-group img {
+            width: 2.5em;
+            margin: 0 5px;
+        }
+
+        .mbbx-plan-group p {
+            margin: 0;
+        }
+        
         .mbbx-plans-cont {
             border: 1px gainsboro solid;
             width: 500px;

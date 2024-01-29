@@ -819,6 +819,30 @@ $form = [
                     'name'  => 'name'
                 ]
             ],
+            [
+                'type'     => 'switch',
+                'label'    => $this->l('Verificación de Totales', 'config-form'),
+                'hint'     => 'Esta verificación es escencial para asegurar que el pedido se genere correctamente, su funcionamiento es el predeterminado en el plugin desde enero de 2023.',
+                'desc'     => 'Por defecto se encuentra activa. Realiza una verificación para asegurar que los pedidos se realizan por el mismo monto que el checkout de Mobbex. Advertencia! Desactivar esta opción es sólo recomendable en casos muy particulares.',
+                'name'     => 'MOBBEX_CHECK_CART_TOTALS',
+                'key'      => 'check_cart_totals',
+                'default'  => true,
+                'is_bool'  => true,
+                'required' => false,
+                'tab'      => 'tab_orders',
+                'values'   => [
+                    [
+                        'id'    => 'active_on_check_cart_totals',
+                        'value' => true,
+                        'label' => $this->l('Enable', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'active_off_check_cart_totals',
+                        'value' => false,
+                        'label' => $this->l('Disabled', 'config-form'),
+                    ],
+                ],
+            ],
         ]
     ]
 ];
