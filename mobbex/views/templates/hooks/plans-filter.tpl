@@ -8,7 +8,7 @@
             <td class="mbbx-plans">
                 {foreach from=$plans['common'] key=key item=field}
                     <div class="mbbx-plan">
-
+                        <div class="mbbx-plan-cont">
                             <div class="source-popover">
                                 <h3>Medios Disponibles</h3>
                                 {foreach from=$plans['groups'][$field['label']] item=sourceRef}
@@ -21,10 +21,16 @@
                                 {/foreach}
                             </div>
 
-                        <input type="hidden" name="{$field['id']}" value="no">
-                        <input type="checkbox" name="{$field['id']}" value="yes" {if !in_array($field['key'], $check_common)}checked="checked" {/if}
-                            id="{$field['id']}">
-                        <label for="{$field['id']}">{$field['label']}</label>
+                            <input type="hidden" name="{$field['id']}" value="no">
+                            <input type="checkbox" name="{$field['id']}" value="yes" {if !in_array($field['key'], $check_common)}checked="checked" {/if}
+                              id="{$field['id']}">
+                            <label for="{$field['id']}">{$field['label']}</label>
+                        </div>
+                        <p>
+                            {if isset($field['description'])}
+                                {{$field['description']}}
+                            {/if}
+                        </p>
                     </div>
                 {/foreach}
             </td>
