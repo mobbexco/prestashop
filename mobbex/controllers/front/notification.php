@@ -184,7 +184,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             return;
 
         // Notify if is updating an order created by other module
-        if (!$order->module != 'mobbex')
+        if (!in_array($state, ['authorized', 'approved']) && !$order->module != 'mobbex')
             $this->logger->log('debug', 'notification > updateOrder | Updating an order created by other module', [
                 'module'      => $order->module,
                 'order'       => $order->id,
