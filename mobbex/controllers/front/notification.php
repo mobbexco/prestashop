@@ -179,12 +179,14 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
      */
     public function updateOrder($order, $data, $trx)
     {
-        // Exit if it is a expired operation and the order has already been paid
-        if ($trx->status_code == 401 && $order->hasBeenPaid())
+        $state = \Mobbex\PS\Checkout\Models\Transaction::getState($trx->status_code);
+
+        // Exit if it is a failed operation and the order has already been paid
+        if (in_array($state, ['expired', 'failed']) && $order->hasBeenPaid())
             return;
 
         // Notify if is updating an order created by other module
-        if (!$order->module != 'mobbex')
+        if (!in_array($state, ['authorized', 'approved']) && !$order->module != 'mobbex')
             $this->logger->log('debug', 'notification > updateOrder | Updating an order created by other module', [
                 'module'      => $order->module,
                 'order'       => $order->id,
