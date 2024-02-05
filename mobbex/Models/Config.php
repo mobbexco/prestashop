@@ -204,7 +204,7 @@ class Config
             'groups'   => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'source_groups'), true) ?: [],
         ];
 
-        if (!$sources['common'] || !$sources['advanced'])
+        if (!$sources['common'] || !$sources['advanced'] || !$sources['groups'])
             $sources = $this->updateMobbexSources();
 
         return $sources;
@@ -216,7 +216,7 @@ class Config
      */
     public function updateMobbexSources()
     {
-        $source_names = $common_sources = $advanced_sources = $source_groups = [];
+        $names = $common = $advanced = $groups = [];
 
         try {
             foreach (\Mobbex\Repository::getSources() as $source) {
@@ -225,15 +225,15 @@ class Config
 
                 // Format field data
                 foreach ($source['installments']['list'] as $plan) {
-                    $common_sources[$plan['reference']] = [
+                    $common[$plan['reference']] = [
                         'id'          => "common_plan_$plan[reference]",
                         'key'         => isset($plan['reference']) ? $plan['reference'] : '',
                         'label'       => isset($plan['name']) ? $plan['name'] : '',
                         'description' => isset($plan['description']) ? $plan['description'] : '',
                     ];
 
-                    $source_groups[$plan['name']][] = $source['source']['reference'];
-                    $source_groups[$plan['name']]   = array_unique($source_groups[$plan['name']]);
+                    $groups[$plan['name']][] = $source['source']['reference'];
+                    $groups[$plan['name']]   = array_unique($groups[$plan['name']]);
                 }
             }
 
@@ -242,11 +242,11 @@ class Config
                     continue;
 
                 // Save source name
-                $source_names[$source['source']['reference']] = $source['source']['name'];
+                $names[$source['source']['reference']] = $source['source']['name'];
 
                 // Format field data
                 foreach ($source['installments'] as $plan) {
-                    $advanced_sources[$source['source']['reference']][] = [
+                    $advanced[$source['source']['reference']][] = [
                         'id'          => "advanced_plan_$plan[uid]",
                         'key'         => isset($plan['uid']) ? $plan['uid'] : '',
                         'label'       => isset($plan['name']) ? $plan['name'] : '',
@@ -257,13 +257,13 @@ class Config
 
             // Save to db
             $shopId = \Context::getContext()->shop->id ?: null;
-            foreach (['source_names', 'common_sources', 'advanced_sources', 'source_groups'] as $value)
+            foreach (['names', 'common', 'advanced', 'groups'] as $value)
                 \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $value, json_encode(${$value}));
         } catch (\Exception $e) {
             $this->logger->log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
         }
 
-        return compact('names', 'common', 'advanced');
+        return compact('names', 'common', 'advanced', 'groups');
     }
 
     /** UTILS **/
