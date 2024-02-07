@@ -28,7 +28,7 @@
                         </div>
                         <p>
                             {if isset($field['description'])}
-                                {{$field['description']}}
+                                <span>{{$field['description']}}</span>
                             {/if}
                         </p>
                     </div>
@@ -40,13 +40,20 @@
                         <img src="https://res.mobbex.com/images/sources/{$sourceRef}.png">
                         <p>{$plans['names'][$sourceRef]}</p>
                     </div>
-                    {foreach from=$fields key=key item=field}
-                        <div class="mbbx-plan-advanced">
-                            <input type="checkbox" name="{$field['id']}" value="yes" {if in_array($field['key'], $check_advanced)}checked="checked" {/if}
-                                id="{$field['id']}">
-                            <label for="{$field['id']}">{$field['label']}</label>
-                        </div>
-                    {/foreach}
+                    <div class="mbbx-plan">
+                        {foreach from=$fields key=key item=field}
+                            <div class="mbbx-plan-advanced">
+                                <input type="checkbox" name="{$field['id']}" value="yes" {if in_array($field['key'], $check_advanced)}checked="checked" {/if}
+                                    id="{$field['id']}">
+                                <label for="{$field['id']}">{$field['label']}</label>
+                                <p>
+                                    {if isset($field['description'])}
+                                        <span>{{$field['description']}}</span>
+                                    {/if}
+                                </p>
+                            </div>
+                        {/foreach}
+                    </div>
                 {/foreach}
             </td>
         </tr>
@@ -80,6 +87,11 @@
 
         .mbbx-plan {
             position: relative;
+        }
+
+        .mbbx-plan span {
+            color: grey;
+            font-size: .7rem;
         }
 
         .mbbx-plan:hover .source-popover {
