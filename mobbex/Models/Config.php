@@ -257,8 +257,8 @@ class Config
 
             // Save to db
             $shopId = \Context::getContext()->shop->id ?: null;
-            foreach (['names', 'common', 'advanced', 'groups'] as $value)
-                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $value, json_encode(${$value}));
+            foreach (['source_names' => 'names', 'common_sources' => 'common','advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
+                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
         } catch (\Exception $e) {
             $this->logger->log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
         }
