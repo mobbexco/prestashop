@@ -41,7 +41,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             return $this->callback();
         } else if ($action == 'webhook') {
             return $this->webhook();
-        } else if($action == 'redirect'){
+        } else if ($action == 'redirect') {
             $this->redirectAction();
         }
     }
@@ -104,7 +104,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } else {
             $order = $this->helper->getOrderByCartId($cart_id, true);
 
-            if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']){
+            if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']) {
                 //update stock
                 $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
@@ -112,11 +112,11 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 $order->update();
                 //Restore the cart
                 $cart = new Cart($cart_id);
-                $this->helper->restoreCart($cart); 
+                $this->helper->restoreCart($cart);
             }
 
             // Go back to checkout
-            Tools::redirect('index.php?controller=order&step=1');
+            Tools::redirect('index.php?controller=order&step=3');
         }
     }
 
@@ -141,7 +141,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $token = Tools::getValue('mbbx_token');
         // Get formated data from $post
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
-        
+
         // Verify token
         if (!\Mobbex\Repository::validateToken($token))
             $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
@@ -240,7 +240,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                     'transaction'   => $trx->id,
                     'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
                     'checkoutTotal' => $data['checkout_total'],
-                ] 
+                ]
             );
         }
 
