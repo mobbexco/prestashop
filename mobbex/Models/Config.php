@@ -21,9 +21,9 @@ class Config
         'mobbex_status_approved'   => ['name' => 'MOBBEX_OS_APPROVED', 'label' => 'Transaction in Process', 'color' => '#5bff67', 'send_email' => true],
         'mobbex_status_pending'    => ['name' => 'MOBBEX_OS_PENDING', 'label'  => 'Pending', 'color' => '#FEFF64', 'send_email' => false],
         'mobbex_status_waiting'    => ['name' => 'MOBBEX_OS_WAITING', 'label'  => 'Waiting', 'color' => '#FEFF64', 'send_email' => false],
-        'mobbex_status_rejected'   => ['name' => 'MOBBEX_OS_REJECTED','label'  => 'Rejected Payment', 'color' => '#8F0621', 'send_email' => false],
-        'mobbex_status_authorized' => ['name' => 'MOBBEX_OS_AUTHORIZED','label'  => 'Authorized', 'color' => '#FEFF64', 'send_email' => false],
-        'mobbex_status_expired'    => ['name' => 'MOBBEX_OS_EXPIRED','label' => 'Checkout Expirado', 'color' => '#999999', 'send_email' => false],
+        'mobbex_status_rejected'   => ['name' => 'MOBBEX_OS_REJECTED', 'label'  => 'Rejected Payment', 'color' => '#8F0621', 'send_email' => false],
+        'mobbex_status_authorized' => ['name' => 'MOBBEX_OS_AUTHORIZED', 'label'  => 'Authorized', 'color' => '#FEFF64', 'send_email' => false],
+        'mobbex_status_expired'    => ['name' => 'MOBBEX_OS_EXPIRED', 'label' => 'Checkout Expirado', 'color' => '#999999', 'send_email' => false],
     ];
 
     public function __construct()
@@ -127,7 +127,7 @@ class Config
         $common_plans = $advanced_plans = [];
 
         foreach ($products as $product) {
-            $id = isset($product['id_product']) ? $product['id_product'] : $product;
+            $id = is_array($product) && isset($product['id_product']) ? $product['id_product'] : $product;
             $product_plans = $this->getCatalogPlans($id);
             //Merge all catalog plans
             $common_plans   = array_merge($common_plans, $product_plans['common_plans']);
@@ -257,7 +257,7 @@ class Config
 
             // Save to db
             $shopId = \Context::getContext()->shop->id ?: null;
-            foreach (['source_names' => 'names', 'common_sources' => 'common','advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
+            foreach (['source_names' => 'names', 'common_sources' => 'common', 'advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
                 \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
         } catch (\Exception $e) {
             $this->logger->log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
