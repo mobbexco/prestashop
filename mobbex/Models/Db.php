@@ -29,6 +29,9 @@ class Db extends \Mobbex\Model\Db
         else if ($result instanceof \mysqli_result)
             return $result->fetch_all(MYSQLI_ASSOC);
 
+        //Log errors
+        \Mobbex\Platform::log('error', 'DB', \Db::getInstance()->getMsgError());
+
         return false;
     }
 }
