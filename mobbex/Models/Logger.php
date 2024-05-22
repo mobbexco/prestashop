@@ -33,14 +33,16 @@ class Logger
 
         \PrestaShopLogger::addLog(
             "Mobbex $mode: $message " . json_encode($data),
-            $mode === 'error' ? 3 : 1,
+            in_array($mode, ['fatal', 'error']) ? 3 : 1,
             null,
             'Mobbex',
             str_replace('.', '', \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION),
             true
         );
 
-        if ($mode === 'fatal')
+        if ($mode === 'fatal') {
+            header("HTTP/1.1 500");
             die($message);
+        }
     }
 }
