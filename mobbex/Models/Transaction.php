@@ -83,7 +83,10 @@ class Transaction extends AbstractModel
             $trx->$key = isset($data[$key]) ? $data[$key] : null;
 
         if (!$trx->save())
-            throw new \Mobbex\Exception("Error saving a transaction for Cart #$cart_id", 1, Db::getInstance()->getMsgError());
+            throw new \Mobbex\Exception("Error Saving Transaction for Cart #$cart_id", 1, [
+                \Db::getInstance()->getNumberError(),
+                \Db::getInstance()->getMsgError()
+            ]);
 
         return $trx;
     }
