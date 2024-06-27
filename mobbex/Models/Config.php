@@ -39,6 +39,9 @@ class Config
      */
     public function getConfigForm($extensionOptions = true)
     {
+        if ($extensionOptions)
+            $extensionOptions = $this->checkExtension();
+        
         $form = require __DIR__ . '/../utils/config-form.php';
         return $extensionOptions ? \Mobbex\PS\Checkout\Models\Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
@@ -47,14 +50,13 @@ class Config
      * Get the Mobbex module settigns from config form array.
      *
      * @param string $key specifies the key used in the array that method returns
-     * @param bool $extensionOptions allow to extend options with a hook
      * @return array $settings 
      */
-    public function getSettings($key = 'key', $extensionOptions = false)
+    public function getSettings($key = 'key')
     {
         $settings = [];
 
-        foreach ($this->getConfigForm($extensionOptions)['form']['input'] as $input)
+        foreach ($this->getConfigForm()['form']['input'] as $input)
             $settings[$input[$key]]  = \Configuration::getIdByName($input['name']) ? \Configuration::get($input['name']) : $input['default'];
 
         return $settings;
@@ -280,5 +282,16 @@ class Config
             $string,
             $source
         );
+    }
+
+    /**
+     * Checks if there's an / any Mobbex extension enabled
+     * @param string $extension extension name (in lowercase)
+     * 
+     * @return bool
+     */
+    public function checkExtension($extension = '')
+    {
+        return empty($extension) ? \Module::isEnabled('mobbex_marketplace') || \Module::isEnabled('mobbex_subscriptions') : \Module::isEnabled($extension);
     }
 }
