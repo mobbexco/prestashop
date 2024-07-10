@@ -385,6 +385,30 @@ $form = [
             ],
             [
                 'type'     => 'switch',
+                'label'    => $this->l( 'Hide installments at checkout', 'config-form'),
+                'name'     => 'MOBBEX_SHOW_NO_INTEREST_LABELS',
+                'key'      => 'show_no_interest_labels',
+                'default'  => true,
+                'is_bool'  => true,
+                'required' => false,
+                'desc'     => 'Hide the "interest-free installments" labels in the checkout view.',
+                'tab'      => 'tab_appearence',
+                'values'  => [
+                    [
+                        'id'    => 'not_show_interest_labels',
+                        'value' => true,
+                        'label' => $this->l( 'Yes', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'show_interest_labels',
+                        'value' => false,
+                        'label' => $this->l( 'No', 'config-form'),
+                    ],
+                ],
+            ],
+
+            [
+                'type'     => 'switch',
                 'label'    => $this->l( 'Add DNI Field', 'config-form'),
                 'name'     => 'MOBBEX_OWN_DNI',
                 'key'      => 'mobbex_dni',
