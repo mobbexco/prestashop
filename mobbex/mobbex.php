@@ -263,7 +263,7 @@ class Mobbex extends PaymentModule
             return;
 
         $options = [];
-        $checkoutData = $this->helper->getPaymentData(false);
+        $checkoutData = $this->helper->getPaymentData(true);
 
         // Necessary variables when defining the payment method icon
         $defaultImage = '/modules/mobbex/views/img/logo_transparent.png';
@@ -689,7 +689,7 @@ class Mobbex extends PaymentModule
      */
     public function hookPayment()
     {
-        $checkoutData = $this->helper->getPaymentData(false);
+        $checkoutData = $this->helper->getPaymentData(true);
 
         // Make sure the assets are loaded correctly
         $this->hookDisplayHeader(true);
