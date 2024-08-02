@@ -178,12 +178,12 @@ class OrderHelper
     /**
      * Get the payment data
      * 
-     * @param bool $webhooks
+     * @param bool $draft
      * 
      * @return array|null
      * 
      */
-    public function getPaymentData($webhooks = true)
+    public function getPaymentData($draft = false)
     {
         // Get cart and customer from context
         $cart     = \Context::getContext()->cart;
@@ -192,7 +192,7 @@ class OrderHelper
         if (!$cart->id)
             return;
 
-        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout($cart, $customer, $webhooks);
+        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout($cart, $customer, $draft);
     }
 
     /**
@@ -200,13 +200,16 @@ class OrderHelper
      * 
      * @param object $cart
      * @param object $customer
-     * @param bool   $webhook
+     * @param bool   $draft
      * 
      * @return array response
      * 
      */
-    public function createCheckout($cart, $customer, $webhooks)
+    public function createCheckout($cart, $customer, $draft)
     {
+        // Generate reference
+        $reference = \Mobbex\Modules\Checkout::generateReference($cart->id) . ($draft ? '_DRAFT_CHECKOUT' : '');
+
         // Get items
         $items    = array();
         // Checks if there´s any cart rule and returns an array of products with the discounts
@@ -284,8 +287,11 @@ class OrderHelper
                 \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
                 $customerData,
                 $this->getAddresses($cart),
-                $webhooks ? null : 'none',
-                'actionMobbexCheckoutRequest'
+                $draft ? 'none' : null,
+                'actionMobbexCheckoutRequest',
+                null,
+                null,
+                $reference
             );
         } catch (\Mobbex\Exception $e) {
             $this->logger->log('error', "Checkout > getCheckout | Fail getting checkout", $e->getMessage());
