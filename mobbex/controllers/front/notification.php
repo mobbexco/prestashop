@@ -76,6 +76,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $transaction_id = Tools::getValue('transactionId');
         $status         = Tools::getValue('status');
 
+        if (!empty($transaction_id) && ($status != 401 && $status >= 400)){
+            $cart = new Cart($cart_id);
+            $this->helper->restoreCart($cart);
+            Tools::redirect('cart?action=show');
+        }
+
         $customer = new Customer($customer_id);
         $order_id = $this->helper->getOrderByCartId($cart_id);
 
