@@ -182,7 +182,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $state = \Mobbex\PS\Checkout\Models\Transaction::getState($trx->status_code);
 
         // Exit if it is a failed operation and the order has already been paid
-        if (in_array($state, ['expired', 'failed']) && $order->hasBeenPaid())
+        if (in_array($state, ['expired', 'failed', 'processing']) && $order->hasBeenPaid())
             return;
 
         // Notify if is updating an order created by other module
