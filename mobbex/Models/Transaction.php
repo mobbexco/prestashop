@@ -312,8 +312,10 @@ class Transaction extends AbstractModel
             return 'onhold';
         } else if ($status == 3){
             return 'authorized';
-        } else if ($status == 4 || $status >= 200 && $status < 400) {
+        } else if ($status == 4 || $status >= 200 && $status < 300) {
             return 'approved';
+        } else if ($status >= 300 && $status < 400) {
+            return 'processing';
         } else if ($status == 401) {
             return 'expired';
         } else if ($status == 601 || $status == 602 || $status == 605) {
