@@ -21,16 +21,16 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function __construct()
     {
         parent::__construct();
-        $this->config = new \Mobbex\PS\Checkout\Models\Config();
-        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
-        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
+        $this->config = $this->module->config;
+        $this->helper = $this->module->helper;
+        $this->logger = $this->module->logger;
     }
 
     public function postProcess()
     {
         // We don't do anything if the module has been disabled by the merchant
         if ($this->module->active == false)
-            $this->logger->log('fatal', 'notification > postProcess | Notification On Module Inactive', $_REQUEST);
+            $this->logger::log('fatal', 'notification > postProcess | Notification On Module Inactive', $_REQUEST);
 
         $this->orderUpdate = new \Mobbex\PS\Checkout\Models\OrderUpdate;
 
@@ -81,7 +81,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // If order was not created and is creable on webhook
         if (empty($order_id) && $status != 401) {
-            $seconds = $this->config->settings['redirect_time'] ?: 10;
+            $seconds = $this->config::$settings['redirect_time'] ?: 10;
 
             // Wait for webhook
             while ($seconds > 0 && !$order_id) {
@@ -104,7 +104,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         } else {
             $order = $this->helper->getOrderByCartId($cart_id, true);
 
-            if ($order && $this->config->settings['order_first'] && $this->config->settings['cart_restore']) {
+            if ($order && $this->config::$settings['order_first'] && $this->config::$settings['cart_restore']) {
                 //update stock
                 $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
@@ -132,7 +132,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $postData = isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' ? json_decode(file_get_contents('php://input'), true) : $_POST;
 
         if (!$cartId || !isset($postData['data']))
-            $this->logger->log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
+            $this->logger::log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
         // Get Order and transaction data
         $cart  = new \Cart($cartId);
@@ -144,18 +144,18 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // Verify token
         if (!\Mobbex\Repository::validateToken($token))
-            $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
+            $this->logger::log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
         try {
             // Save webhook data
             $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
         } catch (\Exception $e) {
-            $this->logger->log('fatal', __METHOD__ . ': ' . $e->getMessage(), isset($e->data) ? $e->data : []);
+            $this->logger::log('fatal', __METHOD__ . ': ' . $e->getMessage(), isset($e->data) ? $e->data : []);
         }
 
         //Check if it is a retry webhook and if process is allowed
-        if (!$this->config->settings['process_webhook_retries'] && $trx->isDuplicated())
-            return $this->logger->log('debug', 'notification > webhook | Mobbex Webhook: Duplicated Request Detected');
+        if (!$this->config::$settings['process_webhook_retries'] && $trx->isDuplicated())
+            return $this->logger::log('debug', 'notification > webhook | Mobbex Webhook: Duplicated Request Detected');
 
         // Only process if it is a parent webhook
         if ($data['parent']) {
@@ -187,7 +187,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
         // Notify if is updating an order created by other module
         if (!in_array($state, ['authorized', 'approved']) && !$order->module != 'mobbex')
-            $this->logger->log('debug', 'notification > updateOrder | Updating an order created by other module', [
+            $this->logger::log('debug', 'notification > updateOrder | Updating an order created by other module', [
                 'module'      => $order->module,
                 'order'       => $order->id,
                 'transaction' => $trx->id,
@@ -222,17 +222,17 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             return;
 
         // Exit if order first mode is enabled
-        if ($this->config->settings['order_first'])
-            return $this->logger->log('fatal', 'notification > createOrder | [Order Creation Aborted] Trying to create order on webhook with order first mode', [
+        if ($this->config::$settings['order_first'])
+            return $this->logger::log('fatal', 'notification > createOrder | [Order Creation Aborted] Trying to create order on webhook with order first mode', [
                 'cart'        => $cart->id,
                 'transaction' => $trx->id,
             ]);
 
         // Exit if cart was modified
         if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5) {
-            $isFatal = $this->config->settings['check_cart_totals'];
+            $isFatal = $this->config::$settings['check_cart_totals'];
 
-            $this->logger->log(
+            $this->logger::log(
                 $isFatal ? 'fatal' : 'error',
                 'notification > createOrder | Difference found between cart and checkout totals ' + ($isFatal ? '[Order Creation Aborted]' : ''),
                 [
@@ -245,7 +245,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         }
 
         // If finance charge discuount is enable, update cart total
-        if ($this->config->settings['charge_discount'])
+        if ($this->config::$settings['charge_discount'])
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order

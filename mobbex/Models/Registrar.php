@@ -195,8 +195,7 @@ class Registrar
 
             return $value;
         } catch (\Exception $e) {
-            $logger = new \Mobbex\PS\Checkout\Models\Logger();
-            $logger->log('error', 'Registrar > executeHook | Hook Error', $e->getMessage());
+            Logger::log('error', 'Registrar > executeHook | Hook Error', $e->getMessage());
         }
     }
 }

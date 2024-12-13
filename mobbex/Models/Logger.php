@@ -7,14 +7,6 @@ if (!defined('_PS_VERSION_'))
 
 class Logger
 {
-    /** @var \Mobbex\PS\Checkout\Models\Config */
-    public $config;
-
-    public function __construct()
-    {
-        $this->config = new \Mobbex\PS\Checkout\Models\Config;
-    }
-
     /**
      * Add log to PrestaShop log table.
      * Mode debug: Log data if debug mode is active
@@ -26,9 +18,9 @@ class Logger
      * @param array $data
      * @param bool $die
      */
-    public function log($mode, $message, $data = [])
+    public static function log($mode, $message, $data = [])
     {
-        if (!$this->config->settings['debug_mode'] && $mode === 'debug')
+        if (!\Mobbex\Platform::$settings['debug_mode'] && $mode === 'debug')
             return;
 
         \PrestaShopLogger::addLog(

@@ -4,13 +4,6 @@ namespace Mobbex\PS\Checkout\Models;
 
 class OrderUpdate
 {
-    public function __construct()
-    {
-        $this->config = new \Mobbex\PS\Checkout\Models\Config();
-        $this->helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
-        $this->logger = new \Mobbex\PS\Checkout\Models\Logger();
-    }
-    
     /**
      * Update the order payment information.
      * 
@@ -49,7 +42,7 @@ class OrderUpdate
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
-            $this->logger->log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', ['msg' => $e->getMessage(), 'order_id' => $order->id]);
+            Logger::log('error', 'OrderUpdate > updateOrderPayment | Error Updating Order Payment on Webhook Process', ['msg' => $e->getMessage(), 'order_id' => $order->id]);
         }
 
         return false;
@@ -71,7 +64,7 @@ class OrderUpdate
 
         foreach ($tasks as $task) {
             if (!$task->delete()) {
-                $this->logger->log('error', 'OrderUpdate > removeExpirationTask | Error removing order expiration task on Webhook', ['order_id' => $order->id]);
+                Logger::log('error', 'OrderUpdate > removeExpirationTask | Error removing order expiration task on Webhook', ['order_id' => $order->id]);
                 return false;
             }
         }
@@ -111,7 +104,7 @@ class OrderUpdate
 
         // Exit if amount is invalid
         if (!$amount || !$cartTotal)
-            return $this->logger->log('error', 'OrderUpdate > updateCartTotal | Invalid amounts updating cart total', [
+            return Logger::log('error', 'OrderUpdate > updateCartTotal | Invalid amounts updating cart total', [
                 'cart'      => $cart->id,
                 'cartTotal' => $cartTotal,
                 'totalPaid' => $amount,
@@ -128,7 +121,7 @@ class OrderUpdate
 
             $cart->save();
         } catch (\Exception $e) {
-            $this->logger->log('error', 'Error updating cart total on Webhook', [$cart->id, $amount, $e->getMessage()]);
+            Logger::log('error', 'Error updating cart total on Webhook', [$cart->id, $amount, $e->getMessage()]);
         }
     }
 
@@ -222,7 +215,7 @@ class OrderUpdate
         if(in_array($order->getCurrentState(), $refund_status) || $status === \Configuration::get('PS_OS_CANCELLED') || $status === \Configuration::get('PS_OS_ERROR'))
             \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
 
-        if($order->getCurrentState() === $this->config->orderStatuses['mobbex_status_pending']['name'] && !$this->config->settings['pending_discount']){
+        if($order->getCurrentState() === \Mobbex\PS\Checkout\Models\Config::$orderStatuses['mobbex_status_pending']['name'] && !\Mobbex\Platform::$settings['pending_discount']){
             foreach ($order->getProductsDetail() as $product) {
                 if(!\StockAvailable::dependsOnStock($product['product_id']))
                     \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
