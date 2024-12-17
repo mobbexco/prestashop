@@ -2,13 +2,16 @@
 
 defined('_PS_VERSION_') || exit;
 
+use Mobbex\PS\Checkout\Models\Config;
+use Mobbex\PS\Checkout\Models\Logger;
+
 class MobbexPaymentModuleFrontController extends ModuleFrontController
 {   
     public function postProcess()
     {
         // We don't do anything if the module has been disabled
         if ($this->module->active == false)
-            $this->module->logger::log('fatal', 'payment > postProcess | Payment Controller Call On Module Inactive', $_REQUEST);
+            Logger::log('fatal', 'payment > postProcess | Payment Controller Call On Module Inactive', $_REQUEST);
 
         if (Tools::getValue('action') == 'process')
             die(json_encode($this->process()));
@@ -30,7 +33,7 @@ class MobbexPaymentModuleFrontController extends ModuleFrontController
 
         return [
             'data'  => $this->module->helper->getPaymentData() ?: null,
-            'order' => $this->module->config::$settings['order_first'] ? $this->module->helper->processOrder($this->module) : true,
+            'order' => Config::$settings['order_first'] ? $this->module->helper->processOrder($this->module) : true,
         ];
     }
 

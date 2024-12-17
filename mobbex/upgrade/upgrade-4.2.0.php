@@ -2,6 +2,8 @@
 
 defined('_PS_VERSION_') || exit;
 
+use Mobbex\PS\Checkout\Models\Config;
+
 /**
  * Upgrade module db data.
  * 
@@ -13,7 +15,7 @@ defined('_PS_VERSION_') || exit;
  */
 function upgrade_module_4_2_0($module) {
     return $module->installer->createTables()
-        && $module->installer->createStates($module->config::$orderStatuses)
+        && $module->installer->createStates(Config::$orderStatuses)
         && $module->installer->createCostProduct()
         && $module->registrar->unregisterHooks($module)
         && $module->registrar->registerHooks($module)

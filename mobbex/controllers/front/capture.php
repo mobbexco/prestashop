@@ -1,15 +1,16 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+defined('_PS_VERSION_') || exit;
+
+use Mobbex\PS\Checkout\Models\Config;
+use Mobbex\PS\Checkout\Models\Logger;
 
  class MobbexCaptureModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
         // Retun if hash not match. This prevents access to the site from outside the capture
-        if (!$this->module->config::validateHash(Tools::getValue('hash')))
+        if (!Config::validateHash(Tools::getValue('hash')))
             return;
 
         // Try to make a capture request and redirect
@@ -28,7 +29,7 @@ if (!defined('_PS_VERSION_')) {
 
             Tools::redirectAdmin($url);
         } catch (\Exception $e) {
-            $this->module->logger::log('error', 'Mobbex > capture | Error making capture', $e->getMessage());
+            Logger::log('error', 'Mobbex > capture | Error making capture', $e->getMessage());
         }
     }
 }
