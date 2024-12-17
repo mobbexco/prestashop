@@ -66,7 +66,7 @@ class OrderHelper
                 $cart->secure_key
             );
         } catch (\Exception $e) {
-            \Mobbex\Platform::log(
+            Logger::log(
                 $die ? 'fatal' : 'error', 'Helper > createOrder | Order Creation Error ' . $e->getMessage(), [
                     'cart_id'             => $cartId,
                     'order_status'        => $orderStatus,
@@ -92,7 +92,7 @@ class OrderHelper
         $cart   = \Context::getContext()->cart;
 
         if (!\Validate::isLoadedObject($cart)) {
-            \Mobbex\Platform::log('error', 'Helper > processOrder | Error Loading Cart On Order Process', $_REQUEST);
+            Logger::log('error', 'Helper > processOrder | Error Loading Cart On Order Process', $_REQUEST);
 
             return false;
         }
@@ -115,8 +115,8 @@ class OrderHelper
                 $task = new Task(
                     null,
                     'actionMobbexExpireOrder',
-                    \Mobbex\Platform::$settings['expiration_interval'] ?: 3,
-                    \Mobbex\Platform::$settings['expiration_period'] ?: 'day',
+                    Config::$settings['expiration_interval'] ?: 3,
+                    Config::$settings['expiration_period'] ?: 'day',
                     1,
                     $order->id
                 );
@@ -126,14 +126,14 @@ class OrderHelper
 
         // Validate that order looks good
         if (!$order || !\Validate::isLoadedObject($order) || !$order->total_paid) {
-            \Mobbex\Platform::log('error', 'Helper > processOrder | Error Creating/Loading Order On Order Process', ['cart_id' => $cart->id]);
+            Logger::log('error', 'Helper > processOrder | Error Creating/Loading Order On Order Process', ['cart_id' => $cart->id]);
             $this->restoreCart($cart);
 
             return false;
         }
 
         //refund stock
-        if (!\Mobbex\Platform::$settings['pending_discount']) {
+        if (!Config::$settings['pending_discount']) {
             foreach ($order->getProductsDetail() as $product) {
                 if (!\StockAvailable::dependsOnStock($product['product_id']))
                     \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
@@ -263,10 +263,10 @@ class OrderHelper
         $customerData = $this->getCustomer($cart);
         
         if(empty($customerData['identification'])){
-            \Mobbex\Platform::log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
+            Logger::log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
             
             // If commerce use mobbex dni redirect to customer page.
-            if(\Mobbex\Platform::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::PS17)
+            if(Config::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::PS17)
                 \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
         }
 
@@ -288,11 +288,11 @@ class OrderHelper
                 $reference
             );
         } catch (\Mobbex\Exception $e) {
-            \Mobbex\Platform::log('error', "Checkout > getCheckout | Fail getting checkout", $e->getMessage());
+            Logger::log('error', "Checkout > getCheckout | Fail getting checkout", $e->getMessage());
             return false;
         }
 
-        \Mobbex\Platform::log('debug', "Checkout Response: ", $mobbexCheckout->response);
+        Logger::log('debug', "Checkout Response: ", $mobbexCheckout->response);
 
         $mobbexCheckout->response['return_url'] = $return_url;
         
@@ -316,7 +316,7 @@ class OrderHelper
         if ($addVersion)
             $uri .= '?ver=' . Config::MODULE_VERSION;
 
-        if (!empty(\Mobbex\Platform::$settings['force_assets']) && \Mobbex\Platform::$settings['force_assets'] == \Tools::getValue('controller')) {
+        if (!empty(Config::$settings['force_assets']) && Config::$settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
         } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
@@ -456,7 +456,7 @@ class OrderHelper
      */
     public function getProductEntity($product)
     {
-        if (!\Mobbex\Platform::$settings['multivendor'])
+        if (!Config::$settings['multivendor'])
             return '';
 
         $entity = Config::getEntityFromProduct($product) ?: Registrar::executeHook('actionGetMobbexProductEntity', false, $product);
@@ -523,7 +523,7 @@ class OrderHelper
         $result = $cart->duplicate();
 
         if (!$result || !\Validate::isLoadedObject($result['cart']) || !$result['success'])
-        return \Mobbex\Platform::log('error', 'Helper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
+        return Logger::log('error', 'Helper > createCheckout | Error Creating/Loading Order On Order Process', ['cart id' => isset($cart->id) ? $cart->id : 0]);
 
         \Context::getContext()->cookie->id_cart = $result['cart']->id;
         $context = \Context::getContext();

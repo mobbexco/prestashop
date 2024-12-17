@@ -213,22 +213,22 @@ class OrderUpdate
         ];
 
         if(in_array($order->getCurrentState(), $refund_status) || $status === \Configuration::get('PS_OS_CANCELLED') || $status === \Configuration::get('PS_OS_ERROR'))
-            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+            CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
 
-        if($order->getCurrentState() === \Mobbex\PS\Checkout\Models\Config::$orderStatuses['mobbex_status_pending']['name'] && !\Mobbex\Platform::$settings['pending_discount']){
+        if($order->getCurrentState() === Config::$orderStatuses['mobbex_status_pending']['name'] && !Config::$settings['pending_discount']){
             foreach ($order->getProductsDetail() as $product) {
                 if(!\StockAvailable::dependsOnStock($product['product_id']))
                     \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], -(int) $product['product_quantity'], $order->id_shop);
             }
         }
 
-        if(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
+        if(CustomFields::getCustomField($order->id, 'order', 'refunded') !== 'yes' && !in_array($order->getCurrentState(), $refund_status)){
             if($status === \Configuration::get('MOBBEX_OS_REJECTED') || $status === \Configuration::get('MOBBEX_OS_WAITING')){
                 foreach ($order->getProductsDetail() as $product) {
                     if(!\StockAvailable::dependsOnStock($product['product_id']))
                         \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
                 }
-                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
+                CustomFields::saveCustomField($order->id, 'order', 'refunded', 'yes');
             }
         }
     }

@@ -20,7 +20,7 @@ class Logger
      */
     public static function log($mode, $message, $data = [])
     {
-        if (!\Mobbex\Platform::$settings['debug_mode'] && $mode === 'debug')
+        if (!Config::$settings['debug_mode'] && $mode === 'debug')
             return;
 
         \PrestaShopLogger::addLog(
