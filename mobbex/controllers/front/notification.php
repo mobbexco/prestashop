@@ -63,20 +63,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $customer = new Customer($customer_id);
         $order_id = $this->module->helper->getOrderByCartId($cart_id);
 
-        // If order was not created and is creable on webhook
-        if (empty($order_id) && $status != 401) {
-            $seconds = Config::$settings['redirect_time'] ?: 10;
-
-            // Wait for webhook
-            while ($seconds > 0 && !$order_id) {
-                sleep(1);
-                $seconds--;
-                $order_id = $this->module->helper->getOrderByCartId($cart_id);
-            }
-        }
-
         // If status is ok
         if ($status > 1 && $status < 400) {
+            // If order was not created and is creable on webhook
+            if (empty($order_id)) {
+                $seconds = Config::$settings['redirect_time'] ?: 10;
+
+                // Wait for webhook
+                while ($seconds > 0 && !$order_id) {
+                    sleep(1);
+                    $seconds--;
+                    $order_id = $this->module->helper->getOrderByCartId($cart_id);
+                }
+            }
+
             // Redirect to order confirmation
             Tools::redirect('index.php?controller=order-confirmation&' . http_build_query([
                 'id_cart'       => $cart_id,
