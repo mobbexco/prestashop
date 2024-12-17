@@ -56,11 +56,15 @@ class Config
 
         // Get values saved on database
         $values = \Db::getInstance()->executes(
-            "SELECT value FROM " . _DB_PREFIX_ . "configuration WHERE `name` LIKE 'MOBBEX_%';"
+            "SELECT name, value FROM " . _DB_PREFIX_ . "configuration WHERE `name` LIKE 'MOBBEX_%';"
         );
 
-        foreach (self::getConfigForm()['form']['input'] as $input)
-            $settings[$input[$key]] = isset($values[$key]) ? $values[$key] : $input['default'];
+       $names = array_column($values, 'name');
+
+        foreach (self::getConfigForm()['form']['input'] as $input) {
+            $position = array_search($input['name'], $names);
+            $settings[$input[$key]] = $position !== false ? $values[$position]['value'] : $input['default'];
+        }
 
         return $settings;
     }
