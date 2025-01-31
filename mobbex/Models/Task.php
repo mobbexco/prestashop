@@ -78,9 +78,6 @@ class Task extends AbstractModel
         $this->interval = $interval;
         $this->period   = $period;
         $this->limit    = $limit;
-        
-        //Mobbex classes
-        $this->logger   = new \Mobbex\PS\Checkout\Models\Logger();
 
         parent::__construct($id);
     }
@@ -122,7 +119,7 @@ class Task extends AbstractModel
         $result = \Mobbex\PS\Checkout\Models\Registrar::executeHook($this->name, false, ...json_decode($this->args, true));
         
         if (!$result) {
-            $this->logger->log('error', "Error Execution Task #".$this->id.$this->name, $this->args);
+            Logger::log('error', "Error Execution Task #".$this->id.$this->name, $this->args);
             return false;
         }
 

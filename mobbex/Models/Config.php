@@ -9,15 +9,11 @@ class Config
 {
     const MODULE_VERSION = '4.3.0';
     const EMBED_VERSION  = '1.0.23';
-
     const PS16           = '1.6';
     const PS17           = '1.7';
 
-    public $settings     = [];
-    public $default      = [];
-
-    //Add Mobbex Order Statuses
-    public $orderStatuses = [
+    public static $settings = [];
+    public static $orderStatuses = [
         'mobbex_status_approved'   => ['name' => 'MOBBEX_OS_APPROVED', 'label' => 'Transaction in Process', 'color' => '#5bff67', 'send_email' => true],
         'mobbex_status_pending'    => ['name' => 'MOBBEX_OS_PENDING', 'label'  => 'Pending', 'color' => '#FEFF64', 'send_email' => false],
         'mobbex_status_waiting'    => ['name' => 'MOBBEX_OS_WAITING', 'label'  => 'Waiting', 'color' => '#FEFF64', 'send_email' => false],
@@ -26,9 +22,11 @@ class Config
         'mobbex_status_expired'    => ['name' => 'MOBBEX_OS_EXPIRED', 'label' => 'Checkout Expirado', 'color' => '#999999', 'send_email' => false],
     ];
 
-    public function __construct()
+    public static function init()
     {
-        $this->settings = $this->getSettings();
+        self::$settings = self::getSettings();
+
+        return self::class;
     }
 
     /** MODULE SETTINGS **/
@@ -37,13 +35,13 @@ class Config
      * Returns an array of config options for prestashop module config.
      * @param bool $extensionOptions 
      */
-    public function getConfigForm($extensionOptions = true)
+    public static function getConfigForm($extensionOptions = true)
     {
         if ($extensionOptions)
-            $extensionOptions = $this->checkExtension();
+            $extensionOptions = self::checkExtension();
         
         $form = require __DIR__ . '/../utils/config-form.php';
-        return $extensionOptions ? \Mobbex\PS\Checkout\Models\Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
+        return $extensionOptions ? Registrar::executeHook('displayMobbexConfiguration', true, $form) : $form;
     }
 
     /**
@@ -52,12 +50,21 @@ class Config
      * @param string $key specifies the key used in the array that method returns
      * @return array $settings 
      */
-    public function getSettings($key = 'key')
+    public static function getSettings($key = 'key')
     {
         $settings = [];
 
-        foreach ($this->getConfigForm()['form']['input'] as $input)
-            $settings[$input[$key]]  = \Configuration::getIdByName($input['name']) ? \Configuration::get($input['name']) : $input['default'];
+        // Get values saved on database
+        $values = \Db::getInstance()->executes(
+            "SELECT name, value FROM " . _DB_PREFIX_ . "configuration WHERE `name` LIKE 'MOBBEX_%';"
+        );
+
+       $names = array_column($values, 'name');
+
+        foreach (self::getConfigForm()['form']['input'] as $input) {
+            $position = array_search($input['name'], $names);
+            $settings[$input[$key]] = $position !== false ? $values[$position]['value'] : $input['default'];
+        }
 
         return $settings;
     }
@@ -65,17 +72,18 @@ class Config
     /**
      * Delete all the mobbex settings from the prestashop database.
      */
-    public function deleteSettings()
+    public static function deleteSettings()
     {
-        foreach ($this->getConfigForm(false)['form']['input'] as $setting)
-            \Configuration::deleteByName($setting['name']);
+        return \Db::getInstance()->executes(
+            "DELETE FROM " . _DB_PREFIX_ . "configuration WHERE `name` LIKE 'MOBBEX_%' AND `name` NOT LIKE 'MOBBEX_OS_%';"
+        );
     }
 
     /**
      * Get the table & column name where dni field is stored from configuration.
      * @return array
      */
-    public function getCustomDniColumn()
+    public static function getCustomDniColumn()
     {
         //Default values
         $data = [
@@ -83,9 +91,9 @@ class Config
             'identifier' => 'customer_id',
         ];
 
-        if ($this->settings['custom_dni'] != '') {
-            foreach (explode(':', $this->settings['custom_dni']) as $key => $value) {
-                if ($key === 0 && count(explode(':', $this->settings['custom_dni'])) > 1) {
+        if (self::$settings['custom_dni'] != '') {
+            foreach (explode(':', self::$settings['custom_dni']) as $key => $value) {
+                if ($key === 0 && count(explode(':', self::$settings['custom_dni'])) > 1) {
                     $data['table'] = trim($value);
                 } else if ($key === 1) {
                     $data['identifier'] = trim($value);
@@ -109,12 +117,12 @@ class Config
      * 
      * @return array|string
      */
-    public function getCatalogSetting($id, $fieldName, $catalogType = 'product')
+    public static function getCatalogSetting($id, $fieldName, $catalogType = 'product')
     {
         if (strpos($fieldName, '_plans'))
-            return json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, $fieldName)) ?: [];
+            return json_decode(CustomFields::getCustomField($id, $catalogType, $fieldName)) ?: [];
 
-        return \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, $fieldName) ?: '';
+        return CustomFields::getCustomField($id, $catalogType, $fieldName) ?: '';
     }
 
     /**
@@ -124,13 +132,13 @@ class Config
      * 
      * @return array $array
      */
-    public function getProductsPlans($products)
+    public static function getProductsPlans($products)
     {
         $common_plans = $advanced_plans = [];
 
         foreach ($products as $product) {
             $id = is_array($product) && isset($product['id_product']) ? $product['id_product'] : $product;
-            $product_plans = $this->getCatalogPlans($id);
+            $product_plans = self::getCatalogPlans($id);
             //Merge all catalog plans
             $common_plans   = array_merge($common_plans, $product_plans['common_plans']);
             $advanced_plans = array_merge($advanced_plans, $product_plans['advanced_plans']);
@@ -147,18 +155,18 @@ class Config
      * 
      * @return array
      */
-    public function getCatalogPlans($id, $catalog_type = 'product', $admin = false)
+    public static function getCatalogPlans($id, $catalog_type = 'product', $admin = false)
     {
         //Get product plans
-        $common_plans   = $this->getCatalogSetting($id, 'common_plans', $catalog_type) ?: [];
-        $advanced_plans = $this->getCatalogSetting($id, 'advanced_plans', $catalog_type) ?: [];
+        $common_plans   = self::getCatalogSetting($id, 'common_plans', $catalog_type) ?: [];
+        $advanced_plans = self::getCatalogSetting($id, 'advanced_plans', $catalog_type) ?: [];
         $product        = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
 
         //Get plans from categories
         if (!$admin && $catalog_type === 'product') {
             foreach ($product->getCategories() as $categoryId) {
-                $common_plans   = array_merge($common_plans, $this->getCatalogSetting($categoryId, 'common_plans', 'category'));
-                $advanced_plans = array_merge($advanced_plans, $this->getCatalogSetting($categoryId, 'advanced_plans', 'category'));
+                $common_plans   = array_merge($common_plans, self::getCatalogSetting($categoryId, 'common_plans', 'category'));
+                $advanced_plans = array_merge($advanced_plans, self::getCatalogSetting($categoryId, 'advanced_plans', 'category'));
             }
         }
 
@@ -176,17 +184,17 @@ class Config
      * 
      * @return string|bool
      */
-    public function getEntityFromProduct($product)
+    public static function getEntityFromProduct($product)
     {
-        $entity = \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($product->id, 'product', 'entity');
+        $entity = CustomFields::getCustomField($product->id, 'product', 'entity');
 
         if ($entity)
             return $entity;
 
         // Try to get from their categories
         foreach ($product->getCategories() as $categoryId) {
-            if (\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity'))
-                return \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($categoryId, 'category', 'entity');
+            if (CustomFields::getCustomField($categoryId, 'category', 'entity'))
+                return CustomFields::getCustomField($categoryId, 'category', 'entity');
         }
 
         return false;
@@ -194,20 +202,20 @@ class Config
 
     /** SOURCES SETTINGS **/
 
-    public function getStoredSources()
+    public static function getStoredSources()
     {
         $shopId = \Context::getContext()->shop->id ?: null;
 
         // Try to get sources from db
         $sources = [
-            'names'    => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
-            'common'   => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
-            'advanced' => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
-            'groups'   => json_decode(\Mobbex\PS\Checkout\Models\CustomFields::getCustomField($shopId, 'shop', 'source_groups'), true) ?: [],
+            'names'    => json_decode(CustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
+            'common'   => json_decode(CustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
+            'advanced' => json_decode(CustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
+            'groups'   => json_decode(CustomFields::getCustomField($shopId, 'shop', 'source_groups'), true) ?: [],
         ];
 
         if (!$sources['common'] || !$sources['advanced'] || !$sources['groups'])
-            $sources = $this->updateMobbexSources();
+            $sources = self::updateMobbexSources();
 
         return $sources;
     }
@@ -216,7 +224,7 @@ class Config
      * Save sources in config data
      * 
      */
-    public function updateMobbexSources()
+    public static function updateMobbexSources()
     {
         $names = $common = $advanced = $groups = [];
 
@@ -260,9 +268,9 @@ class Config
             // Save to db
             $shopId = \Context::getContext()->shop->id ?: null;
             foreach (['source_names' => 'names', 'common_sources' => 'common', 'advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
-                \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
+                CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
         } catch (\Exception $e) {
-            $this->logger->log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
+            Logger::log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
         }
 
         return compact('names', 'common', 'advanced', 'groups');
@@ -275,7 +283,7 @@ class Config
      * @param string $string
      * @param string $source
      */
-    public function l($string, $source = 'mobbex')
+    public static function l($string, $source = 'mobbex')
     {
         return \Translate::getModuleTranslation(
             'mobbex',
@@ -290,8 +298,15 @@ class Config
      * 
      * @return bool
      */
-    public function checkExtension($extension = '')
+    public static function checkExtension($extension = '')
     {
         return empty($extension) ? \Module::isEnabled('mobbex_marketplace') || \Module::isEnabled('mobbex_subscriptions') : \Module::isEnabled($extension);
+    }
+
+    public static function validateHash($hash)
+    {
+        return $hash == md5(
+            self::settings['api_key'] . '!' . self::settings['access_token']
+        );
     }
 }

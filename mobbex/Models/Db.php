@@ -30,7 +30,7 @@ class Db extends \Mobbex\Model\Db
             return $result->fetch_all(MYSQLI_ASSOC);
 
         //Log errors
-        \Mobbex\Platform::log('error', 'DB', \Db::getInstance()->getMsgError());
+        Logger::log('error', 'DB', \Db::getInstance()->getMsgError());
 
         return false;
     }

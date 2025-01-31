@@ -46,17 +46,17 @@ $widgetStyles ='
 $form = [
     'form' => [
         'tabs' => [
-            'tab_general'    => $this->l('General', 'config-form'),
-            'tab_orders'     => $this->l('Orders Configuration', 'config-form'),
-            'tab_appearence' => $this->l('Appearance', 'config-form'),
-            'tab_advanced'   => $this->l('Advanced Configuration', 'config-form'),
+            'tab_general'    => self::l('General', 'config-form'),
+            'tab_orders'     => self::l('Orders Configuration', 'config-form'),
+            'tab_appearence' => self::l('Appearance', 'config-form'),
+            'tab_advanced'   => self::l('Advanced Configuration', 'config-form'),
         ],
         'legend' => [
-            'title' => $this->l('Settings', 'config-form'),
+            'title' => self::l('Settings', 'config-form'),
             'icon'  => 'icon-cogs',
         ],
         'submit' => [
-            'title' => $this->l('Save', 'config-form'),
+            'title' => self::l('Save', 'config-form'),
         ],
         'success'     => null,
         'description' => null,
@@ -65,7 +65,7 @@ $form = [
         'input'       => [
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'API Key', 'config-form'),
+                'label'    => self::l( 'API Key', 'config-form'),
                 'name'     => 'MOBBEX_API_KEY',
                 'key'      => 'api_key',
                 'default'  => '',
@@ -74,7 +74,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Access Token', 'config-form'),
+                'label'    => self::l( 'Access Token', 'config-form'),
                 'name'     => 'MOBBEX_ACCESS_TOKEN',
                 'key'      => 'access_token',
                 'default'  => '',
@@ -83,7 +83,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Test Mode', 'config-form'),
+                'label'    => self::l( 'Test Mode', 'config-form'),
                 'name'     => 'MOBBEX_TEST_MODE',
                 'key'      => 'test',
                 'default'  => false,
@@ -94,18 +94,18 @@ $form = [
                     [
                         'id'    => 'active_on_mdv',
                         'value' => true,
-                        'label' => $this->l('Test Mode', 'config-form'),
+                        'label' => self::l('Test Mode', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_mdv',
                         'value' => false,
-                        'label' => $this->l('Live Mode', 'config-form'),
+                        'label' => self::l('Live Mode', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Payment Method Title', 'config-form'),
+                'label'    => self::l( 'Payment Method Title', 'config-form'),
                 'name'     => 'MOBBEX_TITLE',
                 'key'      => 'mobbex_title',
                 'default'  => '',
@@ -115,7 +115,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Payment Method Icons', 'config-form'),
+                'label'    => self::l('Payment Method Icons', 'config-form'),
                 'desc'     => "Shows methods icons in methods subdivision.",
                 'name'     => 'MOBBEX_METHOD_ICON',
                 'key'      => 'method_icon',
@@ -127,18 +127,18 @@ $form = [
                     [
                         'id'    => 'active_icons_on',
                         'value' => true,
-                        'label' => $this->l('Enable', 'config-form'),
+                        'label' => self::l('Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_icons_off',
                         'value' => false,
-                        'label' => $this->l('Disabled', 'config-form'),
+                        'label' => self::l('Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Payment Method Description', 'config-form'),
+                'label'    => self::l( 'Payment Method Description', 'config-form'),
                 'name'     => 'MOBBEX_DESCRIPTION',
                 'key'      => 'mobbex_description',
                 'default'  => '',
@@ -148,7 +148,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Payment Method Image', 'config-form' ),
+                'label'    => self::l( 'Payment Method Image', 'config-form' ),
                 'name'     => 'MOBBEX_PAYMENT_METHOD_IMAGE',
                 'key'      => 'mobbex_payment_method_image',
                 'default'  => '',
@@ -158,7 +158,7 @@ $form = [
             ],
             [
                 'type'     => 'radio',
-                'label'    => $this->l( 'Theme Mode', 'config-form'),
+                'label'    => self::l( 'Theme Mode', 'config-form'),
                 'name'     => 'MOBBEX_THEME',
                 'key'      => 'theme',
                 'default'  => 'light',
@@ -169,19 +169,19 @@ $form = [
                     [
                         'id'    => 'm_theme_light',
                         'value' => 'light',
-                        'label' => $this->l( 'Light Mode', 'config-form'),
+                        'label' => self::l( 'Light Mode', 'config-form'),
                     ],
                     [
                         'id'    => 'm_theme_dark',
                         'value' => 'dark',
-                        'label' => $this->l( 'Dark Mode', 'config-form'),
+                        'label' => self::l( 'Dark Mode', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'color',
                 'name'     => 'MOBBEX_THEME_BACKGROUND',
-                'label'    => $this->l( 'Background Color', 'config-form'),
+                'label'    => self::l( 'Background Color', 'config-form'),
                 'key'      => 'background',
                 'default'  => '#ECF2F6',
                 'data-hex' => false,
@@ -191,7 +191,7 @@ $form = [
             ],
             [
                 'type'     => 'color',
-                'label'    => $this->l( 'Primary Color', 'config-form'),
+                'label'    => self::l( 'Primary Color', 'config-form'),
                 'name'     => 'MOBBEX_THEME_PRIMARY',
                 'key'      => 'color',
                 'default'  => '#6f00ff',
@@ -202,7 +202,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Use Market configurated Logo', 'config-form'),
+                'label'    => self::l( 'Use Market configurated Logo', 'config-form'),
                 'desc'     => "When is disabled, the logo configured in the Mobbex account will be used.",
                 'name'     => 'MOBBEX_THEME_SHOP_LOGO',
                 'key'      => 'shop_theme_logo',
@@ -214,18 +214,18 @@ $form = [
                     [
                         'id'    => 'active_on_shop_logo',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_shop_logo',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Custom Logo ( URL )', 'config-form'),
+                'label'    => self::l( 'Custom Logo ( URL )', 'config-form'),
                 'name'     => 'MOBBEX_THEME_LOGO',
                 'key'      => 'theme_logo',
                 'default'  => '',
@@ -235,7 +235,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Checkout Banner ( URL )', 'config-form'),
+                'label'    => self::l( 'Checkout Banner ( URL )', 'config-form'),
                 'name'     => 'MOBBEX_CHECKOUT_BANNER',
                 'key'      => 'checkout_banner',
                 'default'  => '',
@@ -245,7 +245,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Embed Payment', 'config-form'),
+                'label'    => self::l('Embed Payment', 'config-form'),
                 'name'     => 'MOBBEX_EMBED',
                 'key'      => 'embed',
                 'default'  => true,
@@ -256,18 +256,18 @@ $form = [
                     [
                         'id'    => 'active_on_embed',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_embed',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Mobbex Wallet for logged users', 'config-form'),
+                'label'    => self::l( 'Mobbex Wallet for logged users', 'config-form'),
                 'name'     => 'MOBBEX_WALLET',
                 'key'      => 'wallet',
                 'default'  => false,
@@ -278,18 +278,18 @@ $form = [
                     [
                         'id'    => 'active_on_wallet',
                         'value' => true,
-                        'label' => $this->l( 'Enabled', 'config-form'),
+                        'label' => self::l( 'Enabled', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_wallet',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'ID or Reseler Key', 'config-form'),
+                'label'    => self::l( 'ID or Reseler Key', 'config-form'),
                 'name'     => 'MOBBEX_RESELLER_ID',
                 'key'      => 'reseller_id',
                 'default'  => '',
@@ -299,7 +299,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Site Id', 'config-form'),
+                'label'    => self::l( 'Site Id', 'config-form'),
                 'name'     => 'MOBBEX_SITE_ID',
                 'key'      => 'site_id',
                 'default'  => '',
@@ -309,7 +309,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Finance Widget in Product Page', 'config-form'),
+                'label'    => self::l( 'Finance Widget in Product Page', 'config-form'),
                 'desc'     => 'Show Finance Widget in Product Page.',
                 'name'     => 'MOBBEX_PLANS',
                 'key'      => 'finance_product',
@@ -320,19 +320,19 @@ $form = [
                     [
                         'id'    => 'active_on_plans',
                         'value' => true,
-                        'label' => $this->l( 'Enabled', 'config-form'),
+                        'label' => self::l( 'Enabled', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_plans',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
                 'tab' => 'tab_general',
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Finance Widget on Cart', 'config-form'),
+                'label'    => self::l( 'Finance Widget on Cart', 'config-form'),
                 'desc'     => 'Show the finance widget on cart page.',
                 'name'     => 'MOBBEX_PLANS_ON_CART',
                 'key'      => 'finance_cart',
@@ -344,18 +344,18 @@ $form = [
                     [
                         'id'    => 'active_on_plans_cart',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_plans_cart',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Finance Button Image ( URL )', 'config-form'),
+                'label'    => self::l( 'Finance Button Image ( URL )', 'config-form'),
                 'name'     => 'MOBBEX_PLANS_IMAGE_URL',
                 'key'      => 'widget_logo',
                 'default'  => 'https://res.mobbex.com/images/sources/png/mobbex.png',
@@ -365,7 +365,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Plans Button Text', 'config-form'),
+                'label'    => self::l( 'Plans Button Text', 'config-form'),
                 'name'     => 'MOBBEX_PLANS_TEXT',
                 'key'      => 'widget_text',
                 'default'  => 'Ver Financiación',
@@ -375,7 +375,7 @@ $form = [
             ],
             [
                 'type'     => 'textarea',
-                'label'    => $this->l( 'Finance widget styles', 'config-form'),
+                'label'    => self::l( 'Finance widget styles', 'config-form'),
                 'name'     => 'MOBBEX_PLANS_STYLES',
                 'key'      => 'widget_styles',
                 'default'  => $widgetStyles,
@@ -385,7 +385,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Hide installments at checkout', 'config-form'),
+                'label'    => self::l( 'Hide installments at checkout', 'config-form'),
                 'name'     => 'MOBBEX_SHOW_NO_INTEREST_LABELS',
                 'key'      => 'show_no_interest_labels',
                 'default'  => true,
@@ -397,19 +397,19 @@ $form = [
                     [
                         'id'    => 'not_show_interest_labels',
                         'value' => true,
-                        'label' => $this->l( 'Yes', 'config-form'),
+                        'label' => self::l( 'Yes', 'config-form'),
                     ],
                     [
                         'id'    => 'show_interest_labels',
                         'value' => false,
-                        'label' => $this->l( 'No', 'config-form'),
+                        'label' => self::l( 'No', 'config-form'),
                     ],
                 ],
             ],
 
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Add DNI Field', 'config-form'),
+                'label'    => self::l( 'Add DNI Field', 'config-form'),
                 'name'     => 'MOBBEX_OWN_DNI',
                 'key'      => 'mobbex_dni',
                 'default'  => true,
@@ -420,18 +420,18 @@ $form = [
                     [
                         'id'    => 'active_on_own_dni',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_own_dni',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Use Multicard in Checkout', 'config-form'),
+                'label'    => self::l( 'Use Multicard in Checkout', 'config-form'),
                 'name'     => 'MOBBEX_MULTICARD',
                 'key'      => 'multicard',
                 'default'  => false,
@@ -442,18 +442,18 @@ $form = [
                     [
                         'id' => 'active_on_multicard',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id' => 'active_off_multicard',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Enable/disable finance charge discount (BETA)', 'config-form'),
+                'label'    => self::l('Enable/disable finance charge discount (BETA)', 'config-form'),
                 'name'     => 'MOBBEX_DISCOUNT',
                 'key'      => 'charge_discount',
                 'default'  => false,
@@ -464,18 +464,18 @@ $form = [
                     [
                         'id' => 'active_on_discount',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id' => 'active_off_discount',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Multivendor', 'config-form'),
+                'label'    => self::l( 'Multivendor', 'config-form'),
                 'desc'     => 'Allow th use of multiple vendor (4 diferent entities supported)',
                 'name'     => 'MOBBEX_MULTIVENDOR',
                 'key'      => 'multivendor',
@@ -503,7 +503,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Use Existing DNI Field', 'config-form'),
+                'label'    => self::l( 'Use Existing DNI Field', 'config-form'),
                 'name'     => 'MOBBEX_CUSTOM_DNI',
                 'key'      => 'custom_dni',
                 'default'  => '',
@@ -514,7 +514,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Unified Mode', 'config-form'),
+                'label'    => self::l( 'Unified Mode', 'config-form'),
                 'desc'     => 'Disables subdivision of payment methods on the checkout page. The options will be seen within the checkout.',
                 'name'     => 'MOBBEX_UNIFIED_METHOD',
                 'key'      => 'unified_method',
@@ -526,18 +526,18 @@ $form = [
                     [
                         'id'    => 'active_on_unified_method',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_unified_method',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Debug Mode', 'config-form'),
+                'label'    => self::l( 'Debug Mode', 'config-form'),
                 'name'     => 'MOBBEX_DEBUG',
                 'key'      => 'debug_mode',
                 'default'  => false,
@@ -548,18 +548,18 @@ $form = [
                     [
                         'id'    => 'active_on_debug',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_debug',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Order when Processing Payment', 'config-form'),
+                'label'    => self::l( 'Order when Processing Payment', 'config-form'),
                 'desc'     => 'The order will be created just before starting the payment instead of when receiving the webhook.',
                 'name'     => 'MOBBEX_ORDER_FIRST',
                 'key'      => 'order_first',
@@ -571,18 +571,18 @@ $form = [
                     [
                         'id'    => 'active_on_order_first',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_order_first',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Discount stock in pending orders', 'config-form'),
+                'label'    => self::l( 'Discount stock in pending orders', 'config-form'),
                 'desc'     => 'Discount product stock in pending orders',
                 'name'     => 'MOBBEX_PENDING_ORDER_DISCOUNT',
                 'key'      => 'pending_discount',
@@ -594,18 +594,18 @@ $form = [
                     [
                         'id'    => 'active_on_discount_stock_pending',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_discount_stock_pending',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Cart restoration in Order First Mode', 'config-form'),
+                'label'    => self::l( 'Cart restoration in Order First Mode', 'config-form'),
                 'desc'     => 'The customer cart will be restored if checkout is closed, it cancell the order and creates new one.',
                 'name'     => 'MOBBEX_CART_RESTORE',
                 'key'      => 'cart_restore',
@@ -617,18 +617,18 @@ $form = [
                     [
                         'id'    => 'active_on_cart_restore',
                         'value' => true,
-                        'label' => $this->l('Enable', 'config-form'),
+                        'label' => self::l('Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_cart_restore',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l('Payment Mode', 'config-form'),
+                'label'    => self::l('Payment Mode', 'config-form'),
                 'desc'     => 'El modo de pago en dos pasos asigna el estado autorizado al pedido y permite capturar el pedido en el panel de administración del pedido. En Two Steps Mode, los pedidos pasaran a esatdo autorizado',
                 'name'     => 'MOBBEX_PAYMENT_MODE',
                 'key'      => 'payment_mode',
@@ -652,7 +652,7 @@ $form = [
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Cancelar pedidos pendientes luego de', 'config-form'),
+                'label'    => self::l( 'Cancelar pedidos pendientes luego de', 'config-form'),
                 'hint'     => 'Tiempo en el que los pedidos se considerarán como pendientes de pago. Cumplido el plazo, estos quedarán cancelados y se devolverá el stock.',
                 'name'     => 'MOBBEX_EXPIRATION_INTERVAL',
                 'key'      => 'expiration_interval',
@@ -690,7 +690,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l( 'Utilizar Cron para tareas programadas', 'config-form'),
+                'label'    => self::l( 'Utilizar Cron para tareas programadas', 'config-form'),
                 'hint'     => 'Mejora el rendimiento del sitio separando la ejecución de las tareas programadas del módulo. Recuerde configurar el Cron Job del lado del servidor.',
                 'desc'     => 'Una vez activada, configure su servidor para que ejecute el siguiente comando diariamente: <code>curl -s ' . \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('task') . '</code>',
                 'name'     => 'MOBBEX_CRON_MODE',
@@ -703,18 +703,18 @@ $form = [
                     [
                         'id'    => 'active_on_cron_mode',
                         'value' => true,
-                        'label' => $this->l( 'Enable', 'config-form'),
+                        'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_cron_mode',
                         'value' => false,
-                        'label' => $this->l( 'Disabled', 'config-form'),
+                        'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'text',
-                'label'    => $this->l( 'Tiempo de espera en redireccion', 'config-form'),
+                'label'    => self::l( 'Tiempo de espera en redireccion', 'config-form'),
                 'hint'     => 'Este tiempo se utilizará sólo si el pedido no existe al redirijir. Recuerde configurar su servidor para que el tiempo no exceda el límite definido en <code>max_execution_time</code>',
                 'desc'     => 'Duración máxima de tiempo que se esperará para redirijir a la página de confirmación del pedido una vez se realiza el pago',
                 'name'     => 'MOBBEX_REDIRECT_TIME',
@@ -727,7 +727,7 @@ $form = [
             ],
             [
                 'type'    => 'text',
-                'label'   => $this->l ( 'Force asset load in', 'config-form'),
+                'label'   => self::l ( 'Force asset load in', 'config-form'),
                 'hint'    => 'Directly print the elements that link the plugin assets in the specified view, bypassing the PrestaShop method.',
                 'name'    => 'MOBBEX_FORCE_ASSETS',
                 'key'     => 'force_assets',
@@ -736,7 +736,7 @@ $form = [
             ],
             [
                 'type'    => 'text',
-                'label'   => $this->l ( 'Timeout', 'config-form'),
+                'label'   => self::l ( 'Timeout', 'config-form'),
                 'hint'    => 'Set the lifetime of the Mobbex checkout once generated',
                 'desc'    => 'Establece el tiempo de vida del checkout una vez generado',
                 'name'    => 'MOBBEX_TIMEOUT',
@@ -748,7 +748,7 @@ $form = [
             ],
             [
                 'type'    => 'switch',
-                'label'   => $this->l('Procesar Reintentos de Webhooks', 'config-form'),
+                'label'   => self::l('Procesar Reintentos de Webhooks', 'config-form'),
                 'hint'    => 'Los reintentos de webhooks se procesarán y modificarán al pedido. Si se desactiva sólo se guardarán en la base de datos.',
                 'name'    => 'MOBBEX_PROCESS_WEBHOOK_RETRIES',
                 'key'     => 'process_webhook_retries',
@@ -759,18 +759,18 @@ $form = [
                     [
                         'id'    => 'active_on_process_webhook_retries',
                         'value' => true,
-                        'label' => $this->l('Enable', 'config-form'),
+                        'label' => self::l('Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_process_webhook_retries',
                         'value' => false,
-                        'label' => $this->l('Disabled', 'config-form'),
+                        'label' => self::l('Disabled', 'config-form'),
                     ],
                 ],
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Order Status Approved', 'config-form'),
+                'label'    => self::l( 'Order Status Approved', 'config-form'),
                 'desc'     => 'Select the status for approved orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_APPROVED',
                 'key'      => 'order_status_approved',
@@ -785,7 +785,7 @@ $form = [
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Order Status Authorized', 'config-form'),
+                'label'    => self::l( 'Order Status Authorized', 'config-form'),
                 'desc'     => 'Select the status for authorized orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_AUTHORIZED',
                 'key'      => 'order_status_authorized',
@@ -800,7 +800,7 @@ $form = [
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Order Status Failed', 'config-form'),
+                'label'    => self::l( 'Order Status Failed', 'config-form'),
                 'desc'     => 'Select the status for approved orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_FAILED',
                 'key'      => 'order_status_failed',
@@ -815,7 +815,7 @@ $form = [
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Order Status Rejected', 'config-form'),
+                'label'    => self::l( 'Order Status Rejected', 'config-form'),
                 'desc'     => 'Select the status for rejected orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_REJECTED',
                 'key'      => 'order_status_rejected',
@@ -830,7 +830,7 @@ $form = [
             ],
             [
                 'type'     => 'select',
-                'label'    => $this->l( 'Order Status Refunded', 'config-form'),
+                'label'    => self::l( 'Order Status Refunded', 'config-form'),
                 'desc'     => 'Select the status for refunded orders.',
                 'name'     => 'MOBBEX_ORDER_STATUS_REFUNDED',
                 'key'      => 'order_status_refunded',
@@ -845,7 +845,7 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => $this->l('Verificación de Totales', 'config-form'),
+                'label'    => self::l('Verificación de Totales', 'config-form'),
                 'hint'     => 'Esta verificación es escencial para asegurar que el pedido se genere correctamente, su funcionamiento es el predeterminado en el plugin desde enero de 2023.',
                 'desc'     => 'Por defecto se encuentra activa. Realiza una verificación para asegurar que los pedidos se realizan por el mismo monto que el checkout de Mobbex. Advertencia! Desactivar esta opción es sólo recomendable en casos muy particulares.',
                 'name'     => 'MOBBEX_CHECK_CART_TOTALS',
@@ -858,12 +858,12 @@ $form = [
                     [
                         'id'    => 'active_on_check_cart_totals',
                         'value' => true,
-                        'label' => $this->l('Enable', 'config-form'),
+                        'label' => self::l('Enable', 'config-form'),
                     ],
                     [
                         'id'    => 'active_off_check_cart_totals',
                         'value' => false,
-                        'label' => $this->l('Disabled', 'config-form'),
+                        'label' => self::l('Disabled', 'config-form'),
                     ],
                 ],
             ],
