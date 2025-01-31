@@ -146,6 +146,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!\Mobbex\Repository::validateToken($token))
             $this->logger->log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
+        // Avoid 3xx states
+        if(\Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) == 'processing')
+            $this->logger->log('fatal', 'notification > webhook | Invalid Status Code', $data);
+
         try {
             // Save webhook data
             $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
@@ -182,7 +186,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $state = \Mobbex\PS\Checkout\Models\Transaction::getState($trx->status_code);
 
         // Exit if it is a failed operation and the order has already been paid
-        if (in_array($state, ['expired', 'failed', 'processing']) && $order->hasBeenPaid())
+        if (in_array($state, ['expired', 'failed']) && $order->hasBeenPaid())
             return;
 
         // Notify if is updating an order created by other module
