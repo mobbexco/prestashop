@@ -130,6 +130,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!\Mobbex\Repository::validateToken($token))
             Logger::log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
+        // Avoid 3xx states
+        if(\Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) == 'processing')
+            $this->logger->log('fatal', 'notification > webhook | Invalid Status Code', $data);
+
         try {
             // Save webhook data
             $trx = \Mobbex\PS\Checkout\Models\Transaction::saveTransaction($cartId, $data);
