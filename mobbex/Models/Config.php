@@ -306,7 +306,7 @@ class Config
     public static function validateHash($hash)
     {
         return $hash == md5(
-            self::settings['api_key'] . '!' . self::settings['access_token']
+            self::$settings['api_key'] . '!' . self::$settings['access_token']
         );
     }
 }
