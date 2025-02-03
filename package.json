@@ -1,0 +1,20 @@
+{
+  "name": "mobbex-for-prestashop",
+  "version": "4.3.0",
+  "description": "Mobbex for Prestashop",
+  "author": "Mobbex",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "vite": "^6.0.11",
+    "vite-plugin-css-injected-by-js": "^3.5.2"
+  },
+  "dependencies": {
+    "@mobbex/ecommerce-ui": "^1.2.0"
+  }
+}
