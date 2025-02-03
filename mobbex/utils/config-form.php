@@ -354,6 +354,30 @@ $form = [
                 ],
             ],
             [
+                'type'     => 'select',
+                'label'    => $this->l( 'Finance Widget Style', 'config-form'),
+                'desc'     => 'Choose between embed & transparent widget.',
+                'name'     => 'MOBBEX_WIDGET_TYPE',
+                'key'      => 'widget_type',
+                'default'  => 'embed',
+                'required' => false,
+                'tab'      => 'tab_appearence',
+                'options'  => [
+                    'query' => [
+                        [
+                            'id_option' => 'embed',
+                            'name'      => 'Embed'
+                        ],
+                        [
+                            'id_option' => 'transparent',
+                            'name'      => 'Transparent'
+                        ],
+                    ],
+                    'id'   => 'id_option',
+                    'name' => 'name'
+                ]
+            ],
+            [
                 'type'     => 'text',
                 'label'    => self::l( 'Finance Button Image ( URL )', 'config-form'),
                 'name'     => 'MOBBEX_PLANS_IMAGE_URL',
