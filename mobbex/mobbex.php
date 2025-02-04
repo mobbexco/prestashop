@@ -279,7 +279,7 @@ class Mobbex extends PaymentModule
         ]);
 
         // Get payment methods from checkout
-        if (Config::$settings['unified_method'] || isset($checkoutData['sid'])) {
+        if (Config::$settings['unified_method'] || isset($checkoutData['sid']) || count($methods) < 1) {
             $options[]    = $this->createPaymentOption(
                 Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 Config::$settings['mobbex_description'],
