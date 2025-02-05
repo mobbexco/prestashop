@@ -514,22 +514,22 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => self::l( 'Unified Mode', 'config-form'),
-                'desc'     => 'Disables subdivision of payment methods on the checkout page. The options will be seen within the checkout.',
-                'name'     => 'MOBBEX_UNIFIED_METHOD',
-                'key'      => 'unified_method',
+                'label'    => self::l( 'Medios de pago en sitio', 'config-form'),
+                'desc'     => 'Habilita la subdivisión de los métodos de pago en la página de finalización de la compra. Las opciones se verán en el checkout.',
+                'name'     => 'MOBBEX_PAYMENT_METHODS',
+                'key'      => 'payment_methods',
                 'default'  => false,
                 'is_bool'  => true,
                 'required' => false,
                 'tab'      => 'tab_advanced',
                 'values'   => [
                     [
-                        'id'    => 'active_on_unified_method',
+                        'id'    => 'active_on_payment_methods',
                         'value' => true,
                         'label' => self::l( 'Enable', 'config-form'),
                     ],
                     [
-                        'id'    => 'active_off_unified_method',
+                        'id'    => 'active_off_payment_methods',
                         'value' => false,
                         'label' => self::l( 'Disabled', 'config-form'),
                     ],

@@ -279,7 +279,7 @@ class Mobbex extends PaymentModule
         ]);
 
         // Get payment methods from checkout
-        if (Config::$settings['unified_method'] || isset($checkoutData['sid']) || count($methods) < 1) {
+        if (!Config::$settings['payment_methods'] || isset($checkoutData['sid']) || count($methods) < 1) {
             $options[]    = $this->createPaymentOption(
                 Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 Config::$settings['mobbex_description'],
@@ -702,7 +702,7 @@ class Mobbex extends PaymentModule
         ]);
 
         $this->smarty->assign([
-            'methods'     => isset($checkoutData['paymentMethods']) && !Config::$settings['unified_method'] ? $checkoutData['paymentMethods'] : [],
+            'methods'     => isset($checkoutData['paymentMethods']) && Config::$settings['payment_methods'] ? $checkoutData['paymentMethods'] : [],
             'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
             'redirectUrl' => isset($checkoutData['id']) ? \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
         ]);
