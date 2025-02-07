@@ -34,6 +34,8 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
 
+    public $active;
+
     /**
      * Constructor
      */
@@ -257,63 +259,20 @@ class Mobbex extends PaymentModule
         if (!$this->active || !$this->checkCurrency($params['cart']) || !$this->helper->isPaymentStep())
             return;
 
+        // Initialize options array and cart object
         $options = [];
-        $checkoutData = $this->helper->getPaymentData(true);
+        $cart    = $params['cart'];
 
         // Necessary variables when defining the payment method icon
+        $method_icon  = (bool) Config::$settings['method_icon'];
         $defaultImage = '/modules/mobbex/views/img/logo_transparent.png';
         $image        = !empty(Config::$settings['mobbex_payment_method_image']) ? Config::$settings['mobbex_payment_method_image'] : $defaultImage;
-        $method_icon  = (bool) Config::$settings['method_icon'];
-
-        // Get cards and payment methods
-        $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
-        $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
-
-        \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
-            'primaryColor' => Config::$settings['color'],
-            'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
-            'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-            'embed'       => (bool) Config::$settings['embed'],
-            'data'        => $checkoutData,
-            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
-        ]);
 
         // Get payment methods from checkout
-        if (!Config::$settings['payment_methods'] || isset($checkoutData['sid']) || count($methods) < 1) {
-            $options[]    = $this->createPaymentOption(
-                Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
-                Config::$settings['mobbex_description'],
-                \Media::getMediaPath($image),
-                'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]"), $method_icon],
-                Config::$settings['checkout_banner']
-            );
-        } else {
-            foreach ($methods as $method) {
-                $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
-                $options[] = $this->createPaymentOption(
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && Config::$settings['mobbex_title'] ? Config::$settings['mobbex_title'] : $method['subgroup_title'],
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['mobbex_description'] : null,
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
-                    'module:mobbex/views/templates/front/method.tpl',
-                    compact('method', 'checkoutUrl', 'method_icon'),
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['checkout_banner'] : ''
-                );
-            }
-        }
-
-        // Get wallet cards
-        foreach ($cards as $key => $card) {
-            if($card['installments']) {
-                $options[] = $this->createPaymentOption(
-                    $card['name'],
-                    null,
-                    $card['source']['card']['product']['logo'],
-                    'module:mobbex/views/templates/front/card-form.tpl',
-                    compact('card', 'key', 'method_icon')
-                );
-            }
-        }
+        if (Config::$settings['payment_methods'] || Config::$settings['wallet'])
+            $this->managePaymentMethods($cart, $options, $method_icon, $image);
+        else
+            $options[] = $this->defaultPaymentOption($cart, $image, $method_icon);
 
         Logger::log('debug', 'Observer > hookPaymentOptions', $options);
 
@@ -993,5 +952,100 @@ class Mobbex extends PaymentModule
             $option->setLogo($logo);
 
         return $option;
+    }
+
+    /**
+     * Manage payment methods and wallet cards. 
+     * This method creates a draft Mobbex Checkout to get data.
+     * 
+     * @param \Cart $cart
+     * @param array $options
+     * @param bool $method_icon
+     * @param string $image
+     */
+    private function managePaymentMethods($cart, &$options, $method_icon, $image)
+    {
+        $checkout = $this->helper->getPaymentData(true);
+        $cards    = isset($checkout['wallet']) ? $checkout['wallet'] : [];
+        $methods  = isset($checkout['paymentMethods']) ? $checkout['paymentMethods'] : [];
+        
+        $this->addPaymentMethods($methods, $checkout, $cart, $options, $method_icon, $image);
+
+        if (!empty($cards))
+            $this->getWalletCards($cards, $options, $method_icon);
+    }
+
+    /**
+     * Add Mobbex payment methods to payment options.
+     * 
+     * @param array $methods
+     * @param array $checkoutData
+     * @param Object $cart
+     * @param array $options
+     * @param bool $method_icon
+     * @param string $image
+     */
+    private function addPaymentMethods($methods, $checkoutData, $cart, &$options, $method_icon, $image)
+    {
+        \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
+            'primaryColor' => Config::$settings['color'],
+            'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
+            'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+            'embed'       => (bool) Config::$settings['embed'],
+            'data'        => $checkoutData,
+            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl("notification", "return", "&id=$cart->id"),
+        ]);
+
+        foreach ($methods as $method) {
+            $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
+            $options[] = $this->createPaymentOption(
+                (count($methods) == 1 || $method['subgroup'] == 'card_input') && Config::$settings['mobbex_title'] ? Config::$settings['mobbex_title'] : $method['subgroup_title'],
+                (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['mobbex_description'] : null,
+                (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
+                'module:mobbex/views/templates/front/method.tpl',
+                compact('method', 'checkoutUrl', 'method_icon'),
+                (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['checkout_banner'] : ''
+            );
+        }
+    }
+    
+    /**
+     * Get wallet cards from checkout data and add it to payment options.
+     * 
+     * @param array $cards
+     * @param array $options
+     */
+    private function getWalletCards($cards, &$options, $method_icon)
+    {
+        foreach ($cards as $key => $card) 
+            if($card['installments'])
+                $options[] = $this->createPaymentOption(
+                    $card['name'],
+                    null,
+                    $card['source']['card']['product']['logo'],
+                    'module:mobbex/views/templates/front/card-form.tpl',
+                    compact('card', 'key', 'method_icon')
+                );
+    }
+
+    /**
+     * Creates Mobbex default payment option.
+     * 
+     * @param Object $cart
+     * @param string $image
+     * @param bool $method_icon
+     * 
+     * @return Object
+     */
+    private function defaultPaymentOption($cart, $image, $method_icon)
+    {
+        return $this->createPaymentOption(
+            Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
+            Config::$settings['mobbex_description'],
+            \Media::getMediaPath($image),
+            'module:mobbex/views/templates/front/payment.tpl',
+            ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$cart->id"), $method_icon],
+            Config::$settings['checkout_banner']
+        );
     }
 }
