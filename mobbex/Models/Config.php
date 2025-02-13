@@ -215,65 +215,9 @@ class Config
         ];
 
         if (!$sources['common'] || !$sources['advanced'] || !$sources['groups'])
-            $sources = self::updateMobbexSources();
+            $sources = \MobbexSourcesModuleFrontController::updateMobbexSources();
 
         return $sources;
-    }
-
-    /**
-     * Save sources in config data
-     * 
-     */
-    public static function updateMobbexSources()
-    {
-        $names = $common = $advanced = $groups = [];
-
-        try {
-            foreach (\Mobbex\Repository::getSources() as $source) {
-                if (empty($source['installments']['list']))
-                    continue;
-
-                // Format field data
-                foreach ($source['installments']['list'] as $plan) {
-                    $common[$plan['reference']] = [
-                        'id'          => "common_plan_$plan[reference]",
-                        'key'         => isset($plan['reference']) ? $plan['reference'] : '',
-                        'label'       => isset($plan['name']) ? $plan['name'] : '',
-                        'description' => isset($plan['description']) ? $plan['description'] : '',
-                    ];
-
-                    $groups[$plan['name']][] = $source['source']['reference'];
-                    $groups[$plan['name']]   = array_unique($groups[$plan['name']]);
-                }
-            }
-
-            foreach (\Mobbex\Repository::getSourcesAdvanced() as $source) {
-                if (empty($source['installments']))
-                    continue;
-
-                // Save source name
-                $names[$source['source']['reference']] = $source['source']['name'];
-
-                // Format field data
-                foreach ($source['installments'] as $plan) {
-                    $advanced[$source['source']['reference']][] = [
-                        'id'          => "advanced_plan_$plan[uid]",
-                        'key'         => isset($plan['uid']) ? $plan['uid'] : '',
-                        'label'       => isset($plan['name']) ? $plan['name'] : '',
-                        'description' => isset($plan['description']) ? $plan['description'] : '',
-                    ];
-                }
-            }
-
-            // Save to db
-            $shopId = \Context::getContext()->shop->id ?: null;
-            foreach (['source_names' => 'names', 'common_sources' => 'common', 'advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
-                CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
-        } catch (\Exception $e) {
-            Logger::log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
-        }
-
-        return compact('names', 'common', 'advanced', 'groups');
     }
 
     /** UTILS **/

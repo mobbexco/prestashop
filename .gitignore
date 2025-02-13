@@ -7,3 +7,4 @@
 /.vscode
 /mobbex/vendor
 /mobbex/composer.lock
+/node_modules

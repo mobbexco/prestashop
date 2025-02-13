@@ -841,15 +841,10 @@ class Mobbex extends PaymentModule
         }
 
         $data = [
-            'product_price'  => \Product::convertAndFormatPrice($total),
-            'sources'        => $sources,
-            'style_settings' => [
-                'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
-                'styles'         => Config::$settings['widget_styles'],
-                'text'           => Config::$settings['widget_text'],
-                'button_image'   => Config::$settings['widget_logo'],
-                'plans_theme'    => Config::$settings['theme'],
-            ],
+            'library'     => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex') . '/views/library/FinanceWidget.js',
+            'sources'     => $sources,
+            'theme'       => Config::$settings['theme'],
+            'price'       => $total
         ];
         
         //Debug Data
