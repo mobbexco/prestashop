@@ -830,24 +830,21 @@ class Mobbex extends PaymentModule
      */
     public function displayPlansWidget($total, $products = [])
     {
-        $hash        = md5($this->config->settings['api_key'] . '!' . $this->config->settings['access_token']);
-        $product_ids = array_map(function ($product) {
-            return is_array($product) && isset($product['id_product']) ? $product['id_product'] : $product;
-        }, $products);
+        extract(Config::getProductsPlans($products));
+        $sources = array();
+
+        //Try to get installments from API
+        try {
+            $sources = \Mobbex\Repository::getSources($total, \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans));
+        } catch (\Exception $e) {
+            Logger::log('error', 'mobbex > displayPlansWidget | Error Obtaining Mobbex installments from API', $e->getMessage());
+        }
 
         $data = [
-            'scriptUrl'      => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex') . '/views/static/FinanceWidget.js',
-            'styles_url'     => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex') . '/views/css/FinanceWidget.css',
-            'sourcesUrl'     => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('sources', 'load', "&hash=$hash"),   
-            'updateUrl'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('sources', 'reload', "&hash=$hash"),
-            'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
-            'type'           => $this->config->settings['widget_type'] ?: $this->config->default['widget_type'],
-            'styles'         => $this->config->settings['widget_styles'] ?: $this->config->default['widget_styles'],
-            'text'           => $this->config->settings['widget_text'] ?: $this->config->default['widget_text'],
-            'logo'           => $this->config->settings['widget_logo'],
-            'theme'          => $this->config->settings['theme'] ?: $this->config->default['theme'],
-            'price'          => $total,
-            'product_ids'    => json_encode($product_ids),
+            'library'     => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex') . '/views/library/FinanceWidget.js',
+            'sources'     => $sources,
+            'theme'       => Config::$settings['theme'],
+            'price'       => $total
         ];
         
         //Debug Data
