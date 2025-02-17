@@ -13,7 +13,7 @@ use Mobbex\PS\Checkout\Models\Config;
  * 
  * @return bool Upgrade result.
  */
-function upgrade_module_4_2_0($module) {
+function upgrade_module_4_4_0($module) {
     return $module->installer->createTables()
         && $module->installer->createStates(Config::$orderStatuses)
         && $module->installer->createCostProduct()

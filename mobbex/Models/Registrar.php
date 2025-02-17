@@ -195,7 +195,7 @@ class Registrar
 
             return $value;
         } catch (\Exception $e) {
-            Logger::log('error', 'Registrar > executeHook | Hook Error', $e->getMessage());
+            Logger::log('error', "Registrar > executeHook | Hook: $name Error: " . $e->getMessage(), $args);
         }
     }
 }
