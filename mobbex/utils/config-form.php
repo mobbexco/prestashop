@@ -459,7 +459,7 @@ $form = [
                 'default'  => '',
                 'required' => false,
                 'tab'      => 'tab_advanced',
-                'desc'     => "Coloque el codigo de la moneda en la que se realizará el pago. Ejemplo: ARS, USD.",
+                'desc'     => 'Permite procesar la transacción en una moneda diferente a la que se muestra en la tienda. Ej. ARS, USD.',
             ],
             [
                 'type'     => 'switch',
