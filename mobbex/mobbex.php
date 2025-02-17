@@ -274,18 +274,17 @@ class Mobbex extends PaymentModule
             'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
             'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
             'embed'       => (bool) Config::$settings['embed'],
-            'data'        => $checkoutData,
             'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
         ]);
 
         // Get payment methods from checkout
-        if (Config::$settings['unified_method'] || isset($checkoutData['sid'])) {
+        if (!Config::$settings['payment_methods'] || isset($checkoutData['sid'])) {
             $options[]    = $this->createPaymentOption(
                 Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
                 Config::$settings['mobbex_description'],
                 \Media::getMediaPath($image),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]"), $method_icon],
+                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect'), $method_icon],
                 Config::$settings['checkout_banner']
             );
         } else {
@@ -696,15 +695,14 @@ class Mobbex extends PaymentModule
                 'paymentUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
                 'errorUrl'     => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
                 'embed'        => (bool) Config::$settings['embed'],
-                'data'         => $checkoutData,
                 'return'       => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
             ]
         ]);
 
         $this->smarty->assign([
-            'methods'     => isset($checkoutData['paymentMethods']) && !Config::$settings['unified_method'] ? $checkoutData['paymentMethods'] : [],
+            'methods'     => isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [],
             'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
-            'redirectUrl' => isset($checkoutData['id']) ? \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]") : '',
+            'redirectUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', isset($checkoutData['id']) ? "&id=$checkoutData[id]" : '')
         ]);
 
         return $this->display(__FILE__, 'views/templates/front/payment.tpl');

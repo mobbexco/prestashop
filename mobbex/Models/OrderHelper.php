@@ -186,7 +186,17 @@ class OrderHelper
         if (!$cart->id)
             return;
 
-        return \Mobbex\PS\Checkout\Models\Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer) ?: $this->createCheckout($cart, $customer, $draft);
+        // Replace checkout if is it needed
+        $replaceCheckout = Registrar::executeHook('actionMobbexProcessPayment', false, $cart, $customer);
+
+        if ($replaceCheckout)
+            return $replaceCheckout;
+
+        // Return if the draft is not needed
+        if ($draft && !Config::$settings['payment_methods'] && !Config::$settings['wallet'])
+            return;
+
+        return $this->createCheckout($cart, $customer, $draft);
     }
 
     /**
