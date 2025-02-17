@@ -452,6 +452,16 @@ $form = [
                 ],
             ],
             [
+                'type'     => 'text',
+                'label'    => self::l('Conversión de Moneda', 'config-form'),
+                'name'     => 'MOBBEX_FINAL_CURRENCY',
+                'key'      => 'final_currency',
+                'default'  => '',
+                'required' => false,
+                'tab'      => 'tab_advanced',
+                'desc'     => 'Permite procesar la transacción en una moneda diferente a la que se muestra en la tienda. Ej. ARS, USD.',
+            ],
+            [
                 'type'     => 'switch',
                 'label'    => self::l('Enable/disable finance charge discount (BETA)', 'config-form'),
                 'name'     => 'MOBBEX_DISCOUNT',
