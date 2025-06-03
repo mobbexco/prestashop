@@ -17,7 +17,6 @@ class Registrar
         'actionOrderReturn',
         'displayAdminOrder',
         'actionMobbexExpireOrder',
-        'actionProductUpdate',
     ];
 
     public $ps16Hooks = [
@@ -60,6 +59,10 @@ class Registrar
         'actionCustomerFormBuilderModifier',
     ];
 
+    public $ps8Hooks = [
+        'actionProductUpdate',
+    ];
+
     /**
      * Register module hooks dependig on prestashop version.
      * 
@@ -84,7 +87,9 @@ class Registrar
     {
         $versionHooks = [];
 
-        if (_PS_VERSION_ > '1.7.6')
+        if (_PS_VERSION_ > '8.0')
+            $versionHooks = $this->ps8Hooks;
+        else if (_PS_VERSION_ > '1.7.6')
             $versionHooks = $this->ps176Hooks;
         else if (_PS_VERSION_ > '1.7')
             $versionHooks = $this->ps17Hooks;
