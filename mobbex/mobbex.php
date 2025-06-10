@@ -848,6 +848,7 @@ class Mobbex extends PaymentModule
         // Prepare data to be sent to smarty
         $data = [
             'sources_url'     => $sourcesUrl,
+            'currency_symbol' => \Context::getContext()->currency->symbol,
             'style_settings' => [
                 'plans_theme'    => Config::$settings['theme'],
                 'text'           => Config::$settings['widget_text'],
