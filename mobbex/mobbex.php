@@ -589,7 +589,7 @@ class Mobbex extends PaymentModule
                 $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if (Config::$settings['embed'])
-                $this->helper->addAsset('https://res.mobbex.com/js/embed/mobbex.embed@1.0.23.js');
+                $this->helper->addAsset('https://api.mobbex.com/p/embed/1.2.0/lib.js');
         }
     }
 
