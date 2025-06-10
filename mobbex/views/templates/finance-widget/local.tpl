@@ -211,8 +211,8 @@
         <script>
     {/literal}
         // Smarty's way to get php vars
-        const sourcesUrl = '{$sources_url|unescape:"html"}'.replace(/&amp;/g, '&');
-        console.log('URL cargada:', sourcesUrl);
+        const currency_symbol = '{$currency_symbol|unescape:"html"}';
+        const sourcesUrl      = '{$sources_url|unescape:"html"}'.replace(/&amp;/g, '&');
     {literal}
             (function (window) {
                 // Charge sources when document is ready
@@ -364,10 +364,7 @@
                 * @return {string} formatted price
                 */
                 function formatPrice(amount) {
-                    return new Intl.NumberFormat('es-AR', {
-                        style: 'currency',
-                        currency: 'ARS'
-                    }).format(amount);
+                    return `${currency_symbol} ${amount}`;
                 }
             })(window);
         </script>
