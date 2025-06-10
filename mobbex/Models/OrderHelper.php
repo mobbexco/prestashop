@@ -248,7 +248,7 @@ class OrderHelper
                     "image"       => 'https://' . $imagePath,
                     "description" => $product['name'],
                     "quantity"    => $product['cart_quantity'],
-                    "total"       => round($product['price_wt'], 2),
+                    "total"       => $product['total_wt'],
                     "entity"      => $this->getProductEntity($prd),
                 ];
             }

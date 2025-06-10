@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 4.3.0
+ * @version 4.4.0
  * @see     PaymentModuleCore
  */
 
@@ -437,11 +437,19 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Executes when hook ActionAdminProductsControllerSaveBefore is fired. (Used to update product options).
+     * Executes when hook ActionAdminProductsControllerSaveBefore is fired. (Used to update product options). (ps 1.7)
      */
     public function hookActionAdminProductsControllerSaveBefore()
     {
         $this->saveCatalogOptions($_POST['id_product']);
+    }
+
+    /**
+     * Executes when hook ActionProductUpdate is fired. (Used to update product options). (ps 8)
+     */
+    public function hookActionProductUpdate()
+    {
+        $this->saveCatalogOptions(\Tools::getValue('id_product'));
     }
 
     /**
@@ -898,13 +906,15 @@ class Mobbex extends PaymentModule
      */
     private function saveCatalogOptions($id, $catalogType = 'product')
     {
+        $productConfig = _PS_VERSION_ >= '8.0.0' ? $_POST : $_REQUEST;
+
         $options = [
-            'entity'         => isset($_REQUEST['entity']) ? $_REQUEST['entity'] : null,
+            'entity'         => isset($productConfig['entity']) ? $productConfig['entity'] : null,
             'common_plans'   => [],
             'advanced_plans' => []
         ];
 
-        foreach ($_REQUEST as $key => $value) {
+        foreach ($productConfig as $key => $value) {
             if (strpos($key, 'common_plan_') !== false && $value === 'no') {
                 // Add UID to common plans
                 $options['common_plans'][] = explode('common_plan_', $key)[1];
@@ -915,8 +925,8 @@ class Mobbex extends PaymentModule
         }
 
         if ($catalogType === 'product') {
-            $options['subscription_enable'] = isset($_REQUEST['sub_enable']) ? $_REQUEST['sub_enable'] : 'no';
-            $options['subscription_uid']    = isset($_REQUEST['sub_uid'])    ? $_REQUEST['sub_uid']    : '';
+            $options['subscription_enable'] = isset($productConfig['sub_enable']) ? $productConfig['sub_enable'] : 'no';
+            $options['subscription_uid']    = isset($productConfig['sub_uid'])    ? $productConfig['sub_uid']    : '';
         }
 
         foreach ($options as $key => $value)
