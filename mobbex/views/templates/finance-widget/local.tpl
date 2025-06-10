@@ -186,52 +186,15 @@
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
             <div id="mbbxProductModalHeader">
                 <select name="mbbx-method-select" id="mbbx-method-select">
-                    <option id="0" value="0">Seleccione un método de pago</option>
-                    {foreach from=$sources item=source}
-                        {if !empty($source['source']['name'])}
-                            <option id="{$source['source']['reference']}" value="{$source['source']['reference']}">{$source['source']['name']}</option>
-                        {/if}
-                    {/foreach}
+                    <option id="mobbex-sources-container">Seleccione un método de papppgo</option>
+                    {* select render *}
                 </select>
                 <span id="closembbxProduct">&times;</span>
             </div>
             <div id="mbbxProductModalBody">
-                {foreach from=$sources item=source }
-                    {if !empty($source['source']['name'])}
-                        <div id="{$source['source']['reference']}" class="mobbexSource">
-                            <p class="mobbexPaymentMethod">
-                                <img src="{if $source['installments']['enabled']}https://res.mobbex.com/images/sources/jpg/{$source['source']['reference']}.jpg{else}{$source['view']['subgroup_logo']}{/if}">{$source['source']['name']}
-                            </p>
-                            {if $source['installments']['enabled']}
-                                <table class="installmentsTable">
-                                    {foreach from=$source['installments']['list'] item=installment }
-                                        <tr>
-                                            <td class="installmentName">
-                                                {$installment['name']}
-                                                {if $installment['totals']['installment']['count'] != 1}
-                                                    <small>
-                                                        {$installment['totals']['installment']['count']} cuotas de {Product::convertAndFormatPrice($installment['totals']['installment']['amount'])}
-                                                    </small>
-                                                {/if}
-                                            </td>
-                                            {if isset($installment['totals']['total'])}
-                                                <td class="mbbxPlansPrice">{Product::convertAndFormatPrice($installment['totals']['total'])}</td>
-                                            {else}
-                                                <td></td>
-                                            {/if}
-                                        </tr>
-                                    {/foreach}
-                                </table>
-                            {else}
-                                <p class="mobbexSourceTotal">
-                                    {$product_price}
-                                </p>
-                            {/if}
-                        </div>
-                    {/if}
-                {/foreach}
+                {* sources render *}
             </div>
-        </div>
+        </div> 
     </div>
 
     <button type="button" id="mbbxProductBtn" class="{if $style_settings['default_styles']}btn btn-secondary mt-1{else}mbbxWidgetOpenBtn{/if}">
@@ -244,33 +207,169 @@
         {$style_settings['text']}
     </button>
 
-    <script>
-        (function (window) {
-            var cont  = document.querySelector('.mobbex-plans');
-            var modal = document.querySelector('#mbbxProductModal');
+    {literal}
+        <script>
+    {/literal}
+        // Smarty's way to get php vars
+        const sourcesUrl = '{$sources_url|unescape:"html"}'.replace(/&amp;/g, '&');
+        console.log('URL cargada:', sourcesUrl);
+    {literal}
+            (function (window) {
+                // Charge sources when document is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () =>
+                        getSources(sourcesUrl)
+                    );
+                } else {
+                    console.log('Document is ready');
+                    getSources(sourcesUrl);
+                }
+                // Get modal elements
+                var cont = document.querySelector('.mobbex-plans');
+                var modal = document.querySelector('#mbbxProductModal');
+                var modalBody = document.querySelector('#mbbxProductModalBody');
+                var methodSelect = document.querySelector('#mbbx-method-select');
 
-            // Get modal action buttons
-            var open  = document.querySelector('#mbbxProductBtn');
-            var close = document.querySelector('#closembbxProduct');
+                // Get modal action buttons
+                var open = document.querySelector('#mbbxProductBtn');
+                var close = document.querySelector('#closembbxProduct');
 
-            // Add events to toggle modal
-            cont.addEventListener('click', function(e) {
-                if (e.target === open || e.target.closest('#mbbxProductBtn') || e.target === close || e.target === modal) {
-                    modal.classList.toggle('active');
-                    document.body.classList.toggle('scroll-lock');
-                } 
-            });
+                // Add events to toggle modal
+                cont.addEventListener('click', function(e) {
+                    if (e.target === open || e.target.closest('#mbbxProductBtn') || e.target === close || e.target === modal) {
+                        modal.classList.toggle('active');
+                        document.body.classList.toggle('scroll-lock');
+                    }
+                });
 
-            // Get sources and payment method selector 
-            var sources = document.querySelectorAll('.mobbexSource');
-            var methodSelect = document.querySelector('#mbbx-method-select');
+                /* Get sources from API through backend
+                *
+                * @param {string} url - backend endpoint to fetch payment sources
+                */
+                async function getSources(url) {
+                    try {
+                        // Show loading message meanwhile fetching sources
+                        modalBody.innerHTML = '<p class="text-center">Cargando métodos de pago...</p>';
 
-            // Filter payment methods in the modal
-            methodSelect.addEventListener('change', function() {
-                for (source of sources)
-                    source.style.display = source.id != methodSelect.value && methodSelect.value != 0 ? 'none' : '';
-            });
-        }) (window);
-    </script>
+                        // Fetch sources from backend
+                        const res      = await fetch(url);
+                        const response = await res.json();
 
+                        renderSources(response.sources, response.productTotal);
+
+                    } catch (error) {
+                        console.error('getSources() Error:', error);
+                    }
+                }
+
+                /* 
+                * Render sources dynamically in modal
+                *
+                * @param {Array} sources - List of payment sources
+                * @param {number} productTotal - Total amount of the product
+                */
+                function renderSources(sources, productTotal) {
+                    // Warns if no sources are available
+                    if (!sources || !sources.length) {
+                        modalBody.innerHTML = '<p class="alert alert-warning">No hay métodos de pago disponibles</p>';
+                        return;
+                    }
+                    // Clear previous content and sets default select option
+                    methodSelect.innerHTML = '<option value="0">Seleccione un método de pago</option>';
+                    modalBody.innerHTML = '';
+
+                    // Add available sources to select and modal body
+                    sources.forEach(source => {
+                        if (!source.source?.name) return;
+
+                        // add source to options
+                        const option = document.createElement('option');
+                        option.value = source.source.reference;
+                        option.textContent = source.source.name;
+                        methodSelect.appendChild(option); 
+
+                        const sourceElement = document.createElement('div');
+                        sourceElement.id = source.source.reference;
+                        sourceElement.className = 'mobbexSource';
+
+                        const imageUrl = source.installments?.enabled 
+                            ? `https://res.mobbex.com/images/sources/jpg/${source.source.reference}.jpg`
+                            : source.view.subgroup_logo;
+
+                        sourceElement.innerHTML = `
+                            <p class="mobbexPaymentMethod">
+                                <img src="${imageUrl}" alt="${source.source.name}">
+                                ${source.source.name}
+                            </p>
+                            ${source.installments?.enabled
+                                ? renderInstallments(source.installments.list)
+                                : `<p class="mobbexSourceTotal">${formatPrice(productTotal)}</p>`
+                            }
+                        `;
+
+                        modalBody.appendChild(sourceElement);
+                    });
+
+                    updateSourcesFilter();
+                }
+
+                /*
+                * Render installments table
+                *
+                * @param {Array} installment options
+                */
+                function renderInstallments(installments) {
+                    if (!installments?.length) return '';
+                    return `
+                        <table class="installmentsTable">
+                            ${installments.map(installment => `
+                                <tr>
+                                    <td class="installmentName">
+                                        ${installment.name}
+                                        ${installment.totals.installment.count !== 1 
+                                            ?  `<small>
+                                                    ${installment.totals.installment.count} cuotas de ${formatPrice(installment.totals.installment.amount)}
+                                                </small>` 
+                                            : ''}
+                                    </td>
+                                    ${installment.totals.total ? `
+                                        <td class="mbbxPlansPrice">
+                                            ${formatPrice(installment.totals.total)}
+                                        </td>
+                                    ` : '<td></td>'}
+                                </tr>
+                            `).join('')}
+                        </table>
+                    `;
+                }
+
+                // Payment methods filter
+                function updateSourcesFilter() {
+                    const sources = document.querySelectorAll('.mobbexSource');
+                    methodSelect.addEventListener('change', function() {
+                        sources.forEach(source => {
+                            source.style.display = 
+                                (source.id !== methodSelect.value && methodSelect.value !== '0') 
+                                    ? 'none' 
+                                    : '';
+                        });
+                    });
+                }
+
+                /* 
+                * Format price to ARS currency
+                *
+                * @param {number} amount - price/installment price amount
+                * 
+                * @return {string} formatted price
+                */
+                function formatPrice(amount) {
+                    return new Intl.NumberFormat('es-AR', {
+                        style: 'currency',
+                        currency: 'ARS'
+                    }).format(amount);
+                }
+            })(window);
+        </script>
+    {/literal}
 </div>
