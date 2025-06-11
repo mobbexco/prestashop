@@ -1,9 +1,9 @@
 #!/bin/sh
 
-VER="4.4.0"
+VER="4.4.1"
 
 # Unified Version
-PRESTAV="1.6-1.7"
+PRESTAV="1.6-8.2"
 
 # Install dependencies
 cd mobbex
