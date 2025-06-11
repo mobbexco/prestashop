@@ -36,11 +36,12 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
     public function getSources() {
         $products = [];
 
-        extract(Config::getProductsPlans($products));
-        
         // Gets values from query params
         $total    = (float) Tools::getValue('total');
         $products = json_decode(Tools::getValue('mbbxProducts'));
+        
+        // Extract products plans
+        extract(Config::getProductsPlans($products));
 
         // Gets installments
         $installments = \Mobbex\Repository::getInstallments(
@@ -50,12 +51,13 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
         );
 
         try {
-            // Get sourcer from Moobbex API
+            // Get sources from Moobbex API
             $sources = \Mobbex\Repository::getSources(
                 $total,
                 $installments
             );
 
+            // Return json with sources and total
             die(json_encode([
                 'success'      => true,
                 'productTotal' => $total,
