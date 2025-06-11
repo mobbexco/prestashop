@@ -20,7 +20,54 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
         if (!Config::validateHash(Tools::getValue('hash')))
             return;
 
-        if (Tools::getValue('action') == 'update')
+        $action = Tools::getValue('action');
+
+        if ($action == 'update')
             Config::updateMobbexSources();
+        else if ($action == 'getSources')
+            $this->getSources();
+    }
+
+    /**
+     * Action that gets sources from Mobbex API
+     * 
+     * @return void
+     */
+    public function getSources() {
+        $products = [];
+
+        extract(Config::getProductsPlans($products));
+        
+        // Gets values from query params
+        $total    = (float) Tools::getValue('total');
+        $products = json_decode(Tools::getValue('mbbxProducts'));
+
+        // Gets installments
+        $installments = \Mobbex\Repository::getInstallments(
+            $products,
+            $common_plans,
+            $advanced_plans
+        );
+
+        try {
+            // Get sourcer from Moobbex API
+            $sources = \Mobbex\Repository::getSources(
+                $total,
+                $installments
+            );
+
+            die(json_encode([
+                'success'      => true,
+                'productTotal' => $total,
+                'sources'      => $sources,
+            ]));
+
+        } catch (\Exception $e) {
+            Logger::log('error', 'Sources > getSources', $e->getMessage());
+            die (json_encode([
+                'success' => false,
+                'error' => $e->getMessage()
+            ]));
+        }
     }
 }

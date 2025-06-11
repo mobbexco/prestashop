@@ -835,30 +835,30 @@ class Mobbex extends PaymentModule
      * @param array|null $products
      */
     public function displayPlansWidget($total, $products = [])
-    {
-        extract(Config::getProductsPlans($products));
-        $sources = array();
+    {        
+        $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
 
-        //Try to get installments from API
-        try {
-            $sources = \Mobbex\Repository::getSources($total, \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans));
-        } catch (\Exception $e) {
-            Logger::log('error', 'mobbex > displayPlansWidget | Error Obtaining Mobbex installments from API', $e->getMessage());
-        }
+        // Sets source url to pass it to backend
+        $sourcesUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl(
+            "sources",
+            "getSources",
+            "&hash=$hash&total=$total&mbbxProducts=" . json_encode($products, true)
+        );
 
+        // Prepare data to be sent to smarty
         $data = [
-            'product_price'  => \Product::convertAndFormatPrice($total),
-            'sources'        => $sources,
+            'sources_url'     => $sourcesUrl,
+            'currency_symbol' => \Context::getContext()->currency->symbol,
             'style_settings' => [
-                'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
-                'styles'         => Config::$settings['widget_styles'],
+                'plans_theme'    => Config::$settings['theme'],
                 'text'           => Config::$settings['widget_text'],
                 'button_image'   => Config::$settings['widget_logo'],
-                'plans_theme'    => Config::$settings['theme'],
+                'styles'         => Config::$settings['widget_styles'],
+                'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
             ],
         ];
         
-        //Debug Data
+        // Debug Data
         Logger::log('debug', 'Observer > displayPlansWidget', $data);
 
         //Assign data to template
