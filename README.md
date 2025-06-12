@@ -1,8 +1,8 @@
 # Mobbex for PrestaShop
 
 ## Requisitos
-- PrestaShop >= 1.6
-- PHP >= 7.0
+- PrestaShop 1.6 - 8.2
+- PHP ^7.0
 
 ## Instalación
 1. Descargar la última versión del módulo desde https://github.com/mobbexco/prestashop/releases.

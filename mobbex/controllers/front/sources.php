@@ -34,12 +34,15 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
      * @return void
      */
     public function getSources() {
-        $products = [];
-
         // Gets values from query params
         $total    = (float) Tools::getValue('total');
-        $products = json_decode(Tools::getValue('mbbxProducts'));
-        
+        $products = explode(',', Tools::getValue('mbbxProducts') ?: '');
+
+        // Filter out non-numeric values
+        $products = array_filter($products, function ($product) {
+            return is_numeric($product);
+        });
+
         // Extract products plans
         extract(Config::getProductsPlans($products));
 
