@@ -192,7 +192,7 @@
                 <span id="closembbxProduct">&times;</span>
             </div>
             <div id="mbbxProductModalBody">
-                {* sources render *}
+                <p class="text-center">Cargando métodos de pago.</p>
             </div>
         </div> 
     </div>
@@ -206,161 +206,156 @@
         {/if}
         {$style_settings['text']}
     </button>
-        <script>
-        {literal}
-            (function (window) {
-                // Charge sources when document is ready
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () =>
-                        getSources(mbbx?.sourcesUrl)
-                    );
-                } else {
-                    console.log('Document is ready');
-                    getSources(mbbx?.sourcesUrl);
+</div>
+<script>
+    {literal}
+        (function (window) {
+            console.log('Mobbex Finance Widget loaded');
+
+            // Get modal elements
+            var cont = document.querySelector('.mobbex-plans');
+            var modal = document.querySelector('#mbbxProductModal');
+            var modalBody = document.querySelector('#mbbxProductModalBody');
+            var methodSelect = document.querySelector('#mbbx-method-select');
+
+            // Get modal action buttons
+            var open = document.querySelector('#mbbxProductBtn');
+            var close = document.querySelector('#closembbxProduct');
+
+            getSources(mbbx?.sourcesUrl);
+
+            // Add events to toggle modal
+            cont.addEventListener('click', function(e) {
+                if (e.target === open || e.target.closest('#mbbxProductBtn') || e.target === close || e.target === modal) {
+                    modal.classList.toggle('active');
+                    document.body.classList.toggle('scroll-lock');
                 }
-                // Get modal elements
-                var cont = document.querySelector('.mobbex-plans');
-                var modal = document.querySelector('#mbbxProductModal');
-                var modalBody = document.querySelector('#mbbxProductModalBody');
-                var methodSelect = document.querySelector('#mbbx-method-select');
+            });
 
-                // Get modal action buttons
-                var open = document.querySelector('#mbbxProductBtn');
-                var close = document.querySelector('#closembbxProduct');
+            /* Get sources from API through backend
+            *
+            * @param {string} url - backend endpoint to fetch payment sources
+            */
+            async function getSources(url) {
+                try {
+                    // Show loading message meanwhile fetching sources
+                    modalBody.innerHTML = '<p class="text-center">Cargando métodos de pago...</p>';
+                    console.log('Fetching sources from:', url);
 
-                // Add events to toggle modal
-                cont.addEventListener('click', function(e) {
-                    if (e.target === open || e.target.closest('#mbbxProductBtn') || e.target === close || e.target === modal) {
-                        modal.classList.toggle('active');
-                        document.body.classList.toggle('scroll-lock');
-                    }
+                    // Fetch sources from backend
+                    const res  = await fetch(url);
+                    const json = await res.json();
+
+                    renderSources(json.sources, json.productTotal);
+                } catch (error) {
+                    console.error('Error fetching sources:', error);
+                }
+            }
+
+            /* 
+            * Render sources dynamically in modal
+            *
+            * @param {Array} sources - List of payment sources
+            * @param {number} productTotal - Total amount of the product
+            */
+            function renderSources(sources, productTotal) {
+                // Warns if no sources are available
+                if (!sources || !sources.length) {
+                    modalBody.innerHTML = '<p class="alert alert-warning">No hay métodos de pago disponibles</p>';
+                    return;
+                }
+                // Clear previous content and sets default select option
+                methodSelect.innerHTML = '<option value="0">Seleccione un método de pago</option>';
+                modalBody.innerHTML = '';
+
+                // Add available sources to select and modal body
+                sources.forEach(source => {
+                    if (!source.source?.name) return;
+
+                    // add source to options
+                    const option = document.createElement('option');
+                    option.value = source.source.reference;
+                    option.textContent = source.source.name;
+                    methodSelect.appendChild(option); 
+
+                    const sourceElement = document.createElement('div');
+                    sourceElement.id = source.source.reference;
+                    sourceElement.className = 'mobbexSource';
+
+                    const imageUrl = source.installments?.enabled 
+                        ? `https://res.mobbex.com/images/sources/jpg/${source.source.reference}.jpg`
+                        : source.view.subgroup_logo;
+
+                    sourceElement.innerHTML = `
+                        <p class="mobbexPaymentMethod">
+                            <img src="${imageUrl}" alt="${source.source.name}">
+                            ${source.source.name}
+                        </p>
+                        ${source.installments?.enabled
+                            ? renderInstallments(source.installments.list)
+                            : `<p class="mobbexSourceTotal">${formatPrice(productTotal)}</p>`
+                        }
+                    `;
+
+                    modalBody.appendChild(sourceElement);
                 });
 
-                /* Get sources from API through backend
-                *
-                * @param {string} url - backend endpoint to fetch payment sources
-                */
-                async function getSources(url) {
-                    try {
-                        // Show loading message meanwhile fetching sources
-                        modalBody.innerHTML = '<p class="text-center">Cargando métodos de pago...</p>';
+                updateSourcesFilter();
+            }
 
-                        // Fetch sources from backend
-                        const res      = await fetch(url);
-                        const response = await res.json();
-
-                        renderSources(response.sources, response.productTotal);
-
-                    } catch (error) {
-                        console.error('getSources() Error:', error);
-                    }
-                }
-
-                /* 
-                * Render sources dynamically in modal
-                *
-                * @param {Array} sources - List of payment sources
-                * @param {number} productTotal - Total amount of the product
-                */
-                function renderSources(sources, productTotal) {
-                    // Warns if no sources are available
-                    if (!sources || !sources.length) {
-                        modalBody.innerHTML = '<p class="alert alert-warning">No hay métodos de pago disponibles</p>';
-                        return;
-                    }
-                    // Clear previous content and sets default select option
-                    methodSelect.innerHTML = '<option value="0">Seleccione un método de pago</option>';
-                    modalBody.innerHTML = '';
-
-                    // Add available sources to select and modal body
-                    sources.forEach(source => {
-                        if (!source.source?.name) return;
-
-                        // add source to options
-                        const option = document.createElement('option');
-                        option.value = source.source.reference;
-                        option.textContent = source.source.name;
-                        methodSelect.appendChild(option); 
-
-                        const sourceElement = document.createElement('div');
-                        sourceElement.id = source.source.reference;
-                        sourceElement.className = 'mobbexSource';
-
-                        const imageUrl = source.installments?.enabled 
-                            ? `https://res.mobbex.com/images/sources/jpg/${source.source.reference}.jpg`
-                            : source.view.subgroup_logo;
-
-                        sourceElement.innerHTML = `
-                            <p class="mobbexPaymentMethod">
-                                <img src="${imageUrl}" alt="${source.source.name}">
-                                ${source.source.name}
-                            </p>
-                            ${source.installments?.enabled
-                                ? renderInstallments(source.installments.list)
-                                : `<p class="mobbexSourceTotal">${formatPrice(productTotal)}</p>`
-                            }
-                        `;
-
-                        modalBody.appendChild(sourceElement);
-                    });
-
-                    updateSourcesFilter();
-                }
-
-                /*
-                * Render installments table
-                *
-                * @param {Array} installment options
-                */
-                function renderInstallments(installments) {
-                    if (!installments?.length) return '';
-                    return `
-                        <table class="installmentsTable">
-                            ${installments.map(installment => `
-                                <tr>
-                                    <td class="installmentName">
-                                        ${installment.name}
-                                        ${installment.totals.installment.count !== 1 
-                                            ?  `<small>
-                                                    ${installment.totals.installment.count} cuotas de ${formatPrice(installment.totals.installment.amount)}
-                                                </small>` 
-                                            : ''}
+            /*
+            * Render installments table
+            *
+            * @param {Array} installment options
+            */
+            function renderInstallments(installments) {
+                if (!installments?.length) return '';
+                return `
+                    <table class="installmentsTable">
+                        ${installments.map(installment => `
+                            <tr>
+                                <td class="installmentName">
+                                    ${installment.name}
+                                    ${installment.totals.installment.count !== 1 
+                                        ?  `<small>
+                                                ${installment.totals.installment.count} cuotas de ${formatPrice(installment.totals.installment.amount)}
+                                            </small>` 
+                                        : ''}
+                                </td>
+                                ${installment.totals.total ? `
+                                    <td class="mbbxPlansPrice">
+                                        ${formatPrice(installment.totals.total)}
                                     </td>
-                                    ${installment.totals.total ? `
-                                        <td class="mbbxPlansPrice">
-                                            ${formatPrice(installment.totals.total)}
-                                        </td>
-                                    ` : '<td></td>'}
-                                </tr>
-                            `).join('')}
-                        </table>
-                    `;
-                }
+                                ` : '<td></td>'}
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+            }
 
-                // Payment methods filter
-                function updateSourcesFilter() {
-                    const sources = document.querySelectorAll('.mobbexSource');
-                    methodSelect.addEventListener('change', function() {
-                        sources.forEach(source => {
-                            source.style.display = 
-                                (source.id !== methodSelect.value && methodSelect.value !== '0') 
-                                    ? 'none' 
-                                    : '';
-                        });
+            // Payment methods filter
+            function updateSourcesFilter() {
+                const sources = document.querySelectorAll('.mobbexSource');
+                methodSelect.addEventListener('change', function() {
+                    sources.forEach(source => {
+                        source.style.display = 
+                            (source.id !== methodSelect.value && methodSelect.value !== '0') 
+                                ? 'none' 
+                                : '';
                     });
-                }
+                });
+            }
 
-                /* 
-                * Format price to ARS currency
-                *
-                * @param {number} amount - price/installment price amount
-                * 
-                * @return {string} formatted price
-                */
-                function formatPrice(amount) {
-                    return `${mbbx?.currencySymbol} ${amount}`;
-                }
-            })(window);
-        </script>
+            /* 
+            * Format price to ARS currency
+            *
+            * @param {number} amount - price/installment price amount
+            * 
+            * @return {string} formatted price
+            */
+            function formatPrice(amount) {
+                return `${mbbx?.currencySymbol} ${amount}`;
+            }
+        })(window);
     {/literal}
-</div>
+</script>
