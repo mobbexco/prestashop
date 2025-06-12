@@ -842,13 +842,17 @@ class Mobbex extends PaymentModule
         $sourcesUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl(
             "sources",
             "getSources",
-            "&hash=$hash&total=$total&mbbxProducts=" . json_encode($products, true)
+            "&hash=$hash&total=$total&mbbxProducts=" . implode(',', $products)
         );
+
+        // Add javascript data to be used in the widget
+        $this->helper->addJavascriptData([
+            'sourcesUrl'     => $sourcesUrl,
+            'currencySymbol' => \Context::getContext()->currency->symbol,
+        ]);
 
         // Prepare data to be sent to smarty
         $data = [
-            'sources_url'     => $sourcesUrl,
-            'currency_symbol' => \Context::getContext()->currency->symbol,
             'style_settings' => [
                 'plans_theme'    => Config::$settings['theme'],
                 'text'           => Config::$settings['widget_text'],

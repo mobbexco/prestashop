@@ -186,7 +186,7 @@
         <div id="mbbxProductModalContent" class="{$style_settings['plans_theme']}">
             <div id="mbbxProductModalHeader">
                 <select name="mbbx-method-select" id="mbbx-method-select">
-                    <option id="mobbex-sources-container">Seleccione un método de papppgo</option>
+                    <option id="mobbex-sources-container">Seleccione un método de pago</option>
                     {* select render *}
                 </select>
                 <span id="closembbxProduct">&times;</span>
@@ -206,23 +206,17 @@
         {/if}
         {$style_settings['text']}
     </button>
-
-    {literal}
         <script>
-    {/literal}
-        // Smarty's way to get php vars
-        const currency_symbol = '{$currency_symbol|unescape:"html"}';
-        const sourcesUrl      = '{$sources_url|unescape:"html"}'.replace(/&amp;/g, '&');
-    {literal}
+        {literal}
             (function (window) {
                 // Charge sources when document is ready
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', () =>
-                        getSources(sourcesUrl)
+                        getSources(mbbx?.sourcesUrl)
                     );
                 } else {
                     console.log('Document is ready');
-                    getSources(sourcesUrl);
+                    getSources(mbbx?.sourcesUrl);
                 }
                 // Get modal elements
                 var cont = document.querySelector('.mobbex-plans');
@@ -364,7 +358,7 @@
                 * @return {string} formatted price
                 */
                 function formatPrice(amount) {
-                    return `${currency_symbol} ${amount}`;
+                    return `${mbbx?.currencySymbol} ${amount}`;
                 }
             })(window);
         </script>
