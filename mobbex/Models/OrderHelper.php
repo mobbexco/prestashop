@@ -403,6 +403,7 @@ class OrderHelper
             'phone'          => $address->phone_mobile ?: $address->phone,
             'identification' => $customer->id ? $this->getDni($customer->id) : null,
             'uid'            => $customer->id,
+            'createdAt'      => \Mobbex\dateToTime($customer->date_add),
         ];
     }
 

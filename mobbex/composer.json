@@ -5,7 +5,7 @@
         }
     },
     "require": {
-        "mobbexco/php-plugins-sdk": "1.14.0"
+        "mobbexco/php-plugins-sdk": "1.15.0"
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "*"
