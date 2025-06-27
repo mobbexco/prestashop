@@ -585,6 +585,9 @@ class Mobbex extends PaymentModule
             $this->helper->addAsset("$mediaPath/views/css/front.css", 'css');
             $this->helper->addAsset("$mediaPath/views/js/front.js");
 
+            if ($currentPage == 'product' || $currentPage == 'cart' )
+                $this->helper->addAsset("$mediaPath/views/js/finance-widget.min.js");
+
             if (Config::$settings['wallet'])
                 $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
@@ -847,26 +850,9 @@ class Mobbex extends PaymentModule
 
         // Add javascript data to be used in the widget
         $this->helper->addJavascriptData([
-            'sourcesUrl'     => $sourcesUrl,
-            'currencySymbol' => \Context::getContext()->currency->symbol,
+            'sourcesUrl'    => $sourcesUrl,
+            'theme'         => Config::$settings['theme'],
         ]);
-
-        // Prepare data to be sent to smarty
-        $data = [
-            'style_settings' => [
-                'plans_theme'    => Config::$settings['theme'],
-                'text'           => Config::$settings['widget_text'],
-                'button_image'   => Config::$settings['widget_logo'],
-                'styles'         => Config::$settings['widget_styles'],
-                'default_styles' => \Tools::getValue('controller') == 'cart' || \Tools::getValue('controller') == 'order',
-            ],
-        ];
-        
-        // Debug Data
-        Logger::log('debug', 'Observer > displayPlansWidget', $data);
-
-        //Assign data to template
-        $this->smarty->assign($data);
 
         return $this->display(__FILE__, 'views/templates/finance-widget/local.tpl');
     }
@@ -879,6 +865,7 @@ class Mobbex extends PaymentModule
     private function displayCatalogOptions($id, $catalogType = 'product')
     {
         $hash     = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
+        
         $template = "views/templates/hooks/$catalogType-settings.tpl";
         extract(Config::getCatalogPlans($id, $catalogType, true));
 
