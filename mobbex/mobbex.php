@@ -848,7 +848,10 @@ class Mobbex extends PaymentModule
         // Add javascript data to be used in the widget
         $this->helper->addJavascriptData([
             'sourcesUrl'     => $sourcesUrl,
-            'currencySymbol' => \Context::getContext()->currency->symbol,
+            'currencySymbol' => 
+                isset(\Context::getContext()->currency->symbol) ?
+                \Context::getContext()->currency->symbol :
+                '$',
         ]);
 
         // Prepare data to be sent to smarty
