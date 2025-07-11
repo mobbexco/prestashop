@@ -115,8 +115,11 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         // Get request data
         $postData = isset($_SERVER['CONTENT_TYPE']) && $_SERVER['CONTENT_TYPE'] == 'application/json' ? json_decode(file_get_contents('php://input'), true) : $_POST;
 
-        if (!$cartId || !isset($postData['data']))
+        if (!$cartId || empty($postData['data']) || empty($postData['type']))
             Logger::log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
+
+        if ($postData['type'] !== 'checkout')
+            return Logger::log('debug', 'notification > webhook | Mobbex Webhook: Ignoring Non-Checkout Webhook', $postData['type']);
 
         // Get Order and transaction data
         $cart  = new \Cart($cartId);
