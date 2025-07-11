@@ -852,6 +852,10 @@ class Mobbex extends PaymentModule
         $this->helper->addJavascriptData([
             'sourcesUrl'    => $sourcesUrl,
             'theme'         => Config::$settings['theme'],
+            'currencySymbol' => 
+                isset(\Context::getContext()->currency->symbol) ?
+                \Context::getContext()->currency->symbol :
+                '$',
         ]);
 
         return $this->display(__FILE__, 'views/templates/finance-widget/local.tpl');
