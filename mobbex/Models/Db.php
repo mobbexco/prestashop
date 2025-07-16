@@ -20,18 +20,21 @@ class Db extends \Mobbex\Model\Db
     {
         $result = \Db::getInstance()->query($sql);
 
+        // If the query fails, throw an exception with the error message
+        $error = \Db::getInstance()->getMsgError();
+        $errorNumber = \Db::getInstance()->getNumberError();
+
+        if ($error)
+            throw new \Exception("Error executing query: $error ($errorNumber). SQL: $sql");
+
         // If isn't a select type query return bool
         if (!preg_match('#^\s*\(?\s*(select|show|explain|describe|desc)\s#i', $sql))
             return (bool) $result;
-        //Return the results in array assoc format
+
+        // Return the results in array assoc format
         if ($result instanceof \PDOStatement)
             return $result->fetchAll(\PDO::FETCH_ASSOC);
         else if ($result instanceof \mysqli_result)
             return $result->fetch_all(MYSQLI_ASSOC);
-
-        //Log errors
-        Logger::log('error', 'DB', \Db::getInstance()->getMsgError());
-
-        return false;
     }
 }
