@@ -14,6 +14,16 @@ class Installer
         foreach (['cache', 'custom_fields', 'task', 'transaction'] as  $tableName) {
             $definition = [];
 
+            // Find cache_key column and reduce its size
+            // to avoid errors on Mariadb with utf8mb4 encoding
+            if ($tableName === 'cache') {
+                $definition = \Mobbex\Model\Table::getTableDefinition($tableName);
+                foreach ($definition as &$column) {
+                    if ($column['Field'] === 'cache_key')
+                        $column['Type'] = 'varchar(190)';
+                }
+            }
+
             //Modify transaction definition
             if ($tableName === 'transaction') {
                 $definition = \Mobbex\Model\Table::getTableDefinition($tableName);
@@ -36,7 +46,7 @@ class Installer
             $table = new \Mobbex\Model\Table($tableName, $definition);
             //If table creation fails, return false
             if (!$table->result)
-                return false;
+                throw new \Exception('Error creating table: ' . $tableName);
         }
 
         return true;

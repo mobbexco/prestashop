@@ -80,6 +80,16 @@ class Mobbex extends PaymentModule
             define('mobbexTasksExecuted', true) && \Mobbex\PS\Checkout\Models\Task::executePendingTasks();
     }
 
+    /**
+     * Add an error to the module errors array.
+     * 
+     * @param string $message The error message to add.
+     */
+    public function addError($message)
+    {
+        $this->_errors[] = $message;
+    }
+
     public function isUsingNewTranslationSystem()
     {
         return false;
@@ -95,19 +105,40 @@ class Mobbex extends PaymentModule
      */
     public function install()
     {
-        if (extension_loaded('curl') == false) {
-            $this->_errors[] = $this->l('You have to enable the cURL extension ') . $this->l('on your server to install this module.');
+        \Mobbex\PS\Checkout\Models\Logger::log('debug', 'Starting installation process');
+
+        try {
+            if (!extension_loaded('curl'))
+                throw new \Exception('cURL extension is not enabled');
+
+            if (!parent::install())
+                throw new \Exception('Parent install failed');
+
+            if (!$this->installer->createTables())
+                throw new \Exception('Create tables failed');
+
+            if (!$this->installer->createStates(Config::$orderStatuses))
+                throw new \Exception('Create states failed');
+
+            if (!$this->installer->createCostProduct())
+                throw new \Exception('Create cost product failed');
+
+            if (!$this->registrar->unregisterHooks($this))
+                throw new \Exception('Unregister hooks failed');
+
+            if (!$this->registrar->registerHooks($this))
+                throw new \Exception('Register hooks failed');
+
+            if (!$this->registrar->addExtensionHooks())
+                throw new \Exception('Add extension hooks failed');
+
+            return true;
+        } catch (\Exception $e) {
+            \Mobbex\PS\Checkout\Models\Logger::log('error', 'Install ' . $e->getMessage());
+            $this->addError($e->getMessage());
 
             return false;
         }
-
-        return parent::install()
-            && $this->installer->createTables()
-            && $this->installer->createStates(Config::$orderStatuses)
-            && $this->installer->createCostProduct()
-            && $this->registrar->unregisterHooks($this)
-            && $this->registrar->registerHooks($this)
-            && $this->registrar->addExtensionHooks();
     }
 
     /**

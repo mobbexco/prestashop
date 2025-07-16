@@ -14,10 +14,32 @@ use Mobbex\PS\Checkout\Models\Config;
  * @return bool Upgrade result.
  */
 function upgrade_module_4_4_1($module) {
-    return $module->installer->createTables()
-        && $module->installer->createStates(Config::$orderStatuses)
-        && $module->installer->createCostProduct()
-        && $module->registrar->unregisterHooks($module)
-        && $module->registrar->registerHooks($module)
-        && $module->registrar->addExtensionHooks();
+    try {
+        \Mobbex\PS\Checkout\Models\Logger::log('debug', 'Starting upgrade process');
+
+        if (!$module->installer->createTables())
+            throw new \Exception('Create tables failed');
+
+        if (!$module->installer->createStates(Config::$orderStatuses))
+            throw new \Exception('Create states failed');
+
+        if (!$module->installer->createCostProduct())
+            throw new \Exception('Create cost product failed');
+
+        if (!$module->registrar->unregisterHooks($module))
+            throw new \Exception('Unregister hooks failed');
+
+        if (!$module->registrar->registerHooks($module))
+            throw new \Exception('Register hooks failed');
+
+        if (!$module->registrar->addExtensionHooks())
+            throw new \Exception('Add extension hooks failed');
+
+        return true;
+    } catch (\Exception $e) {
+        \Mobbex\PS\Checkout\Models\Logger::log('error', 'Upgrade ' . $e->getMessage());
+        method_exists($module, 'addError') ? $module->addError($e->getMessage()) : false;
+
+        return false;
+    }
 }
