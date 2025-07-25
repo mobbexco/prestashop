@@ -118,7 +118,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         if (!$cartId || empty($postData['data']) || empty($postData['type']))
             Logger::log('fatal', 'notification > webhook | Invalid Webhook Data', $_REQUEST);
 
-        if ($postData['type'] !== 'checkout')
+        if (!in_array($postData['type'], ['checkout', 'checkout:expired']))
             return Logger::log('debug', 'notification > webhook | Mobbex Webhook: Ignoring Non-Checkout Webhook', $postData['type']);
 
         // Get Order and transaction data
