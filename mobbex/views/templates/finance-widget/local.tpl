@@ -3,6 +3,6 @@
 {literal}
     window.mobbexTheme      = mbbx.theme;
     window.mobbexSourcesUrl = mbbx.sourcesUrl;
-    window.showFeaturedInstallments = mbbx.showFeaturedInstallments;
+    window.featuredInstallments = mbbx.featuredInstallments;
 {/literal}
 </script>

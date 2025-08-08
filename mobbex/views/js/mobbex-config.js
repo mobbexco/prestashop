@@ -40,9 +40,53 @@
         label.style.color = '#2eacce';
     }
 
+    /**
+     * Toggle featured installments options.
+     * Manage the enabling of the best and custom featured installments options.
+     */
+    function toggleFeaturedInstallmentsOptions() {
+
+      var showInstallments = document.querySelector(
+        '[name="MOBBEX_SHOW_FEATURED_INSTALLMENTS"]'
+      );
+      var bestInstallments = document.querySelector(
+        '[name="MOBBEX_BEST_FEATURED_INSTALLMENTS"]'
+      );
+      var customInstallments = document.querySelector(
+        '[name="MOBBEX_CUSTOM_FEATURED_INSTALLMENTS"]'
+      );
+
+      if (showInstallments.checked) {
+        bestInstallments.setAttribute('disabled', 'disabled');
+        customInstallments.setAttribute('disabled', 'disabled');
+      }
+
+      if (bestInstallments.checked)
+        customInstallments.setAttribute('disabled', 'disabled');
+
+      showInstallments.onchange = () => {
+        if (showInstallments.checked) {
+            bestInstallments.removeAttribute('disabled');
+            customInstallments.removeAttribute('disabled');
+        } else {
+            bestInstallments.setAttribute('disabled', 'disabled');
+            customInstallments.setAttribute('disabled', 'disabled');
+        }
+      };
+
+      bestInstallments.onchange = () => {
+        if (bestInstallments.checked)
+            customInstallments.setAttribute('disabled', 'disabled');
+        else
+            customInstallments.removeAttribute('disabled');
+      };
+    }
+
     window.addEventListener('load', function () {
         var currentUrl = new URL(window.location.href);
         var updated    = currentUrl.searchParams.get('run_update');
+
+        toggleFeaturedInstallmentsOptions();
 
         if (updated) {
             // Remove update param
