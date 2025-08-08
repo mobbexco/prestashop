@@ -355,12 +355,12 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => self::l( 'Mostrar cuotas destacadas', 'config-form'),
+                'label'    => self::l( 'Mostrar financiación destacada', 'config-form'),
                 'name'     => 'MOBBEX_SHOW_FEATURED_INSTALLMENTS',
                 'key'      => 'show_featured_installments',
                 'default'  => true,
                 'required' => false,
-                'desc'     => 'Permite mostrar u ocultar las cuotas destacadas en el widget de financiación.',
+                'desc'     => 'Se mostraran planes de financiación destacados en el modal',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
@@ -374,6 +374,38 @@ $form = [
                         'label' => self::l( 'No', 'config-form'),
                     ],
                 ],
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => self::l( 'Mejores planes', 'config-form'),
+                'name'     => 'MOBBEX_BEST_FEATURED_INSTALLMENTS',
+                'key'      => 'best_featured_installments',
+                'default'  => true,
+                'required' => false,
+                'desc'     => 'Muestra automáticamente los planes de financiación más convenientes según precio y cuotas.',
+                'tab'      => 'tab_appearence',
+                'values'  => [
+                    [
+                        'id'    => 'best_featured_installments',
+                        'value' => true,
+                        'label' => self::l( 'Yes', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'hide_featured_installments',
+                        'value' => false,
+                        'label' => self::l( 'No', 'config-form'),
+                    ],
+                ],
+            ],
+            [
+                'type'     => 'text',
+                'label'    => self::l( 'Planes Personalizados', 'config-form'),
+                'name'     => 'MOBBEX_CUSTOM_FEATURED_INSTALLMENTS',
+                'key'      => 'custom_featured_installments',
+                'default'  => '',
+                'required' => false,
+                'tab'      => 'tab_appearence',
+                'desc'     => "Ingresa los identificadores(ID) de los planes de financiación que quieras mostrar. Serán agrupandos en hasta 3 filas aquellos que compartan precio y cantidad de cuotas.",
             ],
             [
                 'type'     => 'switch',
