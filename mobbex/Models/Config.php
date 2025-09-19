@@ -326,11 +326,11 @@ class Config
     /**
      * Get featured installments value
      * 
-     * @return string|array|null
+     * @return array|null
      */
     private static function get_featured_installments()
     {
-        if (self::$settings["best_featured_installments"] === '1')
+        if (self::$settings["auto_featured_insallments"] === '1')
             return [];
 
         if (!empty(self::$settings['custom_featured_installments']))
