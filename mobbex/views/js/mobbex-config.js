@@ -50,7 +50,7 @@
         '[name="MOBBEX_SHOW_FEATURED_INSTALLMENTS"]'
       );
       var bestInstallments = document.querySelector(
-        '[name="MOBBEX_BEST_FEATURED_INSTALLMENTS"]'
+        '[name="MOBBEX_AUTO_FEATURED_INSTALLMENTS"]'
       );
       var customInstallments = document.querySelector(
         '[name="MOBBEX_CUSTOM_FEATURED_INSTALLMENTS"]'

@@ -360,7 +360,7 @@ $form = [
                 'key'      => 'show_featured_installments',
                 'default'  => true,
                 'required' => false,
-                'desc'     => 'Se mostraran planes de financiación destacados en el modal',
+                'desc'     => 'Se mostraran planes de financiación destacados en el modal de financiación',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
@@ -378,15 +378,15 @@ $form = [
             [
                 'type'     => 'switch',
                 'label'    => self::l( 'Mejores planes', 'config-form'),
-                'name'     => 'MOBBEX_BEST_FEATURED_INSTALLMENTS',
-                'key'      => 'best_featured_installments',
+                'name'     => 'MOBBEX_AUTO_FEATURED_INSTALLMENTS',
+                'key'      => 'auto_featured_insallments',
                 'default'  => true,
                 'required' => false,
                 'desc'     => 'Muestra automáticamente los planes de financiación más convenientes según precio y cuotas.',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
-                        'id'    => 'best_featured_installments',
+                        'id'    => 'auto_featured_insallments',
                         'value' => true,
                         'label' => self::l( 'Yes', 'config-form'),
                     ],
@@ -405,7 +405,7 @@ $form = [
                 'default'  => '',
                 'required' => false,
                 'tab'      => 'tab_appearence',
-                'desc'     => "Ingresa los identificadores(ID) de los planes de financiación que quieras mostrar. Serán agrupandos en hasta 3 filas aquellos que compartan precio y cantidad de cuotas.",
+                'desc'     => "Ingresa los identificadores (ID) de los planes de financiación que quieras mostrar. Serán agrupandos en hasta 3 filas aquellos que compartan precio y cantidad de cuotas.",
             ],
             [
                 'type'     => 'switch',
