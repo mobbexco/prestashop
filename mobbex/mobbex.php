@@ -883,7 +883,7 @@ class Mobbex extends PaymentModule
         $this->helper->addJavascriptData([
             'sourcesUrl'    => $sourcesUrl,
             'theme'         => Config::$settings['theme'],
-            'showFeaturedInstallments' => Config::$settings['show_featured_installments'] == true,
+            'featuredInstallments' => Config::handle_featured_installments(),
             'currencySymbol' => 
                 isset(\Context::getContext()->currency->symbol) ?
                 \Context::getContext()->currency->symbol :

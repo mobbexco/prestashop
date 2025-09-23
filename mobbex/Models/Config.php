@@ -308,4 +308,40 @@ class Config
             self::$settings['api_key'] . '!' . self::$settings['access_token']
         );
     }
+
+    /* Finance Widget */
+    
+    /**
+     * Handle featured installments configuration and return the correct value
+     * 
+     * @return string|array|null
+     */
+    public static function handle_featured_installments()
+    {
+        return self::$settings['show_featured_installments'] === '1'
+            ? self::get_featured_installments()
+            : null;
+    }
+
+    /**
+     * Get featured installments value
+     * 
+     * @return array|null
+     */
+    private static function get_featured_installments()
+    {
+        if (self::$settings["auto_featured_insallments"] === '1')
+            return [];
+
+        if (!empty(self::$settings['custom_featured_installments']))
+            return preg_split('/\s*,\s*/', trim(
+                self::$settings['custom_featured_installments']
+            ));
+
+        Logger::log(
+            'error',
+            __('Error en la configuración de financiación destacada.', 'mobbex-for-woocommerce')
+        );
+        return null;
+    }
 }
