@@ -616,15 +616,24 @@ class Mobbex extends PaymentModule
             $this->helper->addAsset("$mediaPath/views/css/front.css", 'css');
             $this->helper->addAsset("$mediaPath/views/js/front.js");
 
-            if ($currentPage == 'product' || $currentPage == 'cart' )
-                $this->helper->addAsset("$mediaPath/views/js/finance-widget.min.js");
-
             if (Config::$settings['wallet'])
                 $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
             if (Config::$settings['embed'])
                 $this->helper->addAsset('https://api.mobbex.com/p/embed/1.2.0/lib.js');
         }
+    }
+
+    /**
+     * Load frontend scripts (footer).
+     */
+    public function hookDisplayFooter()
+    {
+        $currentPage = \Tools::getValue('controller');
+        $mediaPath = \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex');
+
+        if ($currentPage == 'product' || $currentPage == 'cart' )
+            echo "<script type='text/javascript' src='$mediaPath/views/js/finance-widget.min.js'></script>";
     }
 
     /**
