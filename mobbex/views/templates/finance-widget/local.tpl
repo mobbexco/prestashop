@@ -6,3 +6,4 @@
     window.showFeaturedInstallments = mbbx.showFeaturedInstallments;
 {/literal}
 </script>
+<script type='text/javascript' src='{$mediaPath}/views/js/finance-widget.min.js'></script>

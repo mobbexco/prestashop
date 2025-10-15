@@ -625,18 +625,6 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Load frontend scripts (footer).
-     */
-    public function hookDisplayFooter()
-    {
-        $currentPage = \Tools::getValue('controller');
-        $mediaPath = \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex');
-
-        if ($currentPage == 'product' || $currentPage == 'cart' )
-            echo "<script type='text/javascript' src='$mediaPath/views/js/finance-widget.min.js'></script>";
-    }
-
-    /**
      * Add new information to the Invoice PDF
      * - Card Number
      * - Customer Name
@@ -897,6 +885,10 @@ class Mobbex extends PaymentModule
                 isset(\Context::getContext()->currency->symbol) ?
                 \Context::getContext()->currency->symbol :
                 '$',
+        ]);;
+
+        $this->smarty->assign([
+            'mediaPath' => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex'),
         ]);
 
         return $this->display(__FILE__, 'views/templates/finance-widget/local.tpl');

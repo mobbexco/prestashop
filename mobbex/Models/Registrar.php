@@ -16,8 +16,7 @@ class Registrar
         'paymentReturn',
         'actionOrderReturn',
         'displayAdminOrder',
-        'actionMobbexExpireOrder',
-        'displayFooter',
+        'actionMobbexExpireOrder'
     ];
 
     public $ps16Hooks = [
