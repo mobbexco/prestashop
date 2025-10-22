@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 4.5.0
+ * @version 4.5.1
  * @see     PaymentModuleCore
  */
 
@@ -616,9 +616,6 @@ class Mobbex extends PaymentModule
             $this->helper->addAsset("$mediaPath/views/css/front.css", 'css');
             $this->helper->addAsset("$mediaPath/views/js/front.js");
 
-            if ($currentPage == 'product' || $currentPage == 'cart' )
-                $this->helper->addAsset("$mediaPath/views/js/finance-widget.min.js");
-
             if (Config::$settings['wallet'])
                 $this->helper->addAsset('https://res.mobbex.com/js/sdk/mobbex@1.1.0.js');
 
@@ -888,6 +885,10 @@ class Mobbex extends PaymentModule
                 isset(\Context::getContext()->currency->symbol) ?
                 \Context::getContext()->currency->symbol :
                 '$',
+        ]);;
+
+        $this->smarty->assign([
+            'mediaPath' => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex'),
         ]);
 
         return $this->display(__FILE__, 'views/templates/finance-widget/local.tpl');
