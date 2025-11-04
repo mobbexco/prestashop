@@ -314,34 +314,50 @@ class Config
     /**
      * Handle featured installments configuration and return the correct value
      * 
+     * @param string|int $id
+     * @param boolean    $cartPage
+     * 
      * @return string|array|null
      */
-    public static function handle_featured_installments()
+    public static function handleFeaturedInstallments($id, $cartPage)
     {
-        return self::$settings['show_featured_installments'] === '1'
-            ? self::get_featured_installments()
-            : null;
+        if ($cartPage)
+            return self::$settings['show_featured_installments_on_cart']
+                ? []
+                : null;
+        
+        if (empty($id))
+            return null;
+
+        $showFeatured = self::getCatalogSetting($id[0], "show_featured", 'product');
+        if ($showFeatured === "no")
+            return null;
+
+        $manualConfig = self::getCatalogSetting($id[0], "manual_config", 'product');
+        if ($manualConfig == "no")
+            return [];
+
+        $featuredPlans = self::getCatalogSetting($id[0], "featured_plans", 'product');
+        return self::getCategoriesFeaturedPlans($id[0], $featuredPlans);
     }
 
     /**
-     * Get featured installments value
+     * Get featured plans from product categories
      * 
-     * @return array|null
+     * @param string|int $id
+     * @param array      $featured_plans
+     * 
+     * @return string $comprlete_featured_plans
      */
-    private static function get_featured_installments()
+    private static function getCategoriesFeaturedPlans($id, $featuredPlans = []) 
     {
-        if (self::$settings["auto_featured_insallments"] === '1')
-            return [];
+        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+        foreach ($product->getCategories() as $categoryId)
+            $featuredPlans = array_merge(
+                $featuredPlans,
+                self::getCatalogSetting($categoryId, 'featured_plans', 'category')
+            );
 
-        if (!empty(self::$settings['custom_featured_installments']))
-            return preg_split('/\s*,\s*/', trim(
-                self::$settings['custom_featured_installments']
-            ));
-
-        Logger::log(
-            'error',
-            __('Error en la configuración de financiación destacada.', 'mobbex-for-woocommerce')
-        );
-        return null;
+        return $featuredPlans;
     }
 }
