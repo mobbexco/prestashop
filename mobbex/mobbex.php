@@ -16,6 +16,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Mobbex\PS\Checkout\Models\Config;
 use Mobbex\PS\Checkout\Models\Logger;
+use Mobbex\PS\Checkout\Models\CustomFields;
 
 /**
  * Main class of the module
@@ -679,11 +680,13 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayProductPriceBlock($params)
     {
-
         if ($params['type'] !== 'after_price' || empty($params['product']) || empty($params['product']['show_price']) || !Config::$settings['finance_product'])
             return;
 
-        return $this->displayPlansWidget($params['product']['price_amount'], [$params['product']['id']]);
+        $id    = [$params['product']['id']];
+        $total = $params['product']['price_amount'];
+
+        return $this->displayPlansWidget($total, $id);
     }
 
     /**
@@ -710,7 +713,10 @@ class Mobbex extends PaymentModule
         if (!\Validate::isLoadedObject($cart) || !Config::$settings['finance_cart'])
             return false;
 
-        return $this->displayPlansWidget((float) $cart->getOrderTotal(true, \Cart::BOTH), array_column($cart->getProducts(), 'id_product'));
+        $total        = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+        $cartProducts = array_column($cart->getProducts(), 'id_product');
+
+        return $this->displayPlansWidget($total, $cartProducts, true);
     }
 
     /**
@@ -863,9 +869,9 @@ class Mobbex extends PaymentModule
      * Display finance widget.
      * 
      * @param float|int|string $total Amount to calculate sources.
-     * @param array|null $products
+     * @param array|null       $products_ids
      */
-    public function displayPlansWidget($total, $products = [])
+    public function displayPlansWidget($total, $products_ids = [], $cartPage = false)
     {        
         $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
 
@@ -873,15 +879,15 @@ class Mobbex extends PaymentModule
         $sourcesUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl(
             "sources",
             "getSources",
-            "&hash=$hash&total=$total&mbbxProducts=" . implode(',', $products)
+            "&hash=$hash&total=$total&mbbxProducts=" . implode(',', $products_ids)
         );
 
         // Add javascript data to be used in the widget
         $this->helper->addJavascriptData([
-            'sourcesUrl'    => $sourcesUrl,
-            'theme'         => Config::$settings['theme'],
-            'featuredInstallments' => Config::handle_featured_installments(),
-            'currencySymbol' => 
+            'sourcesUrl'           => $sourcesUrl,
+            'theme'                => Config::$settings['theme'],
+            'featuredInstallments' => Config::handleFeaturedInstallments($products_ids, $cartPage),
+            'currencySymbol'       => 
                 isset(\Context::getContext()->currency->symbol) ?
                 \Context::getContext()->currency->symbol :
                 '$',
@@ -901,24 +907,41 @@ class Mobbex extends PaymentModule
      */
     private function displayCatalogOptions($id, $catalogType = 'product')
     {
-        $hash     = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
-        
         $template = "views/templates/hooks/$catalogType-settings.tpl";
+
         extract(Config::getCatalogPlans($id, $catalogType, true));
+        $filtered_plans = \Mobbex\Repository::getPlansFilterFields($id);
+        $plansSettings  = [
+            'show_featured',
+            'manual_config',
+            'featured_plans',
+            'advanced_plans',
+            'selected_plans'
+        ];
+        foreach($plansSettings as $setting)
+            ${$setting} = Config::getCatalogSetting($id, $setting, $catalogType);
+
+        $settings = [
+            'show_featured'  => $show_featured,
+            'manual_config'  => $manual_config,
+            'filtered_plans' => $filtered_plans,
+            'selected_plans' => $selected_plans,
+            'advanced_plans' => $advanced_plans,
+            'featured_plans' => $featured_plans
+        ];
 
         $options  = [
             'id'             => $id,
-            'update_sources' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('sources', 'update', "&hash=$hash"),
-            'plans'          => Config::getStoredSources(),
-            'check_common'   => $common_plans,
-            'check_advanced' => $advanced_plans,
-            'entity'         => \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, $catalogType, 'entity') ?: '',
+            'mbbx'           => $settings,
+            'filtered_plans' => $filtered_plans,
+            'mediaPath'      => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex'),
+            'entity'         => CustomFields::getCustomField($id, $catalogType, 'entity') ?: '',
         ];
 
         if ($catalogType === 'product') {
             $options['subscription'] = [
-                'uid'    => \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, 'product', 'subscription_uid') ?: '',
-                'enable' => \Mobbex\PS\Checkout\Models\CustomFields::getCustomField($id, 'product', 'subscription_enable') ?: 'no'
+                'uid'    => CustomFields::getCustomField($id, 'product', 'subscription_uid') ?: '',
+                'enable' => CustomFields::getCustomField($id, 'product', 'subscription_enable') ?: 'no'
             ];
         }
 
@@ -937,28 +960,28 @@ class Mobbex extends PaymentModule
         $productConfig = _PS_VERSION_ >= '8.0.0' ? $_POST : $_REQUEST;
 
         $options = [
-            'entity'         => isset($productConfig['entity']) ? $productConfig['entity'] : null,
-            'common_plans'   => [],
-            'advanced_plans' => []
+            'advanced_plans' => "[]",
+            'featured_plans' => "[]",
+            'selected_plans' => "[]",
+            'manual_config'  => 'no',
+            'show_featured'  => 'no',
+            'entity'         => isset($productConfig['entity']) ? $productConfig['entity'] : null
         ];
 
-        foreach ($productConfig as $key => $value) {
-            if (strpos($key, 'common_plan_') !== false && $value === 'no') {
-                // Add UID to common plans
-                $options['common_plans'][] = explode('common_plan_', $key)[1];
-            } else if (strpos($key, 'advanced_plan_') !== false && $value === 'yes') {
-                // Add UID to advanced plans
-                $options['advanced_plans'][] = explode('advanced_plan_', $key)[1];
-            }
+        if ($catalogType === 'product') {
+            $options['subscription_uid']    = isset($productConfig['sub_uid']) ? $productConfig['sub_uid'] : '';
+            $options['subscription_enable'] = isset($productConfig['sub_enable']) ? $productConfig['sub_enable'] : 'no';
         }
 
-        if ($catalogType === 'product') {
-            $options['subscription_enable'] = isset($productConfig['sub_enable']) ? $productConfig['sub_enable'] : 'no';
-            $options['subscription_uid']    = isset($productConfig['sub_uid'])    ? $productConfig['sub_uid']    : '';
-        }
+        // plans configurator settings
+        $options['manual_config']  = isset($productConfig['mobbex_manual_config']) ? $productConfig['mobbex_manual_config'] : 'no';
+        $options['featured_plans'] = isset($productConfig['mobbex_featured_plans']) ? $productConfig['mobbex_featured_plans'] : "[]";
+        $options['selected_plans'] = isset($productConfig['mobbex_selected_plans']) ? $productConfig['mobbex_selected_plans'] : "[]";
+        $options['advanced_plans'] = isset($productConfig['mobbex_advanced_plans']) ? $productConfig['mobbex_advanced_plans'] : "[]";
+        $options['show_featured']  = isset($productConfig['mobbex_show_featured_plans']) ? $productConfig['mobbex_show_featured_plans'] : 'no';
 
         foreach ($options as $key => $value)
-            \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($id, $catalogType, $key, strpos($key, 'plans') ? json_encode($value) : $value);
+            CustomFields::saveCustomField($id, $catalogType, $key, $value);
     }
 
     /**
