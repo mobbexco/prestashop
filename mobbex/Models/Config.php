@@ -312,14 +312,14 @@ class Config
     /* Finance Widget */
     
     /**
-     * Handle featured installments configuration and return the correct value
+     * handleFeaturedPlans configuration and return the correct value
      * 
      * @param string|int $id
      * @param boolean    $cartPage
      * 
      * @return string|array|null
      */
-    public static function handleFeaturedInstallments($id, $cartPage)
+    public static function handleFeaturedPlans($id, $cartPage)
     {
         if ($cartPage)
             return self::$settings['show_featured_installments_on_cart']
@@ -329,35 +329,78 @@ class Config
         if (empty($id))
             return null;
 
-        $showFeatured = self::getCatalogSetting($id[0], "show_featured", 'product');
-        if ($showFeatured === "no")
+        $product = new \Product($id[0], false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+
+        $showFeatured = self::getAllPlansConfiguratorSettings($id[0], $product, "show_featured");
+        if (!$showFeatured)
             return null;
 
-        $manualConfig = self::getCatalogSetting($id[0], "manual_config", 'product');
-        if ($manualConfig == "no")
+        $manualConfig = self::getAllPlansConfiguratorSettings($id[0], $product, "manual_config");
+        if (!$manualConfig)
             return [];
 
-        $featuredPlans = self::getCatalogSetting($id[0], "featured_plans", 'product');
-        return self::getCategoriesFeaturedPlans($id[0], $featuredPlans);
+        return self::getAllPlansConfiguratorSettings($id[0], $product, "featured_plans");
     }
 
     /**
-     * Get featured plans from product categories
+     * Get specific field values from product categories
      * 
-     * @param string|int $id
-     * @param array      $featured_plans
+     * @param object     $product
+     * @param string     $fieldName
      * 
-     * @return string $comprlete_featured_plans
+     * @return string|bool
      */
-    private static function getCategoriesFeaturedPlans($id, $featuredPlans = []) 
+    private static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
     {
-        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+        // gets product settings
+        $productFieldValue = self::getCatalogSetting($id, $fieldName, 'product');
+
+        // gets categories settings
+        // merge in array value case
+        if (is_array($productFieldValue)) {
+            $productFieldValue = self::displayFeaturedPlans($id) 
+                ? $productFieldValue 
+                : [];
+
+            foreach ($product->getCategories()  as $categoryId) {
+                $categoryFieldValue = self::displayFeaturedPlans($categoryId, 'category') 
+                    ? self::getCatalogSetting($categoryId, $fieldName, 'category')
+                    : [];
+
+                $productFieldValue  = array_merge(
+                    $productFieldValue, 
+                    $categoryFieldValue
+                );
+            }
+
+            return $productFieldValue;
+        }
+
+        // check flags in string value case
+        $categoriesFieldValues = [];
         foreach ($product->getCategories() as $categoryId)
-            $featuredPlans = array_merge(
-                $featuredPlans,
-                self::getCatalogSetting($categoryId, 'featured_plans', 'category')
+            array_push(
+                $categoriesFieldValues,
+                self::getCatalogSetting($categoryId, $fieldName, 'category')
             );
 
-        return $featuredPlans;
+        return empty($categoriesFieldValues) 
+            ? $productFieldValue == "yes"
+            : (in_array("yes", $categoriesFieldValues) || $productFieldValue == "yes");
+    }
+    
+    /**
+     * Get product display featured plans settings
+     * 
+     * @param string|int $id
+     * 
+     * @return bool
+     */
+    private static function displayFeaturedPlans($id, $catalogType = "product") 
+    {
+        return (
+            (self::getCatalogSetting($id, "show_featured", $catalogType) == "yes")
+            && (self::getCatalogSetting($id, "manual_config", $catalogType) == "yes")
+        );
     }
 }
