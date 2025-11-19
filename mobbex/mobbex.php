@@ -623,6 +623,26 @@ class Mobbex extends PaymentModule
             if (Config::$settings['embed'])
                 $this->helper->addAsset('https://api.mobbex.com/p/embed/1.2.0/lib.js');
         }
+
+        // Product list pages
+        if (in_array($currentPage, ['index', 'category', 'manufacturer', 'search', 'newproducts', 'bestsales', 'pricesdrop']) ) {
+            $show_tag    = Config::$settings['show_tag_on_products_catalog'] == '1';
+            $show_banner = Config::$settings['show_banner_on_products_catalog'] == '1';
+
+            if ($show_tag || $show_banner) {
+                $this->helper->addAsset("$mediaPath/views/css/product-tag.css", 'css');
+                $this->helper->addAsset("$mediaPath/views/js/product-tag.js");
+    
+                // Add variables for product tags/banners
+                \Media::addJsDef([
+                    'mbbx' => [
+                        'show_tag'    => $show_tag,
+                        'show_banner' => $show_banner
+                    ]
+                ]);
+            }
+
+        }
     }
 
     /**
@@ -647,7 +667,6 @@ class Mobbex extends PaymentModule
      */
     public function hookPaymentReturn($params)
     {
-
         if ($this->active == false)
             return;
 
@@ -768,6 +787,39 @@ class Mobbex extends PaymentModule
             return;
 
         return $this->displayPlansWidget($product->getPrice(), [$product]);
+    }
+
+    /**
+     * Show best plan banner in product lists.
+     * @param array $params
+     * @return string
+     */
+    public function hookDisplayProductListReviews($params)
+    {
+        if (
+            !isset($params['product']['id_product']) &&
+            (Config::$settings['show_tag_on_products_catalog'] == "no"
+            || Config::$settings['show_banner_on_products_catalog'] == "no")
+        ) {
+            return;
+        }
+
+        $id       = $params['product']['id_product'];
+        $bestPlan = json_decode(Config::getCatalogSetting($id, "bestPlan"), true);
+
+        if (empty($bestPlan)) return;
+
+        $mediaPath = \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex');
+
+        $this->smarty->assign([
+            'id'          => $id,
+            'bestPlan'    => $bestPlan,
+            'mediaPath'   => $mediaPath,
+            'version'     => \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION,
+
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/hooks/product-tag.tpl');
     }
 
     /**
@@ -982,6 +1034,10 @@ class Mobbex extends PaymentModule
 
         foreach ($options as $key => $value)
             CustomFields::saveCustomField($id, $catalogType, $key, $value);
+
+        // save best plan to show in produts catalog page
+        if ($catalogType == "product")
+            $this->saveBestPlan($id);
     }
 
     /**
@@ -1052,5 +1108,70 @@ class Mobbex extends PaymentModule
             $option->setLogo($logo);
 
         return $option;
+    }
+
+    /**
+     * saveBestPlan saves the required data to show the best plan banner in products catalog page
+     * 
+     * @param object $product
+     */
+    private function saveBestPlan($id)
+    {
+        $product = new \Product($id[0], false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+
+        $featuredPlans = Config::getAllPlansConfiguratorSettings($id, $product, "manual_config")
+            ? Config::getAllPlansConfiguratorSettings($id, $product, "featured_plans")
+            : null;
+
+        if (empty($featuredPlans))
+            return null;
+
+        $price     = $product->getPrice();
+        $bestPlan = $this->getBestPlan($featuredPlans, $id, $price);
+
+        CustomFields::saveCustomField($id, 'product', 'bestPlan', $bestPlan);
+    }
+
+    /**
+     * getBestPlan get the best plan configured as featured plan for a product
+     * 
+     * @param array      $featuredPlans
+     * @param int|string $id
+     * @param int|string $price
+     * 
+     * @return null|string best plan in featured plans
+     */
+    private function getBestPlan($featuredPlans, $id, $price) 
+    {
+        $sources = [];
+
+        // Get product plans
+        extract(Config::getProductsPlans([$id]));
+
+        $installments = \Mobbex\Repository::getInstallments(
+            [$id], 
+            $common_plans,
+            $advanced_plans
+        );
+
+        // Get sources from cache or Mobbex API
+        try {
+            $sources = \Mobbex\Repository::getSources(
+                $price,
+                $installments
+            );
+        }  catch (\Exception $e) {
+            \Mobbex\PS\Checkout\Models\Logger::log(
+                'error', 
+                'Mobbex > getBestPlan > getSources', 
+                $e->getMessage()
+            );
+            return null;
+        }
+        
+        if (empty($sources))
+            return null;
+
+        return $this->helper->filterFeaturedPlans($sources, $featuredPlans);
     }
 }
