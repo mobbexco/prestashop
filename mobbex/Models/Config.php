@@ -345,12 +345,12 @@ class Config
     /**
      * Get specific field values from product categories
      * 
-     * @param object     $product
-     * @param string     $fieldName
+     * @param object $product
+     * @param string $fieldName
      * 
      * @return string|bool
      */
-    private static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
+    public static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
     {
         // gets product settings
         $productFieldValue = self::getCatalogSetting($id, $fieldName, 'product');
