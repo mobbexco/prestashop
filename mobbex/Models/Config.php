@@ -312,41 +312,44 @@ class Config
     /* Finance Widget */
     
     /**
-     * handleFeaturedPlans configuration and return the correct value
+     * Handles featured plans configuration and return the correct value
      * 
-     * @param string|int $id
+     * @param array      $products_id
      * @param boolean    $cartPage
      * 
      * @return string|array|null
      */
-    public static function handleFeaturedPlans($id, $cartPage)
+    public static function handleFeaturedPlans($products_id, $cartPage)
     {
         if ($cartPage)
             return self::$settings['show_featured_installments_on_cart']
                 ? []
                 : null;
         
-        if (empty($id))
+        if (!is_array($products_id) || !$products_id)
             return null;
 
-        $product = new \Product($id[0], false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+        $id = reset($products_id);
 
-        $showFeatured = self::getAllPlansConfiguratorSettings($id[0], $product, "show_featured");
+        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+
+        $showFeatured = self::getAllPlansConfiguratorSettings($id, $product, "show_featured");
         if (!$showFeatured)
             return null;
 
-        $manualConfig = self::getAllPlansConfiguratorSettings($id[0], $product, "manual_config");
+        $manualConfig = self::getAllPlansConfiguratorSettings($id, $product, "manual_config");
         if (!$manualConfig)
             return [];
 
-        return self::getAllPlansConfiguratorSettings($id[0], $product, "featured_plans");
+        return self::getAllPlansConfiguratorSettings($id, $product, "featured_plans");
     }
 
     /**
-     * Get specific field values from product categories
+     * Get specific field values from a product and their categories.
      * 
-     * @param object     $product
-     * @param string     $fieldName
+     * @param int|string $id
+     * @param object $product
+     * @param string $fieldName
      * 
      * @return string|bool
      */
@@ -358,12 +361,12 @@ class Config
         // gets categories settings
         // merge in array value case
         if (is_array($productFieldValue)) {
-            $productFieldValue = self::displayFeaturedPlans($id) 
+            $productFieldValue = self::shouldDisplayFeaturedPlans($id) 
                 ? $productFieldValue 
                 : [];
 
             foreach ($product->getCategories()  as $categoryId) {
-                $categoryFieldValue = self::displayFeaturedPlans($categoryId, 'category') 
+                $categoryFieldValue = self::shouldDisplayFeaturedPlans($categoryId, 'category') 
                     ? self::getCatalogSetting($categoryId, $fieldName, 'category')
                     : [];
 
@@ -393,10 +396,11 @@ class Config
      * Get product display featured plans settings
      * 
      * @param string|int $id
+     * @param string $catalogType
      * 
      * @return bool
      */
-    private static function displayFeaturedPlans($id, $catalogType = "product") 
+    private static function shouldDisplayFeaturedPlans($id, $catalogType = "product") 
     {
         return (
             (self::getCatalogSetting($id, "show_featured", $catalogType) == "yes")
