@@ -7,11 +7,10 @@
         console.log("mbbx", mbbx);
         window.platformFormName = "";
         window.mobbexSources = mbbx.filtered_plans;
-        window.mobbexSelectedPlans = mbbx.selected_plans;
         window.mobbexFeaturedPlans = mbbx.featured_plans;
         window.mobbexAdvancedPlans = mbbx.advanced_plans;
-        window.mobbexManual = Boolean(mbbx.manual_config == "yes");
-        window.mobbexShowFeaturedPlans = Boolean(mbbx.show_featured == "yes");
+        window.mobbexManual = mbbx.manual_config === "yes";
+        window.mobbexShowFeaturedPlans = mbbx.show_featured === "yes";
     {/literal}
 </script>
 <script type='text/javascript' src='{$mediaPath}/views/js/plans-configurator.min.js'></script>
