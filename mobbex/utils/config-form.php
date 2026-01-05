@@ -355,57 +355,25 @@ $form = [
             ],
             [
                 'type'     => 'switch',
-                'label'    => self::l( 'Mostrar financiación destacada', 'config-form'),
-                'name'     => 'MOBBEX_SHOW_FEATURED_INSTALLMENTS',
-                'key'      => 'show_featured_installments',
+                'label'    => self::l( 'Mostrar financiación destacada en el carrito', 'config-form'),
+                'name'     => 'MOBBEX_SHOW_FEATURED_INSTALLMENTS_ON_CART',
+                'key'      => 'show_featured_installments_on_cart',
                 'default'  => true,
                 'required' => false,
-                'desc'     => 'Se mostraran planes de financiación destacados en el modal de financiación',
+                'desc'     => 'Se mostraran los planes de financiación destacados en el modal de financiación del carrito',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
-                        'id'    => 'show_featured_installments',
+                        'id'    => 'show_featured_installments_on_cart',
                         'value' => true,
                         'label' => self::l( 'Yes', 'config-form'),
                     ],
                     [
-                        'id'    => 'hide_featured_installments',
+                        'id'    => 'hide_featured_installments_on_cart',
                         'value' => false,
                         'label' => self::l( 'No', 'config-form'),
                     ],
                 ],
-            ],
-            [
-                'type'     => 'switch',
-                'label'    => self::l( 'Mejores planes', 'config-form'),
-                'name'     => 'MOBBEX_AUTO_FEATURED_INSTALLMENTS',
-                'key'      => 'auto_featured_insallments',
-                'default'  => true,
-                'required' => false,
-                'desc'     => 'Muestra automáticamente los planes de financiación más convenientes según precio y cuotas.',
-                'tab'      => 'tab_appearence',
-                'values'  => [
-                    [
-                        'id'    => 'auto_featured_insallments',
-                        'value' => true,
-                        'label' => self::l( 'Yes', 'config-form'),
-                    ],
-                    [
-                        'id'    => 'hide_featured_installments',
-                        'value' => false,
-                        'label' => self::l( 'No', 'config-form'),
-                    ],
-                ],
-            ],
-            [
-                'type'     => 'text',
-                'label'    => self::l( 'Planes Personalizados', 'config-form'),
-                'name'     => 'MOBBEX_CUSTOM_FEATURED_INSTALLMENTS',
-                'key'      => 'custom_featured_installments',
-                'default'  => '',
-                'required' => false,
-                'tab'      => 'tab_appearence',
-                'desc'     => "Ingresa los identificadores (ID) de los planes de financiación que quieras mostrar. Serán agrupandos en hasta 3 filas aquellos que compartan precio y cantidad de cuotas.",
             ],
             [
                 'type'     => 'switch',
@@ -430,7 +398,6 @@ $form = [
                     ],
                 ],
             ],
-
             [
                 'type'     => 'switch',
                 'label'    => self::l( 'Add DNI Field', 'config-form'),

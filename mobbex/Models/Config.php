@@ -312,36 +312,99 @@ class Config
     /* Finance Widget */
     
     /**
-     * Handle featured installments configuration and return the correct value
+     * Handles featured plans configuration and return the correct value
+     * 
+     * @param array      $products_id
+     * @param boolean    $cartPage
      * 
      * @return string|array|null
      */
-    public static function handle_featured_installments()
+    public static function handleFeaturedPlans($products_id, $cartPage)
     {
-        return self::$settings['show_featured_installments'] === '1'
-            ? self::get_featured_installments()
-            : null;
+        if ($cartPage)
+            return self::$settings['show_featured_installments_on_cart']
+                ? []
+                : null;
+        
+        if (!is_array($products_id) || !$products_id)
+            return null;
+
+        $id = reset($products_id);
+
+        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+
+        $showFeatured = self::getAllPlansConfiguratorSettings($id, $product, "show_featured");
+        if (!$showFeatured)
+            return null;
+
+        $manualConfig = self::getAllPlansConfiguratorSettings($id, $product, "manual_config");
+        if (!$manualConfig)
+            return [];
+
+        return self::getAllPlansConfiguratorSettings($id, $product, "featured_plans");
     }
 
     /**
-     * Get featured installments value
+     * Get specific field values from a product and their categories.
      * 
-     * @return array|null
+     * @param int|string $id
+     * @param object $product
+     * @param string $fieldName
+     * 
+     * @return string|bool
      */
-    private static function get_featured_installments()
+    private static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
     {
-        if (self::$settings["auto_featured_insallments"] === '1')
-            return [];
+        // gets product settings
+        $productFieldValue = self::getCatalogSetting($id, $fieldName, 'product');
 
-        if (!empty(self::$settings['custom_featured_installments']))
-            return preg_split('/\s*,\s*/', trim(
-                self::$settings['custom_featured_installments']
-            ));
+        // gets categories settings
+        // merge in array value case
+        if (is_array($productFieldValue)) {
+            $productFieldValue = self::shouldDisplayFeaturedPlans($id) 
+                ? $productFieldValue 
+                : [];
 
-        Logger::log(
-            'error',
-            __('Error en la configuración de financiación destacada.', 'mobbex-for-woocommerce')
+            foreach ($product->getCategories()  as $categoryId) {
+                $categoryFieldValue = self::shouldDisplayFeaturedPlans($categoryId, 'category') 
+                    ? self::getCatalogSetting($categoryId, $fieldName, 'category')
+                    : [];
+
+                $productFieldValue  = array_merge(
+                    $productFieldValue, 
+                    $categoryFieldValue
+                );
+            }
+
+            return $productFieldValue;
+        }
+
+        // check flags in string value case
+        $categoriesFieldValues = [];
+        foreach ($product->getCategories() as $categoryId)
+            array_push(
+                $categoriesFieldValues,
+                self::getCatalogSetting($categoryId, $fieldName, 'category')
+            );
+
+        return empty($categoriesFieldValues) 
+            ? $productFieldValue == "yes"
+            : (in_array("yes", $categoriesFieldValues) || $productFieldValue == "yes");
+    }
+    
+    /**
+     * Get product display featured plans settings
+     * 
+     * @param string|int $id
+     * @param string $catalogType
+     * 
+     * @return bool
+     */
+    private static function shouldDisplayFeaturedPlans($id, $catalogType = "product") 
+    {
+        return (
+            (self::getCatalogSetting($id, "show_featured", $catalogType) == "yes")
+            && (self::getCatalogSetting($id, "manual_config", $catalogType) == "yes")
         );
-        return null;
     }
 }
