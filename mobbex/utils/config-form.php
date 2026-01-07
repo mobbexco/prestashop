@@ -360,7 +360,7 @@ $form = [
                 'key'      => 'show_featured_installments_on_cart',
                 'default'  => true,
                 'required' => false,
-                'desc'     => 'Se mostraran los planes de financiación destacados en el modal de financiación del carrito',
+                'desc'     => 'Se mostrarán los planes destacados en el modal de financiación de la página de carrito',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
@@ -414,6 +414,29 @@ $form = [
                     ],
                     [
                         'id'    => 'hide_banner_on_products_catalog',
+                        'value' => false,
+                        'label' => self::l( 'No', 'config-form'),
+                    ],
+                ],
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => self::l( 'Hide installments at checkout', 'config-form'),
+                'name'     => 'MOBBEX_SHOW_NO_INTEREST_LABELS',
+                'key'      => 'show_no_interest_labels',
+                'default'  => true,
+                'is_bool'  => true,
+                'required' => false,
+                'desc'     => 'Hide the "interest-free installments" labels in the checkout view.',
+                'tab'      => 'tab_appearence',
+                'values'  => [
+                    [
+                        'id'    => 'not_show_interest_labels',
+                        'value' => true,
+                        'label' => self::l( 'Yes', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'show_interest_labels',
                         'value' => false,
                         'label' => self::l( 'No', 'config-form'),
                     ],
