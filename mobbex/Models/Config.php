@@ -353,7 +353,7 @@ class Config
      * 
      * @return string|bool
      */
-    private static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
+    public static function getAllPlansConfiguratorSettings($id, $product, $fieldName) 
     {
         // gets product settings
         $productFieldValue = self::getCatalogSetting($id, $fieldName, 'product');

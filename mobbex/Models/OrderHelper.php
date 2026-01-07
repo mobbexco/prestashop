@@ -597,4 +597,77 @@ class OrderHelper
             "SELECT `id_product` FROM " . _DB_PREFIX_ . "product WHERE `reference` = '$reference'"
         );
     }
+
+    /**
+     * filterFeaturedPlans get the featured plans configured for a product
+     * 
+     * @param array $sources
+     * @param array $featuredPlans
+     * 
+     * @return string best plan
+     */
+    public function filterFeaturedPlans($sources, $featuredPlans)
+    {
+        $featuredInstallments = [];
+
+        foreach ($sources as $source) {
+            if (empty($source['installments']) || empty($source['installments']['enabled'])) {
+                continue;
+            }
+
+            $installment_list = isset($source['installments']['list']) && is_array($source['installments']['list'])
+                ? $source['installments']['list']
+                : [];
+
+            foreach ($installment_list as $i) {
+                if (empty($i['uid'])) {
+                    continue;
+                }
+
+                if (in_array($i['uid'], $featuredPlans, true) || in_array($i['reference'], $featuredPlans, true)) {
+                    $featuredInstallments[] = [
+                        'count'      => isset($i['totals']['installment']['count']) ? $i['totals']['installment']['count'] : null,
+                        'amount'     => isset($i['totals']['installment']['amount']) ? $i['totals']['installment']['amount'] : null,
+                        'source'     => isset($source['source']['name']) ? $source['source']['name'] : 'Unknown',
+                        'percentage' => isset($i['totals']['financial']['percentage']) ? $i['totals']['financial']['percentage'] : 0,
+                    ];
+                }
+            }
+        }
+
+        if (empty($featuredInstallments))
+            return null;
+
+        return $this->setBestPlan($featuredInstallments);
+    }
+
+
+    /**
+     * setBestPlan evaluates between featured installments to get the best one
+     * 
+     * @param array $featuredInstallments
+     * 
+     * @return string $bestPlan
+     */
+    private function setBestPlan($featuredInstallments)
+    {
+        $bestPlan = null;
+
+        foreach ($featuredInstallments as $plan) {
+            if ($bestPlan === null) {
+                $bestPlan = $plan;
+                continue;
+            }
+
+            $currentDiscount = isset($plan['percentage']) ? $plan['percentage'] : 0;
+            $bestDiscount    = isset($bestPlan['percentage']) ? $bestPlan['percentage'] : 0;
+
+            if ($currentDiscount < $bestDiscount)
+                $bestPlan = $plan;
+            elseif ($currentDiscount == $bestDiscount && $plan['count'] > $bestPlan['count'])
+                $bestPlan = $plan;
+        }
+
+        return json_encode($bestPlan);
+    }
 }

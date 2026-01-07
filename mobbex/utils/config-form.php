@@ -360,7 +360,7 @@ $form = [
                 'key'      => 'show_featured_installments_on_cart',
                 'default'  => true,
                 'required' => false,
-                'desc'     => 'Se mostraran los planes de financiación destacados en el modal de financiación del carrito',
+                'desc'     => 'Se mostrarán los planes destacados en el modal de financiación de la página de carrito',
                 'tab'      => 'tab_appearence',
                 'values'  => [
                     [
@@ -370,6 +370,50 @@ $form = [
                     ],
                     [
                         'id'    => 'hide_featured_installments_on_cart',
+                        'value' => false,
+                        'label' => self::l( 'No', 'config-form'),
+                    ],
+                ],
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => self::l( 'Mostrar etiqueta de financiación en productos', 'config-form'),
+                'name'     => 'MOBBEX_SHOW_TAG_ON_PRODUCTS_CATALOG',
+                'key'      => 'show_tag_on_products_catalog',
+                'default'  => true,
+                'required' => false,
+                'desc'     => 'Habilita o deshabilita que se muestre una pequeña etiqueta en cada producto del catálogo que tenga configurado por lo menos un plan destacado',
+                'tab'      => 'tab_appearence',
+                'values'  => [
+                    [
+                        'id'    => 'show_tag_on_products_catalog',
+                        'value' => true,
+                        'label' => self::l( 'Yes', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'hide_tag_on_products_catalog',
+                        'value' => false,
+                        'label' => self::l( 'No', 'config-form'),
+                    ],
+                ],
+            ],
+            [
+                'type'     => 'switch',
+                'label'    => self::l( 'Mostrar banner de financiación destacada en productos', 'config-form'),
+                'name'     => 'MOBBEX_SHOW_BANNER_ON_PRODUCTS_CATALOG',
+                'key'      => 'show_banner_on_products_catalog',
+                'default'  => true,
+                'required' => false,
+                'desc'     => 'Habilita o deshabilita que se muestre un banner en cada producto del catálogo que tenga configurado por lo menos un plan destacado',
+                'tab'      => 'tab_appearence',
+                'values'  => [
+                    [
+                        'id'    => 'show_banner_on_products_catalog',
+                        'value' => true,
+                        'label' => self::l( 'Yes', 'config-form'),
+                    ],
+                    [
+                        'id'    => 'hide_banner_on_products_catalog',
                         'value' => false,
                         'label' => self::l( 'No', 'config-form'),
                     ],
