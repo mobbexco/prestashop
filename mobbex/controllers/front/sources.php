@@ -49,7 +49,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
         // Gets installments
         $installments = \Mobbex\Repository::getInstallments(
             $products,
-            $common_plans,
+            [],
             $advanced_plans
         );
 

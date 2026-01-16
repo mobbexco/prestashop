@@ -1101,11 +1101,11 @@ class Mobbex extends PaymentModule
     /**
      * saveBestPlan saves the required data to show the best plan banner in products catalog page
      * 
-     * @param object $product
+     * @param $id catalog id
      */
     private function saveBestPlan($id)
     {
-        $product = new \Product($id[0], false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
 
         $featuredPlans = Config::getAllPlansConfiguratorSettings($id, $product, "manual_config")
             ? Config::getAllPlansConfiguratorSettings($id, $product, "featured_plans")
@@ -1138,7 +1138,7 @@ class Mobbex extends PaymentModule
 
         $installments = \Mobbex\Repository::getInstallments(
             [$id], 
-            $common_plans,
+            [],
             $advanced_plans
         );
 
