@@ -1111,10 +1111,12 @@ class Mobbex extends PaymentModule
             ? Config::getAllPlansConfiguratorSettings($id, $product, "featured_plans")
             : null;
 
-        if (empty($featuredPlans))
+        if (empty($featuredPlans)) {
+            CustomFields::saveCustomField($id, 'product', 'bestPlan', '');
             return null;
+        }
 
-        $price     = $product->getPrice();
+        $price    = $product->getPrice();
         $bestPlan = $this->getBestPlan($featuredPlans, $id, $price);
 
         CustomFields::saveCustomField($id, 'product', 'bestPlan', $bestPlan);
