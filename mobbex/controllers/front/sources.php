@@ -20,12 +20,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
         if (!Config::validateHash(Tools::getValue('hash')))
             return;
 
-        $action = Tools::getValue('action');
-
-        if ($action == 'update')
-            Config::updateMobbexSources();
-        else if ($action == 'getSources')
-            $this->getSources();
+        $this->getSources();
     }
 
     /**
@@ -49,7 +44,7 @@ class MobbexSourcesModuleFrontController extends ModuleFrontController
         // Gets installments
         $installments = \Mobbex\Repository::getInstallments(
             $products,
-            $common_plans,
+            [],
             $advanced_plans
         );
 

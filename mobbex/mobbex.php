@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 4.5.1
+ * @version 5.0.0
  * @see     PaymentModuleCore
  */
 
@@ -1101,20 +1101,22 @@ class Mobbex extends PaymentModule
     /**
      * saveBestPlan saves the required data to show the best plan banner in products catalog page
      * 
-     * @param object $product
+     * @param $id catalog id
      */
     private function saveBestPlan($id)
     {
-        $product = new \Product($id[0], false, (int) \Configuration::get('PS_LANG_DEFAULT'));
+        $product = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
 
         $featuredPlans = Config::getAllPlansConfiguratorSettings($id, $product, "manual_config")
             ? Config::getAllPlansConfiguratorSettings($id, $product, "featured_plans")
             : null;
 
-        if (empty($featuredPlans))
+        if (empty($featuredPlans)) {
+            CustomFields::saveCustomField($id, 'product', 'bestPlan', '');
             return null;
+        }
 
-        $price     = $product->getPrice();
+        $price    = $product->getPrice();
         $bestPlan = $this->getBestPlan($featuredPlans, $id, $price);
 
         CustomFields::saveCustomField($id, 'product', 'bestPlan', $bestPlan);
@@ -1138,7 +1140,7 @@ class Mobbex extends PaymentModule
 
         $installments = \Mobbex\Repository::getInstallments(
             [$id], 
-            $common_plans,
+            [],
             $advanced_plans
         );
 

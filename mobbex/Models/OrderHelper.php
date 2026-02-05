@@ -289,7 +289,7 @@ class OrderHelper
                 self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
                 \Currency::getCurrency($cart->id_currency)['iso_code'],
                 $items,
-                \Mobbex\Repository::getInstallments($products, $common_plans, $advanced_plans),
+                \Mobbex\Repository::getInstallments($products, [], $advanced_plans),
                 $customerData,
                 $this->getAddresses($cart),
                 $draft ? 'none' : null,

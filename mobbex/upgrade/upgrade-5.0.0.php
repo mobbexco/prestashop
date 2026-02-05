@@ -13,7 +13,7 @@ use Mobbex\PS\Checkout\Models\Config;
  * 
  * @return bool Upgrade result.
  */
-function upgrade_module_4_5_0($module) {
+function upgrade_module_5_0_0($module) {
     try {
         \Mobbex\PS\Checkout\Models\Logger::log('debug', 'Starting upgrade process');
 

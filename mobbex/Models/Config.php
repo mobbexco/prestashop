@@ -7,7 +7,7 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '4.5.1';
+    const MODULE_VERSION = '5.0.0';
     const PS16           = '1.6';
     const PS17           = '1.7';
 
@@ -133,17 +133,16 @@ class Config
      */
     public static function getProductsPlans($products)
     {
-        $common_plans = $advanced_plans = [];
+        $advanced_plans = [];
 
         foreach ($products as $product) {
             $id = is_array($product) && isset($product['id_product']) ? $product['id_product'] : $product;
             $product_plans = self::getCatalogPlans($id);
             //Merge all catalog plans
-            $common_plans   = array_merge($common_plans, $product_plans['common_plans']);
             $advanced_plans = array_merge($advanced_plans, $product_plans['advanced_plans']);
         }
 
-        return compact('common_plans', 'advanced_plans');
+        return compact('advanced_plans');
     }
 
     /**
@@ -157,23 +156,26 @@ class Config
     public static function getCatalogPlans($id, $catalog_type = 'product', $admin = false)
     {
         //Get product plans
-        $common_plans   = self::getCatalogSetting($id, 'common_plans', $catalog_type) ?: [];
         $advanced_plans = self::getCatalogSetting($id, 'advanced_plans', $catalog_type) ?: [];
         $product        = new \Product($id, false, (int) \Configuration::get('PS_LANG_DEFAULT'));
 
         //Get plans from categories
         if (!$admin && $catalog_type === 'product') {
             foreach ($product->getCategories() as $categoryId) {
-                $common_plans   = array_merge($common_plans, self::getCatalogSetting($categoryId, 'common_plans', 'category'));
                 $advanced_plans = array_merge($advanced_plans, self::getCatalogSetting($categoryId, 'advanced_plans', 'category'));
             }
         }
 
         //Avoid duplicated plans
-        $common_plans   = array_unique($common_plans);
         $advanced_plans = array_unique($advanced_plans);
 
-        return compact('common_plans', 'advanced_plans');
+        Logger::log(
+            'debug', 
+            'config > getCatalogPlans | Obtained Mobbex plans', 
+            ['advanced_plans' => $advanced_plans]
+        );
+
+        return compact('advanced_plans');
     }
 
     /**
@@ -197,82 +199,6 @@ class Config
         }
 
         return false;
-    }
-
-    /** SOURCES SETTINGS **/
-
-    public static function getStoredSources()
-    {
-        $shopId = \Context::getContext()->shop->id ?: null;
-
-        // Try to get sources from db
-        $sources = [
-            'names'    => json_decode(CustomFields::getCustomField($shopId, 'shop', 'source_names'), true)     ?: [],
-            'common'   => json_decode(CustomFields::getCustomField($shopId, 'shop', 'common_sources'), true)   ?: [],
-            'advanced' => json_decode(CustomFields::getCustomField($shopId, 'shop', 'advanced_sources'), true) ?: [],
-            'groups'   => json_decode(CustomFields::getCustomField($shopId, 'shop', 'source_groups'), true) ?: [],
-        ];
-
-        if (!$sources['common'] || !$sources['advanced'] || !$sources['groups'])
-            $sources = self::updateMobbexSources();
-
-        return $sources;
-    }
-
-    /**
-     * Save sources in config data
-     * 
-     */
-    public static function updateMobbexSources()
-    {
-        $names = $common = $advanced = $groups = [];
-
-        try {
-            foreach (\Mobbex\Repository::getSources() as $source) {
-                if (empty($source['installments']['list']))
-                    continue;
-
-                // Format field data
-                foreach ($source['installments']['list'] as $plan) {
-                    $common[$plan['reference']] = [
-                        'id'          => "common_plan_$plan[reference]",
-                        'key'         => isset($plan['reference']) ? $plan['reference'] : '',
-                        'label'       => isset($plan['name']) ? $plan['name'] : '',
-                        'description' => isset($plan['description']) ? $plan['description'] : '',
-                    ];
-
-                    $groups[$plan['name']][] = $source['source']['reference'];
-                    $groups[$plan['name']]   = array_unique($groups[$plan['name']]);
-                }
-            }
-
-            foreach (\Mobbex\Repository::getSourcesAdvanced() as $source) {
-                if (empty($source['installments']))
-                    continue;
-
-                // Save source name
-                $names[$source['source']['reference']] = $source['source']['name'];
-
-                // Format field data
-                foreach ($source['installments'] as $plan) {
-                    $advanced[$source['source']['reference']][] = [
-                        'id'          => "advanced_plan_$plan[uid]",
-                        'key'         => isset($plan['uid']) ? $plan['uid'] : '',
-                        'label'       => isset($plan['name']) ? $plan['name'] : '',
-                        'description' => isset($plan['description']) ? $plan['description'] : '',
-                    ];
-                }
-            }
-
-            // Save to db
-            $shopId = \Context::getContext()->shop->id ?: null;
-            foreach (['source_names' => 'names', 'common_sources' => 'common', 'advanced_sources' => 'advanced', 'source_groups' => 'groups'] as $key => $value)
-                CustomFields::saveCustomField($shopId, 'shop', $key, json_encode(${$value}));
-        } catch (\Exception $e) {
-            Logger::log('error', 'config > updateMobbexSources | Error Obtaining Mobbex sources from API', $e->getMessage());
-        }
-
-        return compact('names', 'common', 'advanced', 'groups');
     }
 
     /** UTILS **/
