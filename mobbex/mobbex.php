@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * mobbex.php
@@ -44,7 +44,7 @@ class Mobbex extends PaymentModule
         $this->tab             = 'payments_gateways';
         $this->version         = \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
         $this->author          = 'Mobbex Co';
-        $this->controllers     = ['notification', 'payment', 'task', 'sources', 'capture'];
+        $this->controllers     = ['notification', 'payment', 'task', 'sources', 'capture', 'detect', 'process'];
         $this->currencies      = true;
         $this->currencies_mode = 'checkbox';
         $this->bootstrap       = true;
@@ -64,7 +64,7 @@ class Mobbex extends PaymentModule
         $this->updater   = new \Mobbex\PS\Checkout\Models\Updater();
         $this->installer = new \Mobbex\PS\Checkout\Models\Installer();
         $this->cache     = new \Mobbex\PS\Checkout\Models\Cache();
-        
+
         //Init php sdk
         $this->initSdk();
 
@@ -289,53 +289,72 @@ class Mobbex extends PaymentModule
         if (!$this->active || !$this->checkCurrency($params['cart']) || !$this->helper->isPaymentStep())
             return;
 
+        return $this->getMobbexPaymentOptions($params);
+    }
+
+    /**
+     * Get all Mobbex available payment options
+     * 
+     * @param array $params received from hok
+     * 
+     * @return array $options Mobbex payment options
+     */
+    private function getMobbexPaymentOptions(&$params)
+    {
         $options = [];
         $checkoutData = $this->helper->getPaymentData(true);
 
         // Necessary variables when defining the payment method icon
         $defaultImage = '/modules/mobbex/views/img/logo_transparent.png';
-        $image        = !empty(Config::$settings['mobbex_payment_method_image']) ? Config::$settings['mobbex_payment_method_image'] : $defaultImage;
-        $method_icon  = (bool) Config::$settings['method_icon'];
+        $settings     = Config::$settings;
+        $order_helper = new \Mobbex\PS\Checkout\Models\OrderHelper();
+
+        $method_icon = (bool) $settings['method_icon'];
+        $image       = $settings['mobbex_payment_method_image'] ?: $defaultImage;
 
         // Get cards and payment methods
         $cards   = isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [];
         $methods = isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [];
 
-        \Mobbex\PS\Checkout\Models\OrderHelper::addJavascriptData([
-            'primaryColor' => Config::$settings['color'],
-            'paymentUrl'  => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
-            'errorUrl'    => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-            'embed'       => (bool) Config::$settings['embed'],
-            'return'      => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
+        $order_helper::addJavascriptData([
+            'primaryColor' => $settings['color'],
+            'embed'        => (bool) $settings['embed'],
+            'paymentUrl'   => $order_helper::getModuleUrl('payment', 'process'),
+            'errorUrl'     => $order_helper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
+            'return'       => $order_helper::getModuleUrl('notification', 'return', '&id_cart=' . $params['cart']->id),
         ]);
 
         // Get payment methods from checkout
-        if (!Config::$settings['payment_methods'] || isset($checkoutData['sid']) || count($methods) < 1) {
-            $options[]    = $this->createPaymentOption(
-                Config::$settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
-                Config::$settings['mobbex_description'],
+        if (!$settings['payment_methods'] || isset($checkoutData['sid']) || count($methods) < 1) {
+            $options[] = $this->createPaymentOption(
+                $settings['mobbex_title'] ?: $this->l('Paying using cards, cash or others'),
+                $settings['mobbex_description'],
                 \Media::getMediaPath($image),
                 'module:mobbex/views/templates/front/payment.tpl',
-                ['checkoutUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect'), $method_icon],
-                Config::$settings['checkout_banner']
+                ['checkoutUrl' => $order_helper::getModuleUrl('payment', 'redirect'), $method_icon],
+                $settings['checkout_banner']
             );
         } else {
             foreach ($methods as $method) {
-                $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]");
+                $checkoutUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl(
+                    'payment',
+                    'redirect',
+                    "&id=$checkoutData[id]&method=$method[group]:$method[subgroup]"
+                );
                 $options[] = $this->createPaymentOption(
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && Config::$settings['mobbex_title'] ? Config::$settings['mobbex_title'] : $method['subgroup_title'],
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['mobbex_description'] : null,
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') && $settings['mobbex_title'] ? $settings['mobbex_title'] : $method['subgroup_title'],
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $settings['mobbex_description'] : null,
                     (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $image : $method['subgroup_logo'],
                     'module:mobbex/views/templates/front/method.tpl',
                     compact('method', 'checkoutUrl', 'method_icon'),
-                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? Config::$settings['checkout_banner'] : ''
+                    (count($methods) == 1 || $method['subgroup'] == 'card_input') ? $settings['checkout_banner'] : ''
                 );
             }
         }
 
         // Get wallet cards
         foreach ($cards as $key => $card) {
-            if($card['installments']) {
+            if ($card['installments']) {
                 $options[] = $this->createPaymentOption(
                     $card['name'],
                     null,
@@ -344,6 +363,50 @@ class Mobbex extends PaymentModule
                     compact('card', 'key', 'method_icon')
                 );
             }
+        }
+
+        // Add transparent as a payment method
+        if ($settings['transparent_enabled']) {
+            $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
+
+            // required to show sources images in card input
+            $productsIds = [];
+            if (!empty($params['cart']) && method_exists($params['cart'], 'getProducts')) {
+                foreach ($params['cart']->getProducts() as $product) {
+                    if (!empty($product['id_product']))
+                        $productsIds[] = (int) $product['id_product'];
+                }
+                $productsIds = array_values(array_unique($productsIds));
+            }
+            
+            // Sets source url to pass it to backend
+            $sourcesUrl = \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl(
+                "sources",
+                "getSources",
+                "&hash=$hash&total={$checkoutData['total']}&mbbxProducts=" . implode(',', $productsIds)
+            );
+
+            $transparentConfig = [
+                'sourcesUrl'  => $sourcesUrl,
+                'i18n'        => Config::getTransparentI18n(),
+                'showBanner'  => !empty($settings['checkout_banner']),
+                'detectUrl'   => $order_helper::getModuleUrl('detect', '', "&ajax=1&hash=$hash"),
+                'processUrl'  => $order_helper::getModuleUrl('process', '', "&ajax=1&hash=$hash"),
+                'title'       => isset($settings['transparent_title']) ? $settings['transparent_title'] : '',
+                'description' => isset($settings['mobbex_description']) ? $settings['mobbex_description'] : '',
+                'intentToken' => isset($checkoutData['intent']['token']) ? $checkoutData['intent']['token'] : '',
+            ];
+
+            $options[] = $this->createPaymentOption(
+                $settings['transparent_title'],
+                null,
+                $settings['transparent_logo'],
+                'module:mobbex/views/templates/front/transparent.tpl'
+            );
+
+            $order_helper::addJavascriptData([
+                'transparentConfig' => $transparentConfig,
+            ]);
         }
 
         Logger::log('debug', 'Observer > hookPaymentOptions', $options);
@@ -394,7 +457,7 @@ class Mobbex extends PaymentModule
         $customer    = \Context::getContext()->customer;
         $formBuilder = isset($params['form_builder']) ? $params['form_builder'] : null;
 
-        if(!isset($formBuilder, $customer)){
+        if (!isset($formBuilder, $customer)) {
             Logger::log('debug', 'Observer > hookActionCustomerFormBuilder', [$formBuilder, $customer]);
             return;
         }
@@ -412,9 +475,9 @@ class Mobbex extends PaymentModule
                 'required' => false,
             ]
         );
-        
+
         // When it is modified in the form, save new dni value in mobbex custom fields table
-        if(isset($_POST['customer']['customer_dni'])) {
+        if (isset($_POST['customer']['customer_dni'])) {
             // Gets the new dni entered in the form through post
             $dni = $_POST['customer']['customer_dni'];
             \Mobbex\PS\Checkout\Models\CustomFields::saveCustomField($customer->id, 'customer', 'dni', $dni);
@@ -622,17 +685,22 @@ class Mobbex extends PaymentModule
 
             if (Config::$settings['embed'])
                 $this->helper->addAsset('https://api.mobbex.com/p/embed/1.2.0/lib.js');
+
+            if (Config::$settings['transparent_enabled']) {
+                $this->helper->addAsset("$mediaPath/views/js/transparent.min.js");
+                $this->helper->addAsset("$mediaPath/views/css/transparent.css", 'css');
+            }
         }
 
         // Product list pages
-        if (in_array($currentPage, ['index', 'category', 'manufacturer', 'search', 'newproducts', 'bestsales', 'pricesdrop']) ) {
+        if (in_array($currentPage, ['index', 'category', 'manufacturer', 'search', 'newproducts', 'bestsales', 'pricesdrop'])) {
             $show_tag    = Config::$settings['show_tag_on_products_catalog'] == '1';
             $show_banner = Config::$settings['show_banner_on_products_catalog'] == '1';
 
             if ($show_tag || $show_banner) {
                 $this->helper->addAsset("$mediaPath/views/css/product-tag.css", 'css');
                 $this->helper->addAsset("$mediaPath/views/js/product-tag.js");
-    
+
                 // Add variables for product tags/banners
                 \Media::addJsDef([
                     'mbbx' => [
@@ -641,7 +709,6 @@ class Mobbex extends PaymentModule
                     ]
                 ]);
             }
-
         }
     }
 
@@ -890,7 +957,7 @@ class Mobbex extends PaymentModule
 
         // Set the uri to access to the actual page, and a hash to limit the access via capture
         $uri  = urlencode($_SERVER['REQUEST_URI']);
-        $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']); 
+        $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
 
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
@@ -924,7 +991,7 @@ class Mobbex extends PaymentModule
      * @param array|null       $productsIds
      */
     public function displayPlansWidget($total, $productsIds = [], $cartPage = false)
-    {        
+    {
         $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
 
         // Sets source url to pass it to backend
@@ -939,11 +1006,11 @@ class Mobbex extends PaymentModule
             'sourcesUrl'           => $sourcesUrl,
             'theme'                => Config::$settings['theme'],
             'featuredInstallments' => Config::handleFeaturedPlans($productsIds, $cartPage),
-            'currencySymbol'       => 
-                isset(\Context::getContext()->currency->symbol) ?
+            'currencySymbol'       =>
+            isset(\Context::getContext()->currency->symbol) ?
                 \Context::getContext()->currency->symbol :
                 '$',
-        ]);;
+        ]);
 
         $this->smarty->assign([
             'mediaPath' => \Media::getMediaPath(_PS_MODULE_DIR_ . 'mobbex'),
@@ -1079,12 +1146,12 @@ class Mobbex extends PaymentModule
             $this->smarty->assign($templateVars);
 
         $extraInfo = '';
-        
+
         //Add banner
-        if($banner)
+        if ($banner)
             $extraInfo .= "<img src='$banner' class='mbbx-banner'>";
         //Add description
-        if($description)
+        if ($description)
             $extraInfo .= "<p>$description</p>";
 
         $option = new \PrestaShop\PrestaShop\Core\Payment\PaymentOption();
@@ -1092,7 +1159,7 @@ class Mobbex extends PaymentModule
             ->setForm($this->smarty->fetch($template))
             ->setAdditionalInformation($extraInfo ? "<section class='mbbx-extra'>$extraInfo</section>" : '');
 
-        if(Config::$settings['method_icon'])
+        if (Config::$settings['method_icon'])
             $option->setLogo($logo);
 
         return $option;
@@ -1131,7 +1198,7 @@ class Mobbex extends PaymentModule
      * 
      * @return null|string best plan in featured plans
      */
-    private function getBestPlan($featuredPlans, $id, $price) 
+    private function getBestPlan($featuredPlans, $id, $price)
     {
         $sources = [];
 
@@ -1139,7 +1206,7 @@ class Mobbex extends PaymentModule
         extract(Config::getProductsPlans([$id]));
 
         $installments = \Mobbex\Repository::getInstallments(
-            [$id], 
+            [$id],
             [],
             $advanced_plans
         );
@@ -1150,15 +1217,15 @@ class Mobbex extends PaymentModule
                 $price,
                 $installments
             );
-        }  catch (\Exception $e) {
+        } catch (\Exception $e) {
             \Mobbex\PS\Checkout\Models\Logger::log(
-                'error', 
-                'Mobbex > getBestPlan > getSources', 
+                'error',
+                'Mobbex > getBestPlan > getSources',
                 $e->getMessage()
             );
             return null;
         }
-        
+
         if (empty($sources))
             return null;
 
