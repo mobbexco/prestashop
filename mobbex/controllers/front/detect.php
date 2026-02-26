@@ -1,4 +1,5 @@
 <?php
+
 use Mobbex\PS\Checkout\Models\Logger;
 use Mobbex\PS\Checkout\Models\Config;
 
@@ -8,16 +9,47 @@ class MobbexDetectModuleFrontController extends ModuleFrontController
 
     public function postProcess()
     {
-        $this->initContent();
+        if ($this->module->active == false) {
+            Logger::log(
+                'fatal',
+                '[Mobbex Transparent] Detect > postProcess | Controller Call On Module Inactive',
+                $_REQUEST
+            );
+        }
+
+        if (!Config::validateHash(Tools::getValue('hash'))) {
+            Logger::log(
+                'debug',
+                '[Mobbex Transparent] Detect > postProcess | Hash could not be validated',
+                $_REQUEST
+            );
+            return Tools::redirect('index.php?controller=order&step=3&typeReturn=failure');
+        }
+
+        try {
+            $this->initContent();
+        } catch (\Exception $e) {
+            Logger::log(
+                'debug',
+                '[Mobbex Transparent] Detect > postProcess > Error on payment process',
+                $e->getMessage()
+            );
+            Tools::redirect('index.php?controller=order&step=3&typeReturn=failure');
+        }
     }
 
     public function initContent()
     {
+        Logger::log(
+            'debug', 
+            '[Mobbex Transparent] initContent > init card detection', 
+            $_REQUEST
+        );
         parent::initContent();
-        
+
         $bin   = Tools::getValue('bin');
         $token = Tools::getValue('token');
-        
+
         if (!$bin || !$token) {
             Logger::log(
                 'debug',
@@ -36,12 +68,11 @@ class MobbexDetectModuleFrontController extends ModuleFrontController
                 throw new \Exception(
                     '[Mobbex Transparent] Detect > card not found'
                 );
-            
-            die (json_encode([
+
+            die(json_encode([
                 'result' => true,
                 'data'   => $card,
             ]));
-            
         } catch (\Exception $e) {
             Logger::log(
                 'debug',
