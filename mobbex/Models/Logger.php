@@ -23,6 +23,9 @@ class Logger
         if (!Config::$settings['debug_mode'] && $mode === 'debug')
             return;
 
+        if (self::isSensibleData($data))
+            self::hideSensibleData($data);
+
         \PrestaShopLogger::addLog(
             "Mobbex $mode: $message " . json_encode($data),
             in_array($mode, ['fatal', 'error']) ? 3 : 1,
@@ -36,5 +39,32 @@ class Logger
             header("HTTP/1.1 500");
             die($message);
         }
+    }
+
+    private static function isSensibleData($data)
+    {
+        return !empty($data)
+            && (isset($data['controller']) &&
+                ($data['controller'] === 'detect' || $data['controller'] === 'process')
+            );
+    }
+
+    /**
+     * Hide sensible data from log.
+     * 
+     * @param array $data(reference)
+     */
+    private static function hideSensibleData(&$data)
+    {
+        if (isset($data['number']))
+            $data['number'] = substr(
+                $data['number'], 0, 6) . str_repeat('X', strlen($data['number']) - 10) . substr($data['number'], -4
+            );
+
+        if (isset($data['cvv']))
+            $data['cvv'] = '[REDACTED]';
+
+        if (isset($data['hash']))
+            $data['hash'] = '[REDACTED]';
     }
 }
