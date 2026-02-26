@@ -43,10 +43,16 @@ class Logger
 
     private static function isSensibleData($data)
     {
-        return !empty($data)
-            && (isset($data['controller']) &&
-                ($data['controller'] === 'detect' || $data['controller'] === 'process')
-            );
+        if (empty($data))
+            return false;
+        
+        if (isset($data['body']))
+            return true;
+
+        if (isset($data['controller']) && ($data['controller'] === 'detect' || $data['controller'] === 'process'));
+            return true;
+
+        return false;
     }
 
     /**
@@ -56,15 +62,21 @@ class Logger
      */
     private static function hideSensibleData(&$data)
     {
+        if (isset($data['cvv']))
+            $data['cvv'] = '[REDACTED]';
+        
+        if (isset($data['hash']))
+            $data['hash'] = '[REDACTED]';
+
         if (isset($data['number']))
             $data['number'] = substr(
                 $data['number'], 0, 6) . str_repeat('X', strlen($data['number']) - 10) . substr($data['number'], -4
             );
 
-        if (isset($data['cvv']))
-            $data['cvv'] = '[REDACTED]';
+        if (isset($data['body']['source']['card']['number']))
+            $data['body']['source']['card']['number'] = substr($data['body']['source']['card']['number'], 0, 6) . str_repeat('X', strlen($data['body']['source']['card']['number']) - 10) . substr($data['body']['source']['card']['number'], -4);
 
-        if (isset($data['hash']))
-            $data['hash'] = '[REDACTED]';
+        if (isset($data['body']['source']['card']['cvv']))
+            $data['body']['source']['card']['cvv'] = '[REDACTED]';
     }
 }
