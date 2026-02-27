@@ -333,4 +333,35 @@ class Config
             && (self::getCatalogSetting($id, "manual_config", $catalogType) == "yes")
         );
     }
+
+    /**
+     * Get Transparent i18n settings
+     * 
+     * @return array transparent form required settings
+     */
+    public static function getTransparentI18n()
+    {
+        return  [
+            'cvv'                   => self::l('CVV'),
+            'installments'          => self::l('Cuotas'),
+            'expiry'                => self::l('Vencimiento'),
+            'payment_methods'       => self::l('Payment methods'),
+            'card_number'           => self::l('Número de tarjeta'),
+            'card_name'             => self::l('Nombre de titular'),
+            'processing'            => self::l('Procesando pago...'),
+            'card_dni'              => self::l('Número de documento'),
+            'process_error'         => self::l('Falló el proceso de pago'),
+            'card_name_placeholder' => self::l('Como figura en la tarjeta'),
+            'select_installments'   => self::l('Selecciona opción de pago'),
+            'invalid_card'          => self::l('Número de tarjeta invÃ¡lido'),
+            'loading_installments'  => self::l('Cargando opciones de pago...'),
+            'invalid_dni'           => self::l('Número de documento invÃ¡lido'),
+            'invalid_cvv'           => self::l('Código de seguridad invÃ¡lido'),
+            'detect_error'          => self::l('Falló la detección de tarjeta'),
+            'invalid_expiry'        => self::l('Fecha de vencimiento invÃ¡lido'),
+            'enter_card'            => self::l('Ingresa el número de la tarjeta'),
+            'invalid_name'          => self::l('Nombre de titular de tarjeta inválido'),
+            'no_installments'       => self::l('No se encontraron opciones de pago para esta tarjeta'),
+        ];
+    }
 }

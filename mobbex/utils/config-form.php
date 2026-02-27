@@ -49,6 +49,7 @@ $form = [
             'tab_general'    => self::l('General', 'config-form'),
             'tab_orders'     => self::l('Orders Configuration', 'config-form'),
             'tab_appearence' => self::l('Appearance', 'config-form'),
+            'tab_transparent' => self::l('Transparent', 'config-form'),
             'tab_advanced'   => self::l('Advanced Configuration', 'config-form'),
         ],
         'legend' => [
@@ -276,7 +277,8 @@ $form = [
                 'tab'      => 'tab_general',
                 'values'   => [
                     [
-                        'id'    => 'active_on_wallet',
+                        'id'    => 'active_on_wa
+                        llet',
                         'value' => true,
                         'label' => self::l( 'Enabled', 'config-form'),
                     ],
@@ -286,6 +288,36 @@ $form = [
                         'label' => self::l( 'Disabled', 'config-form'),
                     ],
                 ],
+            ],
+            [
+                'type'    => 'switch',
+                'label'   => self::l('Enable Transparent'),
+                'name'    => 'MOBBEX_TRANSPARENT_ENABLED',
+                'tab'     => 'tab_transparent',
+                'key'     => 'transparent_enabled',
+                'default' => false,
+                'values'  => [
+                    ['id' => 'active_on', 'value' => true],
+                    ['id' => 'active_off', 'value' => false]
+                ]
+            ],
+            [
+                'type'    => 'text',
+                'label'   => self::l('Payment Method Title'),
+                'name'    => 'MOBBEX_TRANSPARENT_TITLE',
+                'tab'     => 'tab_transparent',
+                'key'     => 'transparent_title',
+                'desc'    => self::l('Title shown in checkout page'),
+                'default' => 'Pagar con tarjeta de crédito/débito',
+            ],
+            [
+                'type'    => 'file',
+                'label'   => self::l('Payment Method Logo'),
+                'name'    => 'MOBBEX_TRANSPARENT_LOGO',
+                'tab'     => 'tab_transparent',
+                'key'     => 'transparent_logo',
+                'desc'    => self::l('Logo shown next to payment method'),
+                'default' => '',
             ],
             [
                 'type'     => 'text',

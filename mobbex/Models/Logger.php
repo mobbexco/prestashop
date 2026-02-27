@@ -23,6 +23,9 @@ class Logger
         if (!Config::$settings['debug_mode'] && $mode === 'debug')
             return;
 
+        if (self::isSensibleData($data))
+            self::hideSensibleData($data);
+
         \PrestaShopLogger::addLog(
             "Mobbex $mode: $message " . json_encode($data),
             in_array($mode, ['fatal', 'error']) ? 3 : 1,
@@ -36,5 +39,44 @@ class Logger
             header("HTTP/1.1 500");
             die($message);
         }
+    }
+
+    private static function isSensibleData($data)
+    {
+        if (empty($data))
+            return false;
+        
+        if (isset($data['body']))
+            return true;
+
+        if (isset($data['controller']) && ($data['controller'] === 'detect' || $data['controller'] === 'process'));
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Hide sensible data from log.
+     * 
+     * @param array $data(reference)
+     */
+    private static function hideSensibleData(&$data)
+    {
+        if (isset($data['cvv']))
+            $data['cvv'] = '[REDACTED]';
+        
+        if (isset($data['hash']))
+            $data['hash'] = '[REDACTED]';
+
+        if (isset($data['number']))
+            $data['number'] = substr(
+                $data['number'], 0, 6) . str_repeat('X', strlen($data['number']) - 10) . substr($data['number'], -4
+            );
+
+        if (isset($data['body']['source']['card']['number']))
+            $data['body']['source']['card']['number'] = substr($data['body']['source']['card']['number'], 0, 6) . str_repeat('X', strlen($data['body']['source']['card']['number']) - 10) . substr($data['body']['source']['card']['number'], -4);
+
+        if (isset($data['body']['source']['card']['cvv']))
+            $data['body']['source']['card']['cvv'] = '[REDACTED]';
     }
 }
