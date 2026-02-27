@@ -194,6 +194,7 @@ class OrderHelper
     public function getPaymentData($draft = false)
     {
         // Get cart and customer from context
+        $config   = Config::$settings;
         $cart     = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
 
@@ -207,7 +208,7 @@ class OrderHelper
             return $replaceCheckout;
 
         // Return if the draft is not needed
-        if ($draft && !Config::$settings['payment_methods'] && !Config::$settings['wallet'])
+        if ($draft && !$config['payment_methods'] && !$config['wallet'] && !$config['transparent_enabled'])
             return;
 
         return $this->createCheckout($cart, $customer, $draft);
