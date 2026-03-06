@@ -7,60 +7,31 @@ if (!defined('_PS_VERSION_'))
 
 class Registrar
 {
-    public $hooks = [
-        'displayAdminProductsExtra',
-        'actionAdminProductsControllerSaveBefore',
-        'displayBackOfficeCategory',
-        'displayPDFInvoice',
-        'displayBackOfficeHeader',
+    /* Base hooks from Prestashop 8.0.0 */
+    public $baseHooks = [
+        'displayHeader',
         'paymentReturn',
+        'paymentOptions',
+        'displayPDFInvoice',
         'actionOrderReturn',
         'displayAdminOrder',
-        'actionMobbexExpireOrder',
-        'displayProductListReviews'
-    ];
-
-    public $ps16Hooks = [
-        'payment',
-        'header',
-        'categoryUpdate',
-        'categoryAddition',
-        'displayMobileHeader',
-        'displayProductButtons',
-        'displayCustomerAccountForm',
-        'actionCustomerAccountAdd',
-        'displayShoppingCartFooter',
-    ];
-
-    public $ps17Hooks = [
-        'paymentOptions',
-        'displayHeader',
-        'additionalCustomerFormFields',
-        'actionObjectCustomerUpdateAfter',
-        'actionObjectCustomerAddAfter',
-        'displayProductPriceBlock',
-        'displayExpressCheckout',
-        'categoryUpdate',
-        'categoryAddition',
+        'actionProductUpdate',
         'actionEmailSendBefore',
-        'actionCustomerFormBuilderModifier',
-    ];
-
-    public $ps176Hooks = [
-        'paymentOptions',
-        'displayHeader',
+        'displayExpressCheckout',
+        'actionMobbexExpireOrder',
+        'displayProductPriceBlock',
+        'displayBackOfficeHeader',
+        'displayAdminProductsExtra',
+        'displayBackOfficeCategory',
+        'displayProductListReviews',
+        'actionObjectCustomerAddAfter',
         'additionalCustomerFormFields',
         'actionObjectCustomerUpdateAfter',
-        'actionObjectCustomerAddAfter',
-        'displayProductPriceBlock',
-        'displayExpressCheckout',
+        'actionCustomerFormBuilderModifier',
         'ActionAfterCreateCategoryFormHandler',
         'ActionAfterUpdateCategoryFormHandler',
-        'actionEmailSendBefore',
-        'actionCustomerFormBuilderModifier',
+        'actionAdminProductsControllerSaveBefore',
     ];
-
-    public $ps8Hooks = ['actionProductUpdate'];
 
     /**
      * Register module hooks dependig on prestashop version.
@@ -69,34 +40,12 @@ class Registrar
      */
     public function registerHooks($module)
     {
-        foreach ($this->getInstallableHooks() as $hookName) {
+        foreach ($this->baseHooks as $hookName) {
             if (!$module->registerHook($hookName))
                 return false;
         }
 
         return true;
-    }
-
-    /**
-     * Retrieve the list of installable hooks for this specific ps version.
-     * 
-     * @return string[] 
-     */
-    public function getInstallableHooks()
-    {
-        $versionHooks = [];
-
-        if (_PS_VERSION_ > '8.0')
-            $versionHooks = array_merge($this->ps176Hooks, $this->ps8Hooks);
-        else if (_PS_VERSION_ > '1.7.6')
-            $versionHooks = $this->ps176Hooks;
-        else if (_PS_VERSION_ > '1.7')
-            $versionHooks = $this->ps17Hooks;
-        else
-            $versionHooks = $this->ps16Hooks;
-
-        // Merge current version hooks with common hooks and return
-        return array_merge($this->hooks, $versionHooks);
     }
 
     /**

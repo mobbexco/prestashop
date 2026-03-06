@@ -7,9 +7,8 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '5.0.0';
-    const PS16           = '1.6';
-    const PS17           = '1.7';
+    const MODULE_VERSION     = '6.0.0';
+    const MINIMUN_PS_VERSION = '8.0.0';
 
     public static $settings = [];
     public static $orderStatuses = [
