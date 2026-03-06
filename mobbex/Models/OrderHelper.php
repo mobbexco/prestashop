@@ -152,17 +152,19 @@ class OrderHelper
     {
         $controller = \Context::getContext()->controller;
 
-        if (_PS_VERSION_ < '1.7') {
+        if (is_object($controller) && isset($controller->step) && defined(get_class($controller) . '::STEP_PAYMENT'))
             return $controller->step == $controller::STEP_PAYMENT;
-        } else {
-            // Make checkout process as accessible for prestashop backward compatibility
+
+        if (is_object($controller) && property_exists($controller, 'checkoutProcess')) {
             $reflection = new \ReflectionProperty($controller, 'checkoutProcess');
             $reflection->setAccessible(true);
             $checkoutProcess = $reflection->getValue($controller);
 
-            foreach ($checkoutProcess->getSteps() as $step) {
-                if ($step instanceof \CheckoutPaymentStep && $step->isCurrent())
-                    return true;
+            if ($checkoutProcess && method_exists($checkoutProcess, 'getSteps')) {
+                foreach ($checkoutProcess->getSteps() as $step) {
+                    if ($step instanceof \CheckoutPaymentStep && $step->isCurrent())
+                        return true;
+                }
             }
         }
 
@@ -276,7 +278,7 @@ class OrderHelper
             Logger::log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
             
             // If commerce use mobbex dni redirect to customer page.
-            if(Config::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::PS17)
+            if(Config::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::MINIMUN_PS_VERSION)
                 \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
         }
 
@@ -328,7 +330,7 @@ class OrderHelper
 
         if (!empty(Config::$settings['force_assets']) && Config::$settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
-        } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
+        } else if ($controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
             $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
