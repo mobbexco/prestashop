@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * mobbex.php
@@ -6,7 +6,7 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 5.0.0
+ * @version 6.0.0
  * @see     PaymentModuleCore
  */
 
@@ -35,6 +35,9 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
 
+    /** @var string */
+    public $psMinVersion;
+
     /**
      * Constructor
      */
@@ -43,6 +46,7 @@ class Mobbex extends PaymentModule
         $this->name            = 'mobbex';
         $this->tab             = 'payments_gateways';
         $this->version         = \Mobbex\PS\Checkout\Models\Config::MODULE_VERSION;
+        $this->psMinVersion    = \Mobbex\PS\Checkout\Models\Config::MINIMUN_PS_VERSION;
         $this->author          = 'Mobbex Co';
         $this->controllers     = ['notification', 'payment', 'task', 'sources', 'capture'];
         $this->currencies      = true;
@@ -54,7 +58,7 @@ class Mobbex extends PaymentModule
         $this->displayName            = $this->l('Mobbex');
         $this->description            = $this->l('Payment plugin using Mobbex ');
         $this->confirmUninstall       = $this->l('Are you sure you want to uninstall?');
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = array('min' => $this->psMinVersion, 'max' => _PS_VERSION_);
         $this->smarty                 = \Context::getContext()->smarty;
 
         //Mobbex Classes 
@@ -112,9 +116,17 @@ class Mobbex extends PaymentModule
             if (!extension_loaded('curl'))
                 throw new \Exception('cURL extension is not enabled');
 
+            if (version_compare(_PS_VERSION_, $this->psMinVersion, '<'))
+                throw new \Exception(
+                    "PrestaShop version not supported. This module requiere Prestashop {$this->psMinVersion} or newer"
+                );
+
+            if (preg_match('/^1(\.|$)/', (string) $this->version))
+                throw new \Exception('Mobbex plugin version not supported. Try install a newest one.');
+
             if (!parent::install())
                 throw new \Exception('Parent install failed');
-
+            
             if (!$this->installer->createTables())
                 throw new \Exception('Create tables failed');
 
@@ -160,6 +172,8 @@ class Mobbex extends PaymentModule
 
         return parent::uninstall();
     }
+
+    //TO DO: Add eneable overwrite for more security evals like install()
 
     /**
      * Init the PHP Sdk and configure it with module & plataform data.
@@ -384,7 +398,6 @@ class Mobbex extends PaymentModule
     /**
      * Logic to execute when the hook 'CustomerFormBuilder' is fired.
      * Add Mobbex own dni field to prestashop admin customer form.
-     * Support for 1.7
      * 
      * @param array $params
      */
@@ -454,22 +467,8 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Create costumer hook for Prestashop 1.6
-     *
-     * Support for 1.6 Only
-     *
-     * @return string
-     */
-    public function hookActionCustomerAccountAdd()
-    {
-        $customer         = \Context::getContext()->customer;
-        $params['object'] = isset($customer->id) ? $customer : "";
-
-        $this->updateCustomerDniStatus($params);
-    }
-
-    /**
-     * Executes when hook ActionAdminProductsControllerSaveBefore is fired. (Used to update product options). (ps 1.7)
+     * Executes when hook ActionAdminProductsControllerSaveBefore is fired.
+     * Used to update product options
      */
     public function hookActionAdminProductsControllerSaveBefore()
     {
@@ -477,7 +476,8 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Executes when hook ActionProductUpdate is fired. (Used to update product options). (ps 8)
+     * Executes when hook ActionProductUpdate is fired.
+     * Used to update product options
      */
     public function hookActionProductUpdate()
     {
@@ -485,26 +485,8 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Update category options (ps 1.6 only).
-     */
-    public function hookActionCategoryAdd($params)
-    {
-        $this->hookActionCategoryUpdate($params);
-    }
-
-    /**
-     * Update category options (ps 1.6 only).
-     */
-    public function hookActionCategoryUpdate($params)
-    {
-        $this->saveCatalogOptions(
-            isset($params['category']->id) ? $params['category']->id : \Tools::getValue('id_category'),
-            'category'
-        );
-    }
-
-    /**
-     * Executes when hook ActionAfterCreateCategoryFormHandler is fired. (Used to update category options).
+     * Executes when hook ActionAfterCreateCategoryFormHandler is fired. 
+     * Used to update category options.
      */
     public function hookActionAfterCreateCategoryFormHandler($params)
     {
@@ -515,7 +497,8 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Executes when hook ActionAfterUpdateCategoryFormHandler is fired. (Used to update category options).
+     * Executes when hook ActionAfterUpdateCategoryFormHandler is fired. 
+     * Used to update category options.
      */
     public function hookActionAfterUpdateCategoryFormHandler($params)
     {
@@ -711,18 +694,6 @@ class Mobbex extends PaymentModule
     /**
      * Hook to display finance widget in cart page.
      * 
-     * Support for 1.6 Only.
-     * 
-     * @return string|bool
-     */
-    public function hookDisplayShoppingCartFooter()
-    {
-        return $this->hookDisplayExpressCheckout();
-    }
-
-    /**
-     * Hook to display finance widget in cart page.
-     * 
      * @return string|bool
      */
     public function hookDisplayExpressCheckout()
@@ -736,57 +707,6 @@ class Mobbex extends PaymentModule
         $cartProducts = array_column($cart->getProducts(), 'id_product');
 
         return $this->displayPlansWidget($total, $cartProducts, true);
-    }
-
-    /**
-     * Logic to execute when the hook 'displayPayment' is fired
-     *
-     * Support for 1.6 Only
-     *
-     * @return string
-     */
-    public function hookPayment()
-    {
-        $checkoutData = $this->helper->getPaymentData(true);
-
-        // Make sure the assets are loaded correctly
-        $this->hookDisplayHeader(true);
-
-        // Add payment information to js
-        \Media::addJsDef([
-            'mbbx' => [
-                'primaryColor' => Config::$settings['color'],
-                'paymentUrl'   => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'process'),
-                'errorUrl'     => \Mobbex\PS\Checkout\Models\OrderHelper::getUrl('index.php?controller=order&step=3&typeReturn=failure'),
-                'embed'        => (bool) Config::$settings['embed'],
-                'return'       => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'return', '&id_cart=' . \Context::getContext()->cookie->__get('last_cart') . '&status=' . 500)
-            ]
-        ]);
-
-        $this->smarty->assign([
-            'methods'     => isset($checkoutData['paymentMethods']) ? $checkoutData['paymentMethods'] : [],
-            'cards'       => isset($checkoutData['wallet']) ? $checkoutData['wallet'] : [],
-            'redirectUrl' => \Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('payment', 'redirect', isset($checkoutData['id']) ? "&id=$checkoutData[id]" : '')
-        ]);
-
-        return $this->display(__FILE__, 'views/templates/front/payment.tpl');
-    }
-
-    /**
-     * Plans widget hook for Prestashop 1.6
-     *
-     * Support for 1.6 Only
-     *
-     * @return string
-     */
-    public function hookDisplayProductButtons()
-    {
-        $product = new \Product(\Tools::getValue('id_product'));
-
-        if (!Config::$settings['finance_product'] || !\Validate::isLoadedObject($product) || !$product->show_price)
-            return;
-
-        return $this->displayPlansWidget($product->getPrice(), [$product]);
     }
 
     /**
@@ -823,29 +743,6 @@ class Mobbex extends PaymentModule
     }
 
     /**
-     * Display DNI field hook for Prestashop 1.6
-     *
-     * Support for 1.6 Only
-     *
-     * @return string
-     */
-    public function hookDisplayCustomerAccountForm()
-    {
-        if (Config::$settings['custom_dni'] != '')
-            return;
-
-        $customer = \Context::getContext()->customer;
-
-        $this->smarty->assign(
-            array(
-                'last_dni' => isset($customer->id) ? $this->helper->getDni($customer->id) : "",
-            )
-        );
-
-        return $this->display(__FILE__, 'views/templates/hooks/dnifield.tpl');
-    }
-
-    /**
      * Show product admin settings.
      * 
      * @param array $params
@@ -863,7 +760,6 @@ class Mobbex extends PaymentModule
      */
     public function hookDisplayBackOfficeCategory($params)
     {
-
         $id = !empty($params['request']) ? $params['request']->get('categoryId') : \Tools::getValue('id_category');
         return $this->displayCatalogOptions($id, 'category');
     }
@@ -999,7 +895,7 @@ class Mobbex extends PaymentModule
      */
     private function saveCatalogOptions($id, $catalogType = 'product')
     {
-        $productConfig = _PS_VERSION_ >= '8.0.0' ? $_POST : $_REQUEST;
+        $productConfig = $_POST;
 
         $options = [
             'advanced_plans' => "[]",
