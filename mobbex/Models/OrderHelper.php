@@ -258,7 +258,8 @@ class OrderHelper
             if (CustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
                 $items[] = [
                     'type'      => 'subscription',
-                    'reference' => CustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
+                    "total"     => $product['total_wt'],
+                    'reference' => CustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid'),
                 ];
             } else {
                 $items[] = [
