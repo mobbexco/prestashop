@@ -601,6 +601,31 @@ class OrderHelper
     }
 
     /**
+     * Compares prestashop cart and mobbex checkout currencies
+     * 
+     * @param \Cart $cart
+     * 
+     * @return bool
+     */
+    public static function compareCurrecies($cart) 
+    {
+        return Config::$settings['final_currency'] !==  \Currency::getIsoCodeById($cart->id_currency);
+    }
+
+    /**
+     * Applies the conversion rate to the amount passed
+     * 
+     * @param float $amount value to aplly convertion rate
+     * 
+     * @return float converted currency total
+     */
+    public static function applyConvertionRate($amount) 
+    {
+        $rate = (float) \Tools::getValue('convertion_rate');
+        return round($amount / $rate, 2, PHP_ROUND_HALF_EVEN);
+    }
+
+    /**
      * Get a product id from him reference.
      * 
      * @param string $reference
