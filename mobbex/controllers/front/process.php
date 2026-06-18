@@ -52,7 +52,8 @@ class MobbexProcessModuleFrontController extends ModuleFrontController
                 '[Mobbex Transparent] Process > postProcess > Error on payment process',
                 $e->getMessage()
             );
-            Tools::redirect('index.php?controller=order&step=3&typeReturn=failure');
+            $this->errors[] = $e->getMessage();
+            $this->redirectWithNotifications('index.php?controller=order&step=3&typeReturn=failure');
         }
     }
 
@@ -101,7 +102,7 @@ class MobbexProcessModuleFrontController extends ModuleFrontController
         }
 
         if (!in_array($res['status']['code'], ['3', '100', '200'])) {
-            throw new \Mobbex\Exception('Operation process with error code', 0, $res);
+            throw new \Mobbex\Exception("Operation process with error code: {$res['status']['code']}", 0, $res);
         }
 
         Logger::log('debug', '[Mobbex Transparent] Process > success payment process');
