@@ -4,6 +4,7 @@ defined('_PS_VERSION_') || exit;
 
 use Mobbex\PS\Checkout\Models\Config;
 use Mobbex\PS\Checkout\Models\Logger;
+use Mobbex\PS\Checkout\Models\OrderHelper;
 
 class MobbexNotificationModuleFrontController extends ModuleFrontController
 {
@@ -219,18 +220,27 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'transaction' => $trx->id,
             ]);
 
+        // get totals from mobbex checkout and ps cart
+        $checkoutTotal = (float) $data['checkout_total'];
+        $cartTotal     = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+
+        $currencyConverted = OrderHelper::compareCurrecies($cart);
+        if ($currencyConverted) {
+            $cartTotal = OrderHelper::applyConvertionRate($cartTotal);
+        }
+        
         // Exit if cart was modified
-        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5) {
+        if ($cartTotal != $checkoutTotal) {
             $isFatal = Config::$settings['check_cart_totals'];
 
             Logger::log(
                 $isFatal ? 'fatal' : 'error',
-                'notification > createOrder | Difference found between cart and checkout totals ' + ($isFatal ? '[Order Creation Aborted]' : ''),
+                'notification > createOrder | Difference found between cart and checkout totals ' . ($isFatal ? '[Order Creation Aborted]' : ''),
                 [
-                    'cart'          => $cart->id,
                     'transaction'   => $trx->id,
-                    'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
-                    'checkoutTotal' => $data['checkout_total'],
+                    'cart'          => $cart->id,
+                    'cartTotal'     => (float) $cartTotal,
+                    'checkoutTotal' => (float) $checkoutTotal,
                 ]
             );
         }
