@@ -3,6 +3,12 @@
 defined('_PS_VERSION_') || exit;
 
 function upgrade_module_2_8_0(Mobbex $module) {
+    // Block the upgrade on unsupported PrestaShop versions.
+    if (version_compare(_PS_VERSION_, \Mobbex\PS\Checkout\Models\Config::MINIMUN_PS_VERSION, '<')) {
+        method_exists($module, 'addError') ? $module->addError("PrestaShop version not supported. This module requiere Prestashop " . \Mobbex\PS\Checkout\Models\Config::MINIMUN_PS_VERSION . " or newer") : false;
+        return false;
+    }
+
     $configs = [
         'color'      => trim((string) \Configuration::get('MOBBEX_PLANS_TEXT_COLOR')),
         'background' => trim((string) \Configuration::get('MOBBEX_PLANS_BACKGROUND')),
