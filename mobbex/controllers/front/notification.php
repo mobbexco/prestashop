@@ -235,7 +235,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
 
             Logger::log(
                 $isFatal ? 'fatal' : 'error',
-                'notification > createOrer | Difference found between cart and checkout totals ' . ($isFatal ? '[Order Creation Aborted]' : ''),
+                'notification > createOrder | Difference found between cart and checkout totals ' . ($isFatal ? '[Order Creation Aborted]' : ''),
                 [
                     'transaction'   => $trx->id,
                     'cart'          => $cart->id,
