@@ -1,7 +1,5 @@
 window.addEventListener("load", function () {
-
-  if (typeof $ == "undefined")
-    var $ = jQuery;
+  if (typeof $ == "undefined") var $ = jQuery;
 
   // Add Background-color to payment methods icons
   var icons = document.querySelectorAll('img[src*="res.sugaway"]');
@@ -31,23 +29,23 @@ window.addEventListener("load", function () {
         window.top.location.href = `${url}&fromCallback=onResult&status=${data.status.code}&transactionId=${data.id}`;
       },
       onClose: (cancelled) => {
-        let url           = response.data.return_url || mbbx.return;
-        let status        = mbbx.paymentData ? mbbx.paymentData.status.code : '500';
-        let transactionId = mbbx.paymentData ? mbbx.paymentData.id          : null;
+        let url = response.data.return_url || mbbx.return;
+        let status = mbbx.paymentData ? mbbx.paymentData.status.code : "500";
+        let transactionId = mbbx.paymentData ? mbbx.paymentData.id : null;
 
         window.top.location.href = `${url}&fromCallback=onClose&status=${status}&transactionId=${transactionId}`;
       },
       onError: (error) => {
         console.log(error);
-        window.top.location.href = mbbx.return + '&fromCallback=onError&status=500';
+        window.top.location.href =
+          mbbx.return + "&fromCallback=onError&status=500";
       },
       onPayment: (data) => {
         mbbx.paymentData = data.data;
-      }
+      },
     };
 
-    if (response.data.sid) 
-      options.sid = response.data.sid;
+    if (response.data.sid) options.sid = response.data.sid;
 
     let mobbexEmbed = window.MobbexEmbed.init(options);
     mobbexEmbed.open();
@@ -59,7 +57,8 @@ window.addEventListener("load", function () {
    * @param {array} response Mobbex checkout or subscriber response.
    */
   function redirectToCheckout(response) {
-    window.top.location.href = response.data.url + (mbbx.method ? "?paymentMethod=" + mbbx.method : "");
+    window.top.location.href =
+      response.data.url + (mbbx.method ? "?paymentMethod=" + mbbx.method : "");
   }
 
   /**
@@ -98,7 +97,7 @@ window.addEventListener("load", function () {
   function executeWallet(response) {
     let cardNumber = $(`#card-${mbbx.card}-number`).val();
     let updatedCard = response.data.wallet.find(
-      (card) => card.card.card_number == cardNumber
+      (card) => card.card.card_number == cardNumber,
     );
 
     var options = {
@@ -168,22 +167,6 @@ window.addEventListener("load", function () {
   function setCurrentMethod(method) {
     mbbx.card = $(method).attr("card");
     mbbx.method = $(method).attr("group");
-
-    // Only for ps 1.6. In ps 1.7 forms are natively hidden
-    if (!window.prestashop) 
-      hideCardForms();
-  }
-
-  /**
-   * Hide unchecked card options for ps 1.6.
-   */
-  function hideCardForms() {
-    $(".walletForm").each(function (i, form) {
-      $(form).css(
-        "display",
-        $(form).attr("card") == mbbx.card ? "block" : "none"
-      );
-    });
   }
 
   /**
@@ -205,8 +188,7 @@ window.addEventListener("load", function () {
    * Execute mobbex payment.
    */
   function executePayment() {
-    if (mbbx.card && !validateCardForm()) 
-      return;
+    if (mbbx.card && !validateCardForm()) return;
 
     processPayment((response) => {
       if (mbbx.card) {
@@ -236,7 +218,7 @@ window.addEventListener("load", function () {
     ".mbbx-method",
     function (e) {
       return e.preventDefault() || setCurrentMethod(this) || executePayment();
-    }
+    },
   );
 
   // Add wallet payment events

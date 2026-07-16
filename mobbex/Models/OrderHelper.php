@@ -133,11 +133,25 @@ class OrderHelper
         }
 
         //refund stock
-        if (!Config::$settings['pending_discount']) {
-            foreach ($order->getProductsDetail() as $product) {
-                if (!\StockAvailable::dependsOnStock($product['product_id']))
-                    \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
-            }
+        if (Config::$settings['pending_discount'])
+            return true;
+
+        foreach ($order->getProductsDetail() as $product) {
+            $shouldUpdate = true;
+
+            // StockAvailable is deprecated beyond 1.7.8
+            if (method_exists('StockAvailable', 'dependsOnStock'))
+                $shouldUpdate = !\StockAvailable::dependsOnStock(
+                    (int) $product['product_id']
+                );
+
+            if ($shouldUpdate)
+                \StockAvailable::updateQuantity(
+                    (int) $product['product_id'],
+                    (int) $product['product_attribute_id'],
+                    (int) $product['product_quantity'],
+                    (int) $order->id_shop
+                );
         }
 
         return true;
@@ -152,17 +166,19 @@ class OrderHelper
     {
         $controller = \Context::getContext()->controller;
 
-        if (_PS_VERSION_ < '1.7') {
+        if (is_object($controller) && isset($controller->step) && defined(get_class($controller) . '::STEP_PAYMENT'))
             return $controller->step == $controller::STEP_PAYMENT;
-        } else {
-            // Make checkout process as accessible for prestashop backward compatibility
+
+        if (is_object($controller) && property_exists($controller, 'checkoutProcess')) {
             $reflection = new \ReflectionProperty($controller, 'checkoutProcess');
             $reflection->setAccessible(true);
             $checkoutProcess = $reflection->getValue($controller);
 
-            foreach ($checkoutProcess->getSteps() as $step) {
-                if ($step instanceof \CheckoutPaymentStep && $step->isCurrent())
-                    return true;
+            if ($checkoutProcess && method_exists($checkoutProcess, 'getSteps')) {
+                foreach ($checkoutProcess->getSteps() as $step) {
+                    if ($step instanceof \CheckoutPaymentStep && $step->isCurrent())
+                        return true;
+                }
             }
         }
 
@@ -180,6 +196,7 @@ class OrderHelper
     public function getPaymentData($draft = false)
     {
         // Get cart and customer from context
+        $config   = Config::$settings;
         $cart     = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
 
@@ -193,7 +210,7 @@ class OrderHelper
             return $replaceCheckout;
 
         // Return if the draft is not needed
-        if ($draft && !Config::$settings['payment_methods'] && !Config::$settings['wallet'])
+        if ($draft && !$config['payment_methods'] && !$config['wallet'] && !$config['transparent_enabled'])
             return;
 
         return $this->createCheckout($cart, $customer, $draft);
@@ -215,7 +232,7 @@ class OrderHelper
         $reference = \Mobbex\Modules\Checkout::generateReference($cart->id) . ($draft ? '_DRAFT_CHECKOUT' : '');
 
         // Get items
-        $items    = array();
+        $items = array();
         // Checks if there´s any cart rule and returns an array of products with the discounts
         $products =(new \Mobbex\PS\Checkout\Models\PriceCalculator($cart))->getCartRules();
         
@@ -241,7 +258,8 @@ class OrderHelper
             if (CustomFields::getCustomField($product['id_product'], 'product', 'subscription_enable') === 'yes') {
                 $items[] = [
                     'type'      => 'subscription',
-                    'reference' => CustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid')
+                    "total"     => $product['total_wt'],
+                    'reference' => CustomFields::getCustomField($product['id_product'], 'product', 'subscription_uid'),
                 ];
             } else {
                 $items[] = [
@@ -276,7 +294,7 @@ class OrderHelper
             Logger::log('error', 'OrderHelper > getDni | El cliente no tiene registrado un DNI', ['customer_id' => $customer ? $customer->id : '']);
             
             // If commerce use mobbex dni redirect to customer page.
-            if(Config::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::PS17)
+            if(Config::$settings['mobbex_dni'] && _PS_VERSION_ >= Config::MINIMUN_PS_VERSION)
                 \Tools::redirect(\Mobbex\PS\Checkout\Models\OrderHelper::getModuleUrl('notification', 'redirect', '&type=warning&url=identity&message=missing_dni'));
         }
 
@@ -328,7 +346,7 @@ class OrderHelper
 
         if (!empty(Config::$settings['force_assets']) && Config::$settings['force_assets'] == \Tools::getValue('controller')) {
             echo $type == 'js' ? "<script type='text/javascript' src='$uri'></script>" : "<link rel='stylesheet' href='$uri'>";
-        } else if (_PS_VERSION_ >= '1.7' && $controller instanceof \FrontController) {
+        } else if ($controller instanceof \FrontController) {
             $params = ['server' => $remote ? 'remote' : 'local'];
             $type == 'js' ? $controller->registerJavascript(sha1($uri), $uri, $params) : $controller->registerStylesheet(sha1($uri), $uri, $params);
         } else {
@@ -347,10 +365,9 @@ class OrderHelper
     {
 ?>
         <script type='text/javascript'>
-            var mbbx = {
-                ...mbbx,
-                ...<?= json_encode($vars) ?>
-            }
+            window.mbbx = window.mbbx || {};
+            window.mbbx = Object.assign(window.mbbx, <?= json_encode($vars) ?>);
+            var mbbx = window.mbbx;
         </script>
 <?php
     }
@@ -582,6 +599,31 @@ class OrderHelper
             (float) $cart->getOrderTotal(),
             method_exists($context, 'getComputingPrecision') ? $context->getComputingPrecision() : 2
         );
+    }
+
+    /**
+     * Compares prestashop cart and mobbex checkout currencies
+     * 
+     * @param \Cart $cart
+     * 
+     * @return bool
+     */
+    public static function compareCurrecies($cart) 
+    {
+        return Config::$settings['final_currency'] !==  \Currency::getIsoCodeById($cart->id_currency);
+    }
+
+    /**
+     * Applies the conversion rate to the amount passed
+     * 
+     * @param float $amount value to aplly convertion rate
+     * 
+     * @return float converted currency total
+     */
+    public static function applyConvertionRate($amount) 
+    {
+        $rate = (float) \Tools::getValue('convertion_rate');
+        return round($amount / $rate, 2, PHP_ROUND_HALF_EVEN);
     }
 
     /**

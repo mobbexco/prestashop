@@ -4,6 +4,7 @@ defined('_PS_VERSION_') || exit;
 
 use Mobbex\PS\Checkout\Models\Config;
 use Mobbex\PS\Checkout\Models\Logger;
+use Mobbex\PS\Checkout\Models\OrderHelper;
 
 class MobbexNotificationModuleFrontController extends ModuleFrontController
 {
@@ -55,10 +56,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function callback()
     {
         // Get Data from request
+        $status         = (int) Tools::getValue('status');
         $cart_id        = (int) Tools::getValue('id_cart');
-        $customer_id    = (int) Tools::getValue('customer_id');
         $transaction_id = Tools::getValue('transactionId');
-        $status         = Tools::getValue('status');
+        $customer_id    = (int) Tools::getValue('customer_id');
 
         $customer = new Customer($customer_id);
         $order_id = $this->module->helper->getOrderByCartId($cart_id);
@@ -219,18 +220,34 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'transaction' => $trx->id,
             ]);
 
+        $cartTotal = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+        
+        // get totals from mobbex checkout and ps cart
+        if (empty($data['subscriptions'])) {
+            $checkoutTotal = (float) $data['checkout_total'];
+        } else {
+            $subscriptionUid = json_decode($data['subscriptions'], true)[0]['subscription'];
+            $subscription = \Mobbex\Repository::getProductSubscription($subscriptionUid);
+            $checkoutTotal = $subscription['total'] ?: 0;
+        }
+
+        $currencyConverted = isset(Config::$settings['final_currency']) ? OrderHelper::compareCurrecies($cart) : false;
+        if ($currencyConverted) {
+            $cartTotal = OrderHelper::applyConvertionRate($cartTotal);
+        }
+        
         // Exit if cart was modified
-        if (abs((float) $cart->getOrderTotal(true, \Cart::BOTH) - $data['checkout_total']) > 5) {
+        if ($cartTotal != $checkoutTotal) {
             $isFatal = Config::$settings['check_cart_totals'];
 
             Logger::log(
                 $isFatal ? 'fatal' : 'error',
-                'notification > createOrder | Difference found between cart and checkout totals ' + ($isFatal ? '[Order Creation Aborted]' : ''),
+                'notification > createOrder | Difference found between cart and checkout totals ' . ($isFatal ? '[Order Creation Aborted]' : ''),
                 [
-                    'cart'          => $cart->id,
                     'transaction'   => $trx->id,
-                    'cartTotal'     => (float) $cart->getOrderTotal(true, \Cart::BOTH),
-                    'checkoutTotal' => $data['checkout_total'],
+                    'cart'          => $cart->id,
+                    'cartTotal'     => (float) $cartTotal,
+                    'checkoutTotal' => (float) $checkoutTotal,
                 ]
             );
         }

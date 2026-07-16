@@ -2,7 +2,7 @@
 
 namespace Mobbex\PS\Checkout\Models;
 
-class Transaction extends AbstractModel
+class Transaction extends \ObjectModel
 {
     public $id;
     public $cart_id;
@@ -127,6 +127,7 @@ class Transaction extends AbstractModel
             'childs'             => isset($res['childs']) ? json_encode($res['childs']) : '',
             'parent'             => isset($res['payment']['id']) ? self::isParentWebhook($res['payment']['id']) : false,
             'payment_id'         => isset($res['payment']['id']) ? $res['payment']['id'] : '',
+            'subscriptions'      => isset($res['subscriptions']) ? json_encode($res['subscriptions']) : '',
             'description'        => isset($res['payment']['description']) ? $res['payment']['description'] : '',
             'status_code'        => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',
             'status'             => isset($res['payment']['status']['code']) ? (int) $res['payment']['status']['code'] : '',

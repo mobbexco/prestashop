@@ -167,16 +167,9 @@ class Updater
      */
     public static function getUpgradeURL()
     {
-        if (_PS_VERSION_ > '1.7') {
-            return \Link::getUrlSmarty([
-                'entity' => 'sf',
-                'route'  => 'admin_module_updates',
-            ]);
-        } else {
-            return \Context::getContext()->link->getAdminLink('AdminModules') . '&' . http_build_query([
-                'checkAndUpdate' => true,
-                'module_name'    => 'mobbex'
-            ]);
-        }
+        return \Link::getUrlSmarty([
+            'entity' => 'sf',
+            'route'  => 'admin_module_updates',
+        ]);
     }
 }

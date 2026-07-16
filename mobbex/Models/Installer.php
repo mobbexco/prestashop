@@ -76,9 +76,13 @@ class Installer
      */
     public function createCostProduct()
     {
-        //Set default employee for console install
-        if(_PS_VERSION_ >= '8.0')
-            \Context::getContext()->employee = new \Employee(1);
+        // Set a valid employee when running from console/context without logged backoffice user
+        if (!\Validate::isLoadedObject(\Context::getContext()->employee)) {
+            $employeeId = (int) \Db::getInstance()->getValue('SELECT `id_employee` FROM `' . _DB_PREFIX_ . 'employee` ORDER BY `id_employee` ASC');
+
+            if ($employeeId)
+                \Context::getContext()->employee = new \Employee($employeeId);
+        }
 
         // Try to create finnacial cost product
         $productId = \Mobbex\PS\Checkout\Models\OrderHelper::getProductIdByReference('mobbex-cost');
