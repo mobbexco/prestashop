@@ -220,9 +220,16 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
                 'transaction' => $trx->id,
             ]);
 
+        $cartTotal = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+        
         // get totals from mobbex checkout and ps cart
-        $checkoutTotal = (float) $data['checkout_total'];
-        $cartTotal     = (float) $cart->getOrderTotal(true, \Cart::BOTH);
+        if (empty($data['subscriptions'])) {
+            $checkoutTotal = (float) $data['checkout_total'];
+        } else {
+            $subscriptionUid = json_decode($data['subscriptions'], true)[0]['subscription'];
+            $subscription = \Mobbex\Repository::getProductSubscription($subscriptionUid);
+            $checkoutTotal = $subscription['total'] ?: 0;
+        }
 
         $currencyConverted = isset(Config::$settings['final_currency']) ? OrderHelper::compareCurrecies($cart) : false;
         if ($currencyConverted) {
