@@ -411,10 +411,14 @@ class Mobbex extends PaymentModule
                 'intentToken' => isset($checkoutData['intent']['token']) ? $checkoutData['intent']['token'] : '',
             ];
 
+            $logo = isset($settings['transparent_logo']) && !empty($settings['transparent_logo']) 
+                ? \Media::getMediaPath($settings['transparent_logo']) 
+                : $defaultImage;
+
             $options[] = $this->createPaymentOption(
                 $settings['transparent_title'],
                 null,
-                $settings['transparent_logo'],
+                $logo,
                 'module:mobbex/views/templates/front/transparent.tpl'
             );
 
