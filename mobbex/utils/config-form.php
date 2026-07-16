@@ -311,8 +311,8 @@ $form = [
                 'default' => 'Pagar con tarjeta de crédito/débito',
             ],
             [
-                'type'    => 'file',
-                'label'   => self::l('Payment Method Logo'),
+                'type'    => 'text',
+                'label'   => self::l('Payment Method Logo', 'config-form'),
                 'name'    => 'MOBBEX_TRANSPARENT_LOGO',
                 'tab'     => 'tab_transparent',
                 'key'     => 'transparent_logo',
