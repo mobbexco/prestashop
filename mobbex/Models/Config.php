@@ -7,7 +7,15 @@ if (!defined('_PS_VERSION_'))
 
 class Config
 {
-    const MODULE_VERSION = '5.0.0';
+    /**
+     * Module version.
+     *
+     * Single source of truth. The integrity check is verified against the
+     * published release whose tag matches this exact string, so publishing a
+     * version whose tag does not exist leaves every merchant on that version
+     * degraded. build.sh reads it from here for the same reason.
+     */
+    const MODULE_VERSION = '5.1.0';
     const PS16           = '1.6';
     const PS17           = '1.7';
 

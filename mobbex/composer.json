@@ -4,8 +4,14 @@
             "Mobbex\\PS\\Checkout\\": ""
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/mobbexco/php-plugins-sdk"
+        }
+    ],
     "require": {
-        "mobbexco/php-plugins-sdk": "1.15.2"
+        "mobbexco/php-plugins-sdk": "1.16.0"
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "*"

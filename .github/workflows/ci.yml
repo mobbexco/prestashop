@@ -21,3 +21,26 @@ jobs:
       run: composer install --dev --working-dir=./mobbex
     - name: Execute PHP Paralel Lint
       run: mobbex/vendor/php-parallel-lint/php-parallel-lint/parallel-lint ./mobbex --exclude mobbex/vendor
+
+    # The integrity attestation lives in the SDK, and it resolves the release to
+    # verify this install against by the version the plugin reports. A zip named
+    # after a version the code does not report — or a tag that does not exist —
+    # leaves every merchant on it degraded, with no local symptom.
+    - name: Version is consistent across the module
+      run: |
+        CONFIG_VER=$(sed -n "s/.*const MODULE_VERSION *= *'\([^']*\)'.*/\1/p" mobbex/Models/Config.php)
+        HEADER_VER=$(sed -n "s/^ \* @version \(.*\)$/\1/p" mobbex/mobbex.php)
+        echo "Config::MODULE_VERSION = $CONFIG_VER"
+        echo "mobbex.php @version    = $HEADER_VER"
+        test -n "$CONFIG_VER" || { echo "could not read MODULE_VERSION"; exit 1; }
+        test "$CONFIG_VER" = "$HEADER_VER" || { echo "version mismatch"; exit 1; }
+
+    # The attestation only runs if the SDK actually exposes it, and a plugin
+    # that silently stops attesting is exactly what this feature exists to
+    # detect. Fail the build rather than ship that.
+    - name: SDK exposes integrity attestation
+      run: |
+        test -f mobbex/vendor/mobbexco/php-plugins-sdk/src/Integrity/Attestation.php \
+          || { echo "the pinned SDK has no Integrity\\Attestation"; exit 1; }
+        grep -q 'Mobbex\\Integrity\\Attestation::init' mobbex/mobbex.php \
+          || { echo "mobbex.php never enables attestation"; exit 1; }
