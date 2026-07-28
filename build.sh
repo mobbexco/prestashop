@@ -1,11 +1,6 @@
 #!/bin/sh
 
 # Version is read from Config::MODULE_VERSION, never hardcoded here.
-#
-# The plugin reports that string to Mobbex on every checkout, and the published
-# release with the matching tag is what the integrity check is verified against.
-# A zip named after a version the code does not report — or a tag that does not
-# exist — leaves every merchant on it degraded, with no local symptom.
 VER=$(sed -n "s/.*const MODULE_VERSION *= *'\([^']*\)'.*/\1/p" mobbex/Models/Config.php)
 
 if [ -z "$VER" ]; then
@@ -23,15 +18,7 @@ cd mobbex
 composer install --no-dev
 cd ..
 
-# Composer installs from dist (a zipball) for tagged releases resolved through
-# Packagist or a GitHub VCS repository, and from source (a git clone) when it
-# cannot get a dist — a local path repository, for instance. A source install
-# leaves a .git directory inside vendor/, which would ship the dependency's full
-# history inside a module directory the web server serves, and would also make
-# vendor/ differ from what merchants running a normal install get.
-#
-# Fail loudly rather than excluding it: its presence means the build resolved the
-# dependency the wrong way, and that is worth knowing before publishing.
+# Prevent building using local repositories as dependencies
 if find mobbex/vendor -maxdepth 3 -name '.git' | grep -q .; then
     echo "error: vendor/ contains a .git directory, so composer installed from source." >&2
     echo "       Point the repository at the GitHub URL, not a local path, and rebuild." >&2
