@@ -6,7 +6,6 @@
  * Main file of the module
  *
  * @author  Mobbex Co <admin@mobbex.com>
- * @version 5.1.0
  * @see     PaymentModuleCore
  */
 
@@ -183,32 +182,20 @@ class Mobbex extends PaymentModule
 
         \Mobbex\Platform::loadModels($this->cache, new \Mobbex\PS\Checkout\Models\Db(_DB_PREFIX_));
 
-        // Enable integrity attestation. The first argument is the GitHub repo
-        // name, which is how the verification service resolves the release to
-        // check this install against, so it must stay 'prestashop'. The second
-        // is the module directory: the file ranges the server asks for are
-        // relative to it. Everything else lives in the SDK.
-        //
-        // The fourth is the checkout page URL, which only the platform can build
-        // — it depends on the theme, the language and the shop. It is used to
-        // visit the checkout the way a shopper would and look for skimming, so
-        // it has to be the page the buyer sees, not the cart or our return URL.
-        //
-        // Passed as a callable because initSdk() runs on every request while the
-        // header only goes out when a checkout is created, and getPageLink()
-        // touches the context and the router.
+        // Enable integrity attestation. Arguments and flow are documented in the
+        // SDK; the third one is the version, which it takes from Platform::$version.
+        // The checkout URL is a callable because initSdk() runs on every request
+        // while the header only goes out when a checkout is created.
         \Mobbex\Integrity\Attestation::init('prestashop', __DIR__, null, function () {
             $context = \Context::getContext();
 
-            // No context on cron, webhooks or the back office. Returning null
+            // No context on cron, webhooks or the back office: returning null
             // lets the SDK fall back to the shop host.
             if (!$context || empty($context->link))
                 return null;
 
-            // true forces HTTPS: the crawler has to see what the shopper sees,
-            // and an http:// that redirects adds a hop and noise. getPageLink()
-            // honours the context's shop, which is what multistore needs, and
-            // may prefix the language — that is the real URL, leave it in.
+            // The page the shopper sees, not the cart or our return URL. true
+            // forces HTTPS; getPageLink() honours the context's shop for multistore.
             return $context->link->getPageLink('order', true);
         });
 
