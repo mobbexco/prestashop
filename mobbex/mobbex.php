@@ -55,6 +55,16 @@ class Mobbex extends PaymentModule
 
         parent::__construct();
 
+        if (version_compare(_PS_VERSION_, $this->psMinVersion, '<')) {
+            $this->warning = sprintf(
+                $this->l('Mobbex requires PrestaShop %s or newer. The module has been disabled.'),
+                $this->psMinVersion
+            );
+
+            if (!empty($this->id) && $this->active)
+                $this->disable();
+        }
+
         $this->displayName            = $this->l('Mobbex');
         $this->description            = $this->l('Payment plugin using Mobbex ');
         $this->confirmUninstall       = $this->l('Are you sure you want to uninstall?');
@@ -173,7 +183,34 @@ class Mobbex extends PaymentModule
         return parent::uninstall();
     }
 
-    //TO DO: Add eneable overwrite for more security evals like install()
+    /**
+     * Enable the module.
+     *
+     * Blocks enabling on unsupported PrestaShop versions. PrestaShop calls this
+     * on install, on upgrade and whenever the merchant clicks "Enable" in the
+     * Module Manager, so returning false here makes it impossible to (re)enable
+     * the module while the PrestaShop version is lower than the minimum supported.
+     *
+     * @see    Module::enable()
+     * @param  bool $force_all
+     * @return bool
+     */
+    public function enable($force_all = false)
+    {
+        if (version_compare(_PS_VERSION_, $this->psMinVersion, '<')) {
+            \Mobbex\PS\Checkout\Models\Logger::log(
+                'error',
+                'Enable blocked: PrestaShop ' . _PS_VERSION_ . ' is lower than the required ' . $this->psMinVersion
+            );
+            $this->addError(
+                "PrestaShop version not supported. This module requiere Prestashop {$this->psMinVersion} or newer"
+            );
+
+            return false;
+        }
+
+        return parent::enable($force_all);
+    }
 
     /**
      * Init the PHP Sdk and configure it with module & plataform data.
@@ -209,6 +246,17 @@ class Mobbex extends PaymentModule
      */
     public function getContent()
     {
+        // Block access to the configuration page on unsupported PrestaShop versions.
+        // Returning before postProcess/runUpdate also prevents saving settings or
+        // triggering updates while the PrestaShop version is below the minimum.
+        if (version_compare(_PS_VERSION_, $this->psMinVersion, '<'))
+            return $this->displayError(
+                sprintf(
+                    $this->l('Mobbex requires PrestaShop %s or newer. The module is disabled and cannot be configured on this version.'),
+                    $this->psMinVersion
+                )
+            );
+
         if (Tools::isSubmit('submit_mobbex')) {
             $this->postProcess();
         }
