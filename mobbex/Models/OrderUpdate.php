@@ -21,6 +21,13 @@ class OrderUpdate
             if (!$payment || \Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) != 'approved')
                 return;
 
+            // Never overwrite the payment with a zero amount
+            if (!(float) $data['total'])
+                return Logger::log('error', 'OrderUpdate > updateOrderPayment | Approved webhook with zero total, payment left untouched', [
+                    'order_id' => $order->id,
+                    'total'    => $data['total'],
+                ]);
+
             // First, decode jsons to use data safely
             $sourceExpiration = json_decode($data['source_expiration'], true); // chemes
             $cardHolder       = json_decode($data['cardholder'], true);

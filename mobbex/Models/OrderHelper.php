@@ -55,6 +55,13 @@ class OrderHelper
 
         $amountPaid = $this->getRoundedTotal($cart);
 
+        // A cart resolving to zero means a broken context, not a free order
+        if (!$amountPaid)
+            return Logger::log($die ? 'fatal' : 'error', 'Helper > createOrder | [Order Creation Aborted] Cart total resolved to zero', [
+                'cart_id'      => $cartId,
+                'order_status' => $orderStatus,
+            ]);
+
         try {
             $db = \Db::getInstance();
 
