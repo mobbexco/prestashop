@@ -39,7 +39,7 @@ class OrderHelper
     /**
      * Create an order from Cart.
      * 
-     * @param int|string $cartId
+     * @param \Cart|int|string $cart
      * @param int|string $orderStatus
      * @param string $methodName
      * @param \PaymentModuleCore $module
@@ -47,17 +47,22 @@ class OrderHelper
      * 
      * @return \Order|null
      */
-    public function createOrder($cartId, $orderStatus, $methodName, $module, $die = true)
+    public function createOrder($cart, $orderStatus, $methodName, $module, $die = true)
     {
+        // Reuse the caller Cart instance: rebuilding it here loses cart rules applied moments before
+        $cart   = is_object($cart) ? $cart : new \Cart($cart);
+        $cartId = $cart->id;
+
+        $amountPaid = $this->getRoundedTotal($cart);
+
         try {
-            $db   = \Db::getInstance();
-            $cart = new \Cart($cartId);
+            $db = \Db::getInstance();
 
             // Validate order, remember to send secure key to avoid warning logs
             $module->validateOrder(
                 $cartId,
                 $orderStatus,
-                $this->getRoundedTotal($cart),
+                $amountPaid,
                 $methodName,
                 null,
                 [],
@@ -577,6 +582,21 @@ class OrderHelper
 
         // Instance context to get computing precision
         $context = \Context::getContext();
+
+        // Webhooks run with no session. Without a customer in context Group::getCurrent() falls back to the
+        // unidentified group, changing the tax method and group prices, so the cart can total zero.
+        // Rebuild it the same way PaymentModule::validateOrder does before computing.
+        if (!\Validate::isLoadedObject($context->customer) || $context->customer->id != $cart->id_customer) {
+            $context->cart     = $cart;
+            $context->customer = new \Customer((int) $cart->id_customer);
+            $context->shop     = new \Shop((int) $cart->id_shop);
+            $context->currency = new \Currency((int) $cart->id_currency, null, (int) $cart->id_shop);
+
+            $cart->setTaxCalculationMethod();
+            \Cart::resetStaticCache();
+            // Drop product prices already cached under the previous group
+            $cart->getProducts(true);
+        }
 
         return (float) \Tools::ps_round(
             (float) $cart->getOrderTotal(),

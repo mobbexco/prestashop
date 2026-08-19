@@ -240,7 +240,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = $this->module->helper->createOrder($cart->id, $data['order_status'], $trx->source_name, $this->module, false);
+        $order = $this->module->helper->createOrder($cart, $data['order_status'], $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);
