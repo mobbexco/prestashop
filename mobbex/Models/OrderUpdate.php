@@ -43,9 +43,8 @@ class OrderUpdate
             $payment->card_holder     = isset($cardHolder['name']) ? $cardHolder['name'] : null;
             $payment->card_brand      = $data['source_type'];
 
-            // If is new payment, update order real paid
-            if (!isset($payments[0]))
-                $order->total_paid_real = $order->total_paid;
+            // Always refresh it: the payment row may already exist holding a wrong amount
+            $order->total_paid_real = $order->total_paid;
 
             return $payment->save() && $order->update();
         } catch (\Exception $e) {
