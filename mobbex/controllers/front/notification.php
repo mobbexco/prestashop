@@ -55,10 +55,10 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function callback()
     {
         // Get Data from request
+        $status         = (int) Tools::getValue('status');
         $cart_id        = (int) Tools::getValue('id_cart');
-        $customer_id    = (int) Tools::getValue('customer_id');
         $transaction_id = Tools::getValue('transactionId');
-        $status         = Tools::getValue('status');
+        $customer_id    = (int) Tools::getValue('customer_id');
 
         $customer = new Customer($customer_id);
         $order_id = $this->module->helper->getOrderByCartId($cart_id);

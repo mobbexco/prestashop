@@ -133,11 +133,25 @@ class OrderHelper
         }
 
         //refund stock
-        if (!Config::$settings['pending_discount']) {
-            foreach ($order->getProductsDetail() as $product) {
-                if (!\StockAvailable::dependsOnStock($product['product_id']))
-                    \StockAvailable::updateQuantity($product['product_id'], $product['product_attribute_id'], (int) $product['product_quantity'], $order->id_shop);
-            }
+        if (Config::$settings['pending_discount'])
+            return true;
+
+        foreach ($order->getProductsDetail() as $product) {
+            $shouldUpdate = true;
+
+            // StockAvailable is deprecated beyond 1.7.8
+            if (method_exists('StockAvailable', 'dependsOnStock'))
+                $shouldUpdate = !\StockAvailable::dependsOnStock(
+                    (int) $product['product_id']
+                );
+
+            if ($shouldUpdate)
+                \StockAvailable::updateQuantity(
+                    (int) $product['product_id'],
+                    (int) $product['product_attribute_id'],
+                    (int) $product['product_quantity'],
+                    (int) $order->id_shop
+                );
         }
 
         return true;
@@ -180,6 +194,7 @@ class OrderHelper
     public function getPaymentData($draft = false)
     {
         // Get cart and customer from context
+        $config   = Config::$settings;
         $cart     = \Context::getContext()->cart;
         $customer = \Context::getContext()->customer;
 
@@ -193,7 +208,7 @@ class OrderHelper
             return $replaceCheckout;
 
         // Return if the draft is not needed
-        if ($draft && !Config::$settings['payment_methods'] && !Config::$settings['wallet'])
+        if ($draft && !$config['payment_methods'] && !$config['wallet'] && !$config['transparent_enabled'])
             return;
 
         return $this->createCheckout($cart, $customer, $draft);
@@ -215,7 +230,7 @@ class OrderHelper
         $reference = \Mobbex\Modules\Checkout::generateReference($cart->id) . ($draft ? '_DRAFT_CHECKOUT' : '');
 
         // Get items
-        $items    = array();
+        $items = array();
         // Checks if there´s any cart rule and returns an array of products with the discounts
         $products =(new \Mobbex\PS\Checkout\Models\PriceCalculator($cart))->getCartRules();
         
@@ -347,10 +362,9 @@ class OrderHelper
     {
 ?>
         <script type='text/javascript'>
-            var mbbx = {
-                ...mbbx,
-                ...<?= json_encode($vars) ?>
-            }
+            window.mbbx = window.mbbx || {};
+            window.mbbx = Object.assign(window.mbbx, <?= json_encode($vars) ?>);
+            var mbbx = window.mbbx;
         </script>
 <?php
     }

@@ -1,0 +1,103 @@
+#mobbex-transparent-checkout {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+#mobbex-transparent-form .form-group {
+    margin-bottom: 15px;
+}
+
+#mobbex-transparent-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+#mobbex-transparent-form input.form-control,
+#mobbex-transparent-form select.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#mobbex-transparent-form input.form-control:focus,
+#mobbex-transparent-form select.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.mobbex-card-number-input-wrapper {
+    position: relative;
+}
+
+.mobbex-card-number-input-wrapper input.form-control {
+    padding-right: 132px;
+}
+
+.mobbex-card-brands {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    pointer-events: none;
+    max-width: 120px;
+    overflow: hidden;
+}
+
+.mobbex-card-brand-logo {
+    width: 24px;
+    height: fit-content;
+    object-fit: contain;
+}
+
+.mobbex-card-brand-logo.is-preview {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
+.mobbex-card-brand-logo.is-detected {
+    filter: none;
+    opacity: 1;
+}
+
+#mobbex-transparent-form input.error {
+    border-color: #dc3545;
+}
+
+#transparent-errors {
+    margin-top: 15px;
+}
+
+/* Card brand icon */
+.card-brand-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #mobbex-transparent-checkout {
+        padding: 15px;
+    }
+    
+    .form-row {
+        display: block;
+    }
+    
+    .form-row .form-group {
+        width: 100%;
+    }
+}
