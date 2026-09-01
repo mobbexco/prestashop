@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 /**
  * mobbex.php
@@ -33,6 +33,9 @@ class Mobbex extends PaymentModule
 
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
+
+    /** @var \Mobbex\PS\Checkout\Models\Cache */
+    public $cache;
 
     /**
      * Constructor
