@@ -268,8 +268,6 @@ class OrderHelper
             ];
         }
 
-        // Set return url
-        $return_url   = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id);
         $customerData = $this->getCustomer($cart);
         
         if(empty($customerData['identification'])){
@@ -281,12 +279,15 @@ class OrderHelper
         }
 
         // Attempt to create a payment checkout
+        $mobbexToken = \Mobbex\Repository::generateToken($cart->id);
+        $returnUrl   = self::getModuleUrl('notification', 'return', '&id_cart=' . $cart->id );
+        $webhookUrl  = self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . "&mbbx_token=" . $mobbexToken);
         try {
             $mobbexCheckout = new \Mobbex\Modules\Checkout(
                 $cart->id,
                 (float) $cart->getOrderTotal(true, \Cart::BOTH),
-                $return_url,
-                self::getModuleUrl('notification', 'webhook', '&id_cart=' . $cart->id . '&customer_id=' . $customer->id . "&mbbx_token=" . \Mobbex\Repository::generateToken()),
+                $returnUrl,
+                $webhookUrl,
                 \Currency::getCurrency($cart->id_currency)['iso_code'],
                 $items,
                 \Mobbex\Repository::getInstallments($products, [], $advanced_plans),
@@ -304,7 +305,7 @@ class OrderHelper
 
         Logger::log('debug', "Checkout Response: ", $mobbexCheckout->response);
 
-        $mobbexCheckout->response['return_url'] = $return_url;
+        $mobbexCheckout->response['return_url'] = $returnUrl;
         
         return $mobbexCheckout->response;
     }
