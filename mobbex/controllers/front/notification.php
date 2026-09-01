@@ -235,12 +235,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             );
         }
 
+        // Exit if the webhook carries no amount: an approved payment always has a total
+        if (!(float) $trx->total)
+            return Logger::log('error', 'notification > createOrder | [Order Creation Aborted] Webhook with zero total', [
+                'cart'        => $cart->id,
+                'transaction' => $trx->id,
+                'total'       => $trx->total,
+            ]);
+
         // If finance charge discuount is enable, update cart total
         if (Config::$settings['charge_discount'])
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = $this->module->helper->createOrder($cart->id, $data['order_status'], $trx->source_name, $this->module, false);
+        $order = $this->module->helper->createOrder($cart, $data['order_status'], $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);
