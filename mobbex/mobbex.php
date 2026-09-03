@@ -907,9 +907,9 @@ class Mobbex extends PaymentModule
         if (!$parent)
             return;
 
-        // Set the uri to access to the actual page, and a hash to limit the access via capture
-        $uri  = urlencode($_SERVER['REQUEST_URI']);
-        $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']); 
+        // Set the uri to access to the actual page, and a token bound to this order to limit access via capture
+        $uri   = urlencode($_SERVER['REQUEST_URI']);
+        $token = \Mobbex\Repository::generateToken($params['id_order']);
 
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
@@ -923,11 +923,11 @@ class Mobbex extends PaymentModule
                     'risk_analysis'  => $parent->risk_analysis,
                     'status_message' => $parent->status_message,
                 ],
-                'capture'    => $parent->status == '3' ? true : false,
+                'capture'    => $parent->status == '3',
                 'coupon'     => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
                 'sources'    => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
                 'entities'   => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
-                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
+                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&token=$token&url=$uri"),
             ]
         );
 
