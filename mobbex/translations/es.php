@@ -31,6 +31,7 @@ $_MODULE['<{mobbex}prestashop>config-form_caa98c1a4577c4470fba11acce4089e2'] = '
 $_MODULE['<{mobbex}prestashop>config-form_e30b6e2efafb13ca97aa47ec997892b5'] = 'Experiencia de Pago en Sitio';
 $_MODULE['<{mobbex}prestashop>config-form_0c4d031336283f807816fa201b7523e2'] = 'Mobbex Wallet para Usuarios Loggeados';
 $_MODULE['<{mobbex}prestashop>config-form_00d23a76e43b46dae9ec7aa9dcbebb32'] = 'Activado';
+$_MODULE['<{mobbex}prestashop>config-form_292d525d9e9a6f636eb2b187cd88a9c0'] = 'Permite realizar pagos directamente desde el sitio, mediante un formulario y sin redirigir a Mobbex. Se requiere certificación de cumplimiento PCI para la integración.';
 $_MODULE['<{mobbex}prestashop>config-form_52673bde23c4f0e606bf0240c22651fe'] = 'ID o Clave de Revendedor';
 $_MODULE['<{mobbex}prestashop>config-form_1f446f20ccbb470a1238047dd80275df'] = 'Modal de Financiación en Pagina de Producto';
 $_MODULE['<{mobbex}prestashop>config-form_81b47461489fee99a844552c8a1e3a01'] = 'Muestra el modal de financiación en la pagina del producto.';

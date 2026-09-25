@@ -295,6 +295,7 @@ $form = [
                 'name'    => 'MOBBEX_TRANSPARENT_ENABLED',
                 'tab'     => 'tab_transparent',
                 'key'     => 'transparent_enabled',
+                'desc'    => self::l('It allows payments to be made directly from the site, via a form and without redirecting to Mobbex. PCI compliance certification is required for integration.', 'config-form'),
                 'default' => false,
                 'values'  => [
                     ['id' => 'active_on', 'value' => true],
