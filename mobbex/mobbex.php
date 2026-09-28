@@ -23,6 +23,9 @@ use Mobbex\PS\Checkout\Models\CustomFields;
  */
 class Mobbex extends PaymentModule
 {
+    /** @var string */
+    public $psMinVersion;
+
     /** @var \Mobbex\PS\Checkout\Models\Updater */
     public $updater;
 
@@ -35,8 +38,8 @@ class Mobbex extends PaymentModule
     /** @var \Mobbex\PS\Checkout\Models\Installer */
     public $installer;
 
-    /** @var string */
-    public $psMinVersion;
+    /** @var \Mobbex\PS\Checkout\Models\Cache */
+    public $cache;
 
     /**
      * Constructor
@@ -233,6 +236,23 @@ class Mobbex extends PaymentModule
         );
 
         \Mobbex\Platform::loadModels($this->cache, new \Mobbex\PS\Checkout\Models\Db(_DB_PREFIX_));
+
+        // Enable integrity attestation. Arguments and flow are documented in the
+        // SDK; the third one is the version, which it takes from Platform::$version.
+        // The checkout URL is a callable because initSdk() runs on every request
+        // while the header only goes out when a checkout is created.
+        \Mobbex\Integrity\Attestation::init('prestashop', __DIR__, null, function () {
+            $context = \Context::getContext();
+
+            // No context on cron, webhooks or the back office: returning null
+            // lets the SDK fall back to the shop host.
+            if (!$context || empty($context->link))
+                return null;
+
+            // The page the shopper sees, not the cart or our return URL. true
+            // forces HTTPS; getPageLink() honours the context's shop for multistore.
+            return $context->link->getPageLink('order', true);
+        });
 
         // Init api conector
         \Mobbex\Api::init();
@@ -903,9 +923,9 @@ class Mobbex extends PaymentModule
         if (!$parent)
             return;
 
-        // Set the uri to access to the actual page, and a hash to limit the access via capture
-        $uri  = urlencode($_SERVER['REQUEST_URI']);
-        $hash = md5(Config::$settings['api_key'] . '!' . Config::$settings['access_token']);
+        // Set the uri to access to the actual page, and a token bound to this order to limit access via capture
+        $uri   = urlencode($_SERVER['REQUEST_URI']);
+        $token = \Mobbex\Repository::generateToken($params['id_order']);
 
         // Add payment information data and try to create a capture button
         $this->smarty->assign(
@@ -919,11 +939,11 @@ class Mobbex extends PaymentModule
                     'risk_analysis'  => $parent->risk_analysis,
                     'status_message' => $parent->status_message,
                 ],
-                'capture'    => $parent->status == '3' ? true : false,
+                'capture'    => $parent->status == '3',
                 'coupon'     => \Mobbex\PS\Checkout\Models\Transaction::generateCoupon($parent),
                 'sources'    => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsSources($parent, $childs),
                 'entities'   => \Mobbex\PS\Checkout\Models\Transaction::getTransactionsEntities($parent, $childs),
-                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&hash=$hash&url=$uri"),
+                'captureUrl' => $this->helper->getModuleUrl('capture', 'captureOrder', "&order_id=$params[id_order]&token=$token&url=$uri"),
             ]
         );
 

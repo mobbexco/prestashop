@@ -56,12 +56,25 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
     public function callback()
     {
         // Get Data from request
-        $status         = (int) Tools::getValue('status');
+        $status         = Tools::getValue('status');
         $cart_id        = (int) Tools::getValue('id_cart');
         $transaction_id = Tools::getValue('transactionId');
-        $customer_id    = (int) Tools::getValue('customer_id');
 
-        $customer = new Customer($customer_id);
+        if (!$cart_id || !$transaction_id || !$status) {
+            Logger::log('fatal', 'notification > callback | Missing cart_id or transaction_id or status', $_REQUEST);
+            Tools::redirect('index.php?controller=order&step=3');
+        }
+
+        // Fail closed: the requested cart must belong to whoever is browsing this session.
+        $cart = new Cart($cart_id);
+        if (!Validate::isLoadedObject($cart)
+            || !Validate::isLoadedObject($this->context->customer)
+            || (int) $cart->id_customer !== (int) $this->context->customer->id
+        ) {
+            Tools::redirect('index.php?controller=order&step=3');
+        }
+
+        $customer = new Customer((int) $cart->id_customer);
         $order_id = $this->module->helper->getOrderByCartId($cart_id);
 
         // If status is ok
@@ -90,13 +103,16 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $order = $this->module->helper->getOrderByCartId($cart_id, true);
 
             if ($order && Config::$settings['order_first'] && Config::$settings['cart_restore']) {
+                // Never touch an order that has already been paid.
+                if ($order->hasBeenPaid())
+                    Tools::redirect('index.php?controller=order&step=3');
+
                 //update stock
                 $this->orderUpdate->updateStock($order, Configuration::get('PS_OS_CANCELED'));
                 //Cancel the order
                 $order->setCurrentState(Configuration::get('PS_OS_CANCELED'));
                 $order->update();
                 //Restore the cart
-                $cart = new Cart($cart_id);
                 $this->module->helper->restoreCart($cart);
             }
 
@@ -131,12 +147,12 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
         $data  = \Mobbex\PS\Checkout\Models\Transaction::formatData($postData['data']);
 
         // Verify token
-        if (!\Mobbex\Repository::validateToken($token))
+        if (!\Mobbex\Repository::validateToken($token, $cartId))
             Logger::log('fatal', 'notification > webhook | Invalid Token', $_REQUEST);
 
         // Avoid 3xx states
         if(\Mobbex\PS\Checkout\Models\Transaction::getState($data['status_code']) == 'processing')
-            $this->logger->log('fatal', 'notification > webhook | Invalid Status Code', $data);
+            Logger::log('fatal', 'notification > webhook | Invalid Status Code', $data);
 
         try {
             // Save webhook data
@@ -252,12 +268,20 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             );
         }
 
+        // Exit if the webhook carries no amount: an approved payment always has a total
+        if (!(float) $trx->total)
+            return Logger::log('error', 'notification > createOrder | [Order Creation Aborted] Webhook with zero total', [
+                'cart'        => $cart->id,
+                'transaction' => $trx->id,
+                'total'       => $trx->total,
+            ]);
+
         // If finance charge discuount is enable, update cart total
         if (Config::$settings['charge_discount'])
             $cartRule = $this->orderUpdate->updateCartTotal($cart->id, $trx->total);
 
         // Create and validate Order
-        $order = $this->module->helper->createOrder($cart->id, $data['order_status'], $trx->source_name, $this->module, false);
+        $order = $this->module->helper->createOrder($cart, $data['order_status'], $trx->source_name, $this->module, false);
 
         if ($order)
             $this->orderUpdate->updateOrderPayment($order, $data);

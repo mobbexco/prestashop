@@ -5,6 +5,7 @@
 *.zip
 
 /.vscode
+/.claude
 /mobbex/vendor
 /mobbex/composer.lock
 project.md
