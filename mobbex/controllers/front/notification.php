@@ -247,7 +247,7 @@ class MobbexNotificationModuleFrontController extends ModuleFrontController
             $checkoutTotal = $subscription['total'] ?: 0;
         }
 
-        $currencyConverted = isset(Config::$settings['final_currency']) ? OrderHelper::compareCurrecies($cart) : false;
+        $currencyConverted = isset(Config::$settings['final_currency']) && !empty(Config::$settings['final_currency']) ? OrderHelper::compareCurrecies($cart) : false;
         if ($currencyConverted) {
             $cartTotal = OrderHelper::applyConvertionRate($cartTotal);
         }
