@@ -8,3 +8,7 @@
 /.claude
 /mobbex/vendor
 /mobbex/composer.lock
+project.md
+summary.md
+/node_modules
+package-lock.json

@@ -1,6 +1,6 @@
 <?php
 namespace Mobbex\PS\Checkout\Models;
-class Task extends AbstractModel
+class Task extends \ObjectModel
 {
     public $id;
     public $name;

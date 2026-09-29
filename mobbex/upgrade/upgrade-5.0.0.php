@@ -17,6 +17,12 @@ function upgrade_module_5_0_0($module) {
     try {
         \Mobbex\PS\Checkout\Models\Logger::log('debug', 'Starting upgrade process');
 
+        // Block the upgrade on unsupported PrestaShop versions.
+        if (version_compare(_PS_VERSION_, Config::MINIMUN_PS_VERSION, '<'))
+            throw new \Exception(
+                "PrestaShop version not supported. This module requiere Prestashop " . Config::MINIMUN_PS_VERSION . " or newer"
+            );
+
         if (!$module->installer->createTables())
             throw new \Exception('Create tables failed');
 

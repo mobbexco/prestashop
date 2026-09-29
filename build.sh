@@ -11,7 +11,7 @@ fi
 echo "Building mobbex $VER"
 
 # Unified Version
-PRESTAV="1.6-8.2"
+PRESTAV="8.0.0-9.0.2"
 
 # Install dependencies
 cd mobbex
